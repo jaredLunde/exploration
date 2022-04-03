@@ -2,7 +2,7 @@
 
 # exploration
 
-> File explorer atoms for Jotai
+> Primitives for creating high performance file explorers with React
 
 ```sh
 npm i exploration
