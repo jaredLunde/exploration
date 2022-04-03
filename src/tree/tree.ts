@@ -1,21 +1,29 @@
 import { Branch } from "./branch";
 import { FlatViewMap } from "./flat-view-map";
 import { Leaf } from "./leaf";
-import type { Node, NodeComparator, NodeFactory, Source } from "./types";
+import type { GetNodes, Node } from "./types";
 import { spliceTypedArray } from "./utils";
 
 export class Tree<NodeData = {}> {
   protected rootBranch: Branch<NodeData>;
   private flatViewMap = new FlatViewMap();
-  private treeNodeMap = new Map<number, Node<NodeData>>();
+  protected treeNodeMap = new Map<number, Node<NodeData>>();
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
   >();
   private onVisibleNodesChangeCallback: () => void = () => {};
+  private getNodes: GetNodes<NodeData>;
 
-  constructor(private source: Source<NodeData>, rootBranchData: NodeData) {
-    this.rootBranch = new Branch(this.nextId(), null, rootBranchData);
+  constructor({
+    getNodes,
+    rootData,
+  }: {
+    getNodes: GetNodes<NodeData>;
+    rootData: NodeData;
+  }) {
+    this.getNodes = getNodes;
+    this.rootBranch = new Branch(null, rootData);
     let didSetInitial = false;
     this.flatViewMap.onDidSetKey = (key: number): void => {
       if (didSetInitial && key === this.rootBranch.id) {
@@ -51,7 +59,7 @@ export class Tree<NodeData = {}> {
    * ⚠ "Loaded" doesn't mean expanded, it just means the contents are "ready". Except when no arguments are given, the
    * branch being checked is root, and root is always expanded.
    *
-   * @param branch
+   * @param branch - The branch to check
    */
   async ensureLoaded(
     branch: Branch<NodeData> = this.rootBranch
@@ -99,35 +107,28 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  produce(branch: Branch<NodeData>, produceFn: BranchProducer<NodeData>): void {
+  protected _produce(
+    branch: Branch<NodeData>,
+    produceFn: (context: {
+      get draft(): Node<NodeData>[];
+      insert<NodeType extends Node<NodeData>>(
+        node: NodeType,
+        insertionIndex?: number
+      ): NodeType;
+      revert(): void;
+    }) => void | Node<NodeData>[]
+  ): void {
     let draftResult = createDraft(branch.nodes ?? []);
-    const factory = this.getNodeFactory(branch);
-
-    const insertNode = <NodeType extends Node<NodeData>>(
-      node: NodeType,
-      insertionIndex?: number
-    ): NodeType => {
-      draftResult.modified = true;
-      draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
-      return node;
-    };
 
     draftResult.draft =
       produceFn({
         get draft() {
           return draftResult.draft;
         },
-        createBranch: factory.createBranch,
-        createLeaf: factory.createLeaf,
-        insertBranch(data: NodeData, insertionIndex?: number) {
-          return insertNode(factory.createBranch(data), insertionIndex);
-        },
-        insertLeaf(data: NodeData, insertionIndex?: number) {
-          return insertNode(factory.createLeaf(data), insertionIndex);
-        },
-        sort(comparatorFn: NodeComparator<NodeData>) {
+        insert(node, insertionIndex) {
           draftResult.modified = true;
-          draftResult.draft.sort(comparatorFn);
+          draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
+          return node;
         },
         revert() {
           draftResult = createDraft(branch.nodes ?? []);
@@ -208,7 +209,7 @@ export class Tree<NodeData = {}> {
    * question not the actual status, because the child nodes might still need to be
    * loaded before the change can be seen in the tree.
    *
-   * @param branch
+   * @param branch - The branch to check
    */
   isExpanded(branch: Branch<NodeData>): boolean {
     return !!(
@@ -222,22 +223,13 @@ export class Tree<NodeData = {}> {
     return !this.findClosestDisconnectedParent(node);
   }
 
-  protected nextId = (
-    (genesis = 0) =>
-    (): number =>
-      genesis++
-  )();
-
   private async loadNodes(branch: Branch<NodeData>): Promise<void> {
     const promise = this.pendingLoadChildrenRequests.get(branch);
 
     if (!promise) {
       const promise = (async (): Promise<void> => {
         if (branch) {
-          const nodes = await this.source.getNodes(
-            branch,
-            this.getNodeFactory(branch)
-          );
+          const nodes = await this.getNodes(branch);
 
           this.setNodes(branch, nodes);
 
@@ -296,17 +288,6 @@ export class Tree<NodeData = {}> {
     for (let i = 0; i < restoreExpansionQueue.length; i++) {
       this.connectBranchToClosestFlatView(restoreExpansionQueue[i]);
     }
-  }
-
-  protected getNodeFactory(
-    branch: Branch<NodeData> | null
-  ): NodeFactory<NodeData> {
-    return {
-      createBranch: (data: NodeData, expanded?: boolean): Branch<NodeData> =>
-        new Branch(this.nextId(), branch, data, expanded),
-      createLeaf: (data: NodeData): Leaf<NodeData> =>
-        new Leaf(this.nextId(), branch, data),
-    };
   }
 
   private removeNodeFromFlatView(node: Node<NodeData>): void {
@@ -478,24 +459,3 @@ export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
 export function isBranch<T>(node: Node<T>): node is Branch<T> {
   return node instanceof Branch;
 }
-
-export type BranchProducer<NodeData = {}> = {
-  (ctx: BranchProduceContext<NodeData>): Node<NodeData>[] | void;
-};
-
-export type BranchProduceContext<NodeData = {}> = {
-  draft: Node<NodeData>[];
-  createBranch(data: NodeData, expanded?: boolean): Branch<NodeData>;
-  createLeaf(data: NodeData): Leaf<NodeData>;
-  /**
-   * Realtime representation of nodes of the target branch. This is a readonly copy that updates after any operation is performed.
-   *
-   * It starts of with the current child nodes of the branch, and mutates as you run operation on it. The mutations will be commited
-   * to the actual tree after the produce function returns. Calling `revertChanges` will reset the copy back to how it was and no changes
-   * will be saved.
-   */
-  insertLeaf(data: NodeData, insertionIndex?: number): Leaf<NodeData>;
-  insertBranch(data: NodeData, insertionIndex?: number): Branch<NodeData>;
-  sort(comparatorFn: NodeComparator<NodeData>): void;
-  revert(): void;
-};

@@ -18,12 +18,11 @@ export class Branch<NodeData = {}> extends Leaf<NodeData> {
   public expanded: boolean;
 
   constructor(
-    id: number,
     parent: Branch<NodeData> | null,
     data: NodeData,
     expanded = false
   ) {
-    super(id, parent, data);
+    super(parent, data);
     this.expanded = expanded;
   }
 }
