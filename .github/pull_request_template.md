@@ -2,7 +2,7 @@
 > **Any change needs to be discussed before proceeding.** Failure to do so may result
 > in the rejection of the pull request.
 
-## Thank you for contributing to `jotai-file-explorer`
+## Thank you for contributing to `exploration`
 
 ### Before submitting
 

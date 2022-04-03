@@ -1,4 +1,4 @@
-# Contributing to jotai-file-explorer
+# Contributing to exploration
 
 To contribute to this project, first:
 
@@ -34,7 +34,7 @@ Before your PR will be considered I will look for:
 
 ## Development
 
-Here's what you need to know to start developing `jotai-file-explorer`.
+Here's what you need to know to start developing `exploration`.
 
 ### Package scripts
 
