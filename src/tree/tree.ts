@@ -17,13 +17,13 @@ export class Tree<NodeData = {}> {
 
   constructor({
     getNodes,
-    rootData,
+    root,
   }: {
     getNodes: GetNodes<NodeData>;
-    rootData: NodeData;
+    root: Branch<NodeData>;
   }) {
+    this.rootBranch = root;
     this.getNodes = getNodes;
-    this.rootBranch = new Branch(null, rootData);
     let didSetInitial = false;
     this.flatViewMap.onDidSetKey = (key: number): void => {
       if (didSetInitial && key === this.rootBranch.id) {
@@ -47,9 +47,9 @@ export class Tree<NodeData = {}> {
     return this.flatViewMap.get(this.rootBranch.id);
   }
 
-  getById(id: number): Node<NodeData> | undefined {
+  getById = (id: number): Node<NodeData> | undefined => {
     return this.treeNodeMap.get(id);
-  }
+  };
 
   /**
    * Ensures that the children of any given branch have been loaded and ready to be worked with.

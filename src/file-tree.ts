@@ -27,17 +27,14 @@ export function createFileTree<Meta = {}>(
 
       return getNodes(parent as Dir<Meta>, factory);
     },
-    rootData: root ? { ...root } : { name: "/" },
+    root: new Dir(null, root ? { ...root } : { name: "/" }),
   });
 }
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   protected declare rootBranch: Dir<Meta>;
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
-
-  getById(id: number): File<Meta> | Dir<Meta> | undefined {
-    return this.treeNodeMap.get(id);
-  }
+  declare getById: (id: number) => FileTreeNode<Meta> | undefined;
 
   get root(): Dir<Meta> {
     return this.rootBranch;

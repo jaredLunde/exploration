@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Tree } from ".";
 import { createFileTree } from ".";
-import { comparator } from "./file-tree";
+import { comparator, isFile } from "./file-tree";
 import type { Dir, FileTreeData } from "./file-tree";
 import type { Branch } from "./tree/branch";
 import type { Leaf } from "./tree/leaf";
@@ -31,6 +31,39 @@ describe("createFileTree()", () => {
 
       expect((tree.root.nodes[0] as Branch).nodes[0].depth).toBe(2);
       expect((tree.root.nodes[0] as Branch).nodes[1].depth).toBe(2);
+    });
+
+    it("should create dir paths based on a node parent", async () => {
+      const tree = createFileTree(getNodesFromMockFs);
+
+      await waitForTree(tree);
+      const node = tree.root.nodes[0];
+      expect(node.path).toBe("/.github");
+
+      await tree.move(
+        tree.root.nodes[0],
+        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+      );
+
+      expect(tree.root.path).toBe("/");
+      expect(node.path).toBe("/src/.github");
+      expect(node.basename).toBe(".github");
+    });
+
+    it("should create file paths based on a node parent", async () => {
+      const tree = createFileTree(getNodesFromMockFs);
+
+      await waitForTree(tree);
+      const node = tree.root.nodes.find((n) => n.basename === ".gitignore");
+      expect(node.path).toBe("/.gitignore");
+
+      await tree.move(
+        node,
+        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+      );
+
+      expect(node.path).toBe("/src/.gitignore");
+      expect(node.basename).toBe(".gitignore");
     });
   });
 
@@ -543,6 +576,18 @@ describe("isLeaf()", () => {
     expect(isLeaf(tree.root)).toBe(false);
     expect(
       isLeaf(tree.root.nodes.find((node) => node.data.name === "/.gitignore"))
+    ).toBe(true);
+  });
+});
+
+describe("isFile()", () => {
+  it("should return `true` for file nodes, `false` for dir nodes", async () => {
+    const tree = createFileTree(getNodesFromMockFs);
+
+    await waitForTree(tree);
+    expect(isFile(tree.root)).toBe(false);
+    expect(
+      isFile(tree.root.nodes.find((node) => node.data.name === "/.gitignore"))
     ).toBe(true);
   });
 });
