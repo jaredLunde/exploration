@@ -1,6 +1,6 @@
 {
   "name": "exploration",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "",
   "license": "MIT",
   "author": "Jared Lunde <jared.lunde@gmail.com> (https://jaredlunde.com/)",
@@ -103,12 +103,12 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/main/index.js",
       "umd": "./dist/umd/exploration.js",
-      "source": "./src/index.tsx",
+      "source": "./src/index.ts",
       "types": "./types/index.d.ts",
       "default": "./dist/main/index.js"
     },
     "./package.json": "./package.json",
-    "./": "./"
+    "./*": "./"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -186,6 +186,6 @@
       "@semantic-release/github"
     ]
   },
-  "source": "src/index.tsx",
+  "source": "src/index.ts",
   "unpkg": "dist/umd/exploration.js"
 }
