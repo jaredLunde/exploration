@@ -1,32 +1,29 @@
 import { Branch } from "./branch";
 import { FlatViewMap } from "./flat-view-map";
 import { Leaf } from "./leaf";
-import type {
-  TreeNode,
-  TreeNodeComparator,
-  TreeNodeFactory,
-  TreeSource,
-} from "./types";
+import type { GetNodes, Node } from "./types";
 import { spliceTypedArray } from "./utils";
 
 export class Tree<NodeData = {}> {
-  private rootBranch: Branch<NodeData>;
+  protected rootBranch: Branch<NodeData>;
   private flatViewMap = new FlatViewMap();
-  private treeNodeMap = new Map<number, TreeNode<NodeData>>();
+  protected treeNodeMap = new Map<number, Node<NodeData>>();
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
   >();
   private onVisibleNodesChangeCallback: () => void = () => {};
+  private getNodes: GetNodes<NodeData>;
 
-  public static isLeaf = <T>(treeNode: TreeNode<T>): treeNode is Leaf<T> =>
-    treeNode instanceof Leaf && !(treeNode instanceof Branch);
-
-  public static isBranch = <T>(treeNode: TreeNode<T>): treeNode is Branch<T> =>
-    treeNode instanceof Branch;
-
-  constructor(private source: TreeSource<NodeData>, rootBranchData: NodeData) {
-    this.rootBranch = new Branch(this.nextId(), null, rootBranchData);
+  constructor({
+    getNodes,
+    root,
+  }: {
+    getNodes: GetNodes<NodeData>;
+    root: Branch<NodeData>;
+  }) {
+    this.rootBranch = root;
+    this.getNodes = getNodes;
     let didSetInitial = false;
     this.flatViewMap.onDidSetKey = (key: number): void => {
       if (didSetInitial && key === this.rootBranch.id) {
@@ -46,13 +43,13 @@ export class Tree<NodeData = {}> {
     return this.rootBranch;
   }
 
-  get visibleTreeNodes(): Uint32Array | undefined {
+  get visibleNodes(): Uint32Array | undefined {
     return this.flatViewMap.get(this.rootBranch.id);
   }
 
-  getNodeById(id: number): TreeNode<NodeData> | undefined {
+  getById = (id: number): Node<NodeData> | undefined => {
     return this.treeNodeMap.get(id);
-  }
+  };
 
   /**
    * Ensures that the children of any given branch have been loaded and ready to be worked with.
@@ -62,7 +59,7 @@ export class Tree<NodeData = {}> {
    * ⚠ "Loaded" doesn't mean expanded, it just means the contents are "ready". Except when no arguments are given, the
    * branch being checked is root, and root is always expanded.
    *
-   * @param branch
+   * @param branch - The branch to check
    */
   async ensureLoaded(
     branch: Branch<NodeData> = this.rootBranch
@@ -97,7 +94,7 @@ export class Tree<NodeData = {}> {
       if (recursive && branch.nodes) {
         await Promise.all(
           branch.nodes.map((node) =>
-            Tree.isBranch(node) ? this.expand(node, options) : null
+            isBranch(node) ? this.expand(node, options) : null
           )
         );
       }
@@ -110,35 +107,28 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  produce(branch: Branch<NodeData>, produceFn: BranchProducer<NodeData>): void {
+  protected _produce(
+    branch: Branch<NodeData>,
+    produceFn: (context: {
+      get draft(): Node<NodeData>[];
+      insert<NodeType extends Node<NodeData>>(
+        node: NodeType,
+        insertionIndex?: number
+      ): NodeType;
+      revert(): void;
+    }) => void | Node<NodeData>[]
+  ): void {
     let draftResult = createDraft(branch.nodes ?? []);
-    const factory = this.getNodeFactory(branch);
-
-    const insertNode = <NodeType extends TreeNode<NodeData>>(
-      node: NodeType,
-      insertionIndex?: number
-    ): NodeType => {
-      draftResult.modified = true;
-      draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
-      return node;
-    };
 
     draftResult.draft =
       produceFn({
         get draft() {
           return draftResult.draft;
         },
-        createBranch: factory.createBranch,
-        createLeaf: factory.createLeaf,
-        insertBranch(data: NodeData, insertionIndex?: number) {
-          return insertNode(factory.createBranch(data), insertionIndex);
-        },
-        insertLeaf(data: NodeData, insertionIndex?: number) {
-          return insertNode(factory.createLeaf(data), insertionIndex);
-        },
-        sort(comparatorFn: TreeNodeComparator<NodeData>) {
+        insert(node, insertionIndex) {
           draftResult.modified = true;
-          draftResult.draft.sort(comparatorFn);
+          draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
+          return node;
         },
         revert() {
           draftResult = createDraft(branch.nodes ?? []);
@@ -150,21 +140,20 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  removeNode(nodeToRemove: TreeNode<NodeData>): void {
+  remove(nodeToRemove: Node<NodeData>): void {
     // TODO: dispatch remove event
     this.removeNodeFromFlatView(nodeToRemove);
     this.treeNodeMap.delete(nodeToRemove.id);
 
-    if (Tree.isBranch(nodeToRemove) && nodeToRemove.nodes) {
+    if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
       const nodes = nodeToRemove.nodes.slice();
-      let node: TreeNode<NodeData> | undefined;
+      let node: Node<NodeData> | undefined;
 
       while ((node = nodes.pop())) {
         this.removeNodeFromFlatView(node);
         this.treeNodeMap.delete(node.id);
 
-        if (Tree.isBranch(node) && node.nodes) {
-          // @ts-expect-error: freaking out because node.nodes is readonly
+        if (isBranch(node) && node.nodes) {
           // eslint-disable-next-line prefer-spread
           nodes.push.apply(nodes, node.nodes);
         }
@@ -172,12 +161,46 @@ export class Tree<NodeData = {}> {
     }
 
     if (nodeToRemove.parent?.nodes) {
-      nodeToRemove.parent.nodes =
-        nodeToRemove.parent.nodes.filter((n) => n !== nodeToRemove) ?? [];
+      nodeToRemove.parent.nodes = nodeToRemove.parent.nodes.filter(
+        (n) => n !== nodeToRemove
+      );
     }
   }
 
-  moveNode(node: TreeNode<NodeData>, to: Branch<NodeData>): void {}
+  async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
+    const initialParent = node.parent;
+
+    if (initialParent === to) {
+      return;
+    }
+
+    if (!to.nodes) {
+      await this.expand(to);
+    }
+
+    // parent may have changed in the meantime
+    if (node.parent === initialParent) {
+      if (isBranch(node)) {
+        this.disconnectBranchFromClosestFlatView(node);
+      }
+
+      if (initialParent?.nodes) {
+        this.setNodes(
+          initialParent,
+          initialParent.nodes.filter((n) => n !== node)
+        );
+      }
+
+      if (to.nodes) {
+        this.setNodes(to, to.nodes.concat(node));
+        node.parent = to;
+      }
+
+      if (isBranch(node)) {
+        this.connectBranchToClosestFlatView(node);
+      }
+    }
+  }
 
   /**
    * A more accurate and real-time representation of whether a branch is expanded.
@@ -186,7 +209,7 @@ export class Tree<NodeData = {}> {
    * question not the actual status, because the child nodes might still need to be
    * loaded before the change can be seen in the tree.
    *
-   * @param branch
+   * @param branch - The branch to check
    */
   isExpanded(branch: Branch<NodeData>): boolean {
     return !!(
@@ -196,15 +219,9 @@ export class Tree<NodeData = {}> {
     );
   }
 
-  isVisible(node: TreeNode<NodeData>): boolean {
+  isVisible(node: Node<NodeData>): boolean {
     return !this.findClosestDisconnectedParent(node);
   }
-
-  private nextId = (
-    (genesis = 0) =>
-    (): number =>
-      genesis++
-  )();
 
   private async loadNodes(branch: Branch<NodeData>): Promise<void> {
     const promise = this.pendingLoadChildrenRequests.get(branch);
@@ -212,17 +229,14 @@ export class Tree<NodeData = {}> {
     if (!promise) {
       const promise = (async (): Promise<void> => {
         if (branch) {
-          const nodes = await this.source.getNodes(
-            branch,
-            this.getNodeFactory(branch)
-          );
+          const nodes = await this.getNodes(branch);
 
           this.setNodes(branch, nodes);
 
           for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
 
-            if (Tree.isBranch(node) && node.expanded) {
+            if (isBranch(node) && node.expanded) {
               this.expand(node);
             }
           }
@@ -236,10 +250,7 @@ export class Tree<NodeData = {}> {
     return promise;
   }
 
-  private setNodes(
-    branch: Branch<NodeData>,
-    nodes: TreeNode<NodeData>[]
-  ): void {
+  private setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
     const restoreExpansionQueue: Branch<NodeData>[] = [];
 
     if (branch.expanded) {
@@ -251,7 +262,7 @@ export class Tree<NodeData = {}> {
       for (let i = 0; i < branch.nodes.length; i++) {
         const node = branch.nodes[i];
         // if a child branch is expanded, we must disconnect it (will be reconnected later)
-        if (Tree.isBranch(node) && node.expanded) {
+        if (isBranch(node) && node.expanded) {
           this.disconnectBranchFromClosestFlatView(node);
           restoreExpansionQueue.unshift(node);
         }
@@ -279,18 +290,7 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  private getNodeFactory(
-    branch: Branch<NodeData> | null
-  ): TreeNodeFactory<NodeData> {
-    return {
-      createBranch: (data: NodeData, expanded?: boolean): Branch<NodeData> =>
-        new Branch(this.nextId(), branch, data, expanded),
-      createLeaf: (data: NodeData): Leaf<NodeData> =>
-        new Leaf(this.nextId(), branch, data),
-    };
-  }
-
-  private removeNodeFromFlatView(node: TreeNode<NodeData>): void {
+  private removeNodeFromFlatView(node: Node<NodeData>): void {
     // if the node (branch) was in a disconnected state, remove its records
     this.flatViewMap.delete(node.id);
     // proceed with the complete removal from the shadow parent
@@ -306,7 +306,7 @@ export class Tree<NodeData = {}> {
 
       const spliced = spliceTypedArray(parentFlatView, start, end - start)[0];
 
-      if (Tree.isBranch(node)) {
+      if (isBranch(node)) {
         node.expanded = false;
       }
 
@@ -376,7 +376,7 @@ export class Tree<NodeData = {}> {
   }
 
   private findClosestDisconnectedParent(
-    node: TreeNode<NodeData>
+    node: Node<NodeData>
   ): Branch<NodeData> | undefined {
     let p = node.parent;
 
@@ -388,7 +388,7 @@ export class Tree<NodeData = {}> {
 
   private getNodeProjectionRangeWithinFlatView(
     flatView: Uint32Array,
-    node: TreeNode<NodeData>
+    node: Node<NodeData>
   ): { start: number; end: number } {
     let b = node;
 
@@ -415,8 +415,8 @@ export class Tree<NodeData = {}> {
 }
 
 function createDraft<NodeData = {}>(
-  nodes: ReadonlyArray<TreeNode<NodeData>>
-): { draft: TreeNode<NodeData>[]; modified: boolean } {
+  nodes: ReadonlyArray<Node<NodeData>>
+): { draft: Node<NodeData>[]; modified: boolean } {
   const draft = new Proxy(nodes.slice(), {
     set(target, index, value) {
       if (typeof index === "string" || typeof index === "number") {
@@ -452,23 +452,10 @@ function createDraft<NodeData = {}>(
   return draftResult;
 }
 
-export type BranchProducer<NodeData = {}> = {
-  (ctx: BranchProduceContext<NodeData>): TreeNode<NodeData>[] | void;
-};
+export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
+  return node instanceof Leaf && !(node instanceof Branch);
+}
 
-export type BranchProduceContext<NodeData = {}> = {
-  draft: TreeNode<NodeData>[];
-  createBranch(data: NodeData, expanded?: boolean): Branch<NodeData>;
-  createLeaf(data: NodeData): Leaf<NodeData>;
-  /**
-   * Realtime representation of nodes of the target branch. This is a readonly copy that updates after any operation is performed.
-   *
-   * It starts of with the current child nodes of the branch, and mutates as you run operation on it. The mutations will be commited
-   * to the actual tree after the produce function returns. Calling `revertChanges` will reset the copy back to how it was and no changes
-   * will be saved.
-   */
-  insertLeaf(data: NodeData, insertionIndex?: number): Leaf<NodeData>;
-  insertBranch(data: NodeData, insertionIndex?: number): Branch<NodeData>;
-  sort(comparatorFn: TreeNodeComparator<NodeData>): void;
-  revert(): void;
-};
+export function isBranch<T>(node: Node<T>): node is Branch<T> {
+  return node instanceof Branch;
+}

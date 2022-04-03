@@ -1,11 +1,8 @@
 import type { Branch } from "./branch";
 
-export class Leaf<T = {}> {
-  constructor(
-    public readonly id: number,
-    public readonly parent: Branch<T> | null,
-    public data: T
-  ) {}
+export class Leaf<NodeData = {}> {
+  public readonly id = nextId();
+  constructor(public parent: Branch<NodeData> | null, public data: NodeData) {}
 
   get depth(): number {
     if (!this.parent) {
@@ -15,3 +12,8 @@ export class Leaf<T = {}> {
     return this.parent.depth + 1;
   }
 }
+
+const nextId = (() => {
+  let id = 0;
+  return () => id++;
+})();
