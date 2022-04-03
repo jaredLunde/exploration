@@ -36,7 +36,6 @@
     "is-relative": "^1.0.0"
   },
   "peerDependencies": {
-    "jotai": ">=1.6.1",
     "react": ">=16.8"
   },
   "devDependencies": {
@@ -58,7 +57,6 @@
     "eslint-config-lunde": "latest",
     "husky": "latest",
     "jest": "latest",
-    "jotai": "^1.6.1",
     "lint-staged": "latest",
     "lundle": "latest",
     "prettier": "latest",
@@ -71,8 +69,6 @@
     "file browser",
     "file explorer",
     "file tree",
-    "jotai file browser",
-    "jotai file explorer",
     "react",
     "react component",
     "react file browser",
