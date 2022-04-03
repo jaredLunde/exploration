@@ -1,10 +1,10 @@
 import type { Branch } from "./branch";
 
-export class Leaf<T = {}> {
+export class Leaf<NodeData = {}> {
   constructor(
     public readonly id: number,
-    public readonly parent: Branch<T> | null,
-    public data: T
+    public parent: Branch<NodeData> | null,
+    public data: NodeData
   ) {}
 
   get depth(): number {

@@ -1,8 +1,8 @@
 import { Leaf } from "./leaf";
-import type { TreeNode } from "./types";
+import type { Node } from "./types";
 
-export class Branch<NodeDataT = {}> extends Leaf<NodeDataT> {
-  public nodes?: ReadonlyArray<TreeNode<NodeDataT>>;
+export class Branch<NodeData = {}> extends Leaf<NodeData> {
+  public nodes?: Node<NodeData>[];
   /**
    * A flag indicating the "intended" expansion status of this branch. If this is `true`, the branch
    * is either already expanded OR is about to be expanded. Explained below.
@@ -19,8 +19,8 @@ export class Branch<NodeDataT = {}> extends Leaf<NodeDataT> {
 
   constructor(
     id: number,
-    parent: Branch<NodeDataT> | null,
-    data: NodeDataT,
+    parent: Branch<NodeData> | null,
+    data: NodeData,
     expanded = false
   ) {
     super(id, parent, data);
