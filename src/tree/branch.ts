@@ -1,5 +1,4 @@
 import { Leaf } from "./leaf";
-import type { Node } from "./types";
 
 export class Branch<NodeData = {}> extends Leaf<NodeData> {
   public nodes?: Node<NodeData>[];
@@ -26,3 +25,5 @@ export class Branch<NodeData = {}> extends Leaf<NodeData> {
     this.expanded = expanded;
   }
 }
+
+export type Node<NodeData = {}> = Leaf<NodeData> | Branch<NodeData>;

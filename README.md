@@ -39,14 +39,74 @@ npm i exploration
 - [x] Drag and drop
 - [x] Multiselect
 - [x] Decorations
-- [x] Search
+- [x] Filtering/search
 
 --
 
 ## Quick start
 
-```js
-import { useTree } from "exploration";
+```tsx
+import {
+  createFileTree,
+  useFileTree,
+  useMultiselect,
+  useDnd,
+  useDecorations,
+  useFilter,
+  useVirtualize,
+} from "exploration";
+
+const fileTree = createFileTree((parent, { createFile, createDir }) => {
+  // Return the files that live at the current depth within the tree or a promise
+  // containing the files at the current depth.
+  return Promise.resolve([
+    createDir({ name: "src" }),
+    createFile({ name: "README.md" }),
+  ]);
+});
+
+function FileExplorer() {
+  const fileTree = useFileTree(fileTree);
+  const dndProps = useDnd(fileTree);
+  const decorations = useDecorations(fileTree, {
+    activeFile: "active",
+    pseudoActiveFiles: "pseudo-active",
+    dirty: "modified",
+  });
+  const [searchValue, setSearchValue] = React.useState("");
+  const useFilter = useFilter(
+    fileTree,
+    (node, i) => !searchValue || node.includes(searchValue)
+  );
+  const multiselectProps = useMultiselect(fileTree, (nodes) => {
+    // Return true if the node should be selected.
+    decorations.add(
+      "pseudoactiveFiles",
+      nodes.map((node) => node.id)
+    );
+  });
+  const windowRef = React.useRef(null);
+  const virtualize = useVirtualize(fileTree, {
+    attach: [fileTree, dnd, multiselect, decorations],
+    windowRef,
+  });
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+      />
+
+      <div ref={windowRef}>
+        {virtualize.map(({ node, props }) => (
+          <div {...props}>{node.name}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
 ```
 
 ## API

@@ -1,18 +1,16 @@
+import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { FlatViewMap } from "./flat-view-map";
 import { Leaf } from "./leaf";
-import type { GetNodes, Node } from "./types";
-import { spliceTypedArray } from "./utils";
 
 export class Tree<NodeData = {}> {
   protected rootBranch: Branch<NodeData>;
-  private flatViewMap = new FlatViewMap();
+  flatViewMap = new FlatViewMap();
   protected treeNodeMap = new Map<number, Node<NodeData>>();
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
   >();
-  private onVisibleNodesChangeCallback: () => void = () => {};
   private getNodes: GetNodes<NodeData>;
 
   constructor({
@@ -24,19 +22,7 @@ export class Tree<NodeData = {}> {
   }) {
     this.rootBranch = root;
     this.getNodes = getNodes;
-    let didSetInitial = false;
-    this.flatViewMap.onDidSetKey = (key: number): void => {
-      if (didSetInitial && key === this.rootBranch.id) {
-        return this.onVisibleNodesChangeCallback();
-      }
-
-      didSetInitial = true;
-    };
     this.expand(this.rootBranch);
-  }
-
-  onVisibleNodesChange(cb: () => void): void {
-    this.onVisibleNodesChangeCallback = cb;
   }
 
   get root(): Branch<NodeData> {
@@ -459,3 +445,46 @@ export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
 export function isBranch<T>(node: Node<T>): node is Branch<T> {
   return node instanceof Branch;
 }
+
+/**
+ * Like Array.prototype.splice except this method won't throw
+ * RangeError when given too many items (with spread operator as `...items`)
+ *
+ * Also items are concated straight up without having to use the spread operator
+ *
+ * Performance is more or less same as Array.prototype.splice
+ *
+ * @param arr - Array to splice
+ * @param start - Start index where splicing should begin
+ * @param deleteCount - Items to delete (optionally replace with given items)
+ * @param elements - Items to insert (when deleteCount is same as items.length, it becomes a replace)
+ */
+export function spliceTypedArray(
+  arr: Uint32Array,
+  start: number,
+  deleteCount = 0,
+  elements?: Uint32Array
+): [Uint32Array, Uint32Array] {
+  /* It's creating a new array with the same length as the original array. */
+  const deleted = arr.slice(start, start + deleteCount);
+  const spliced = new Uint32Array(
+    arr.length - deleteCount + (elements ? elements.length : 0)
+  );
+
+  spliced.set(arr.slice(0, start));
+
+  if (elements) {
+    spliced.set(elements, start);
+  }
+
+  spliced.set(
+    arr.slice(start + deleteCount, arr.length),
+    start + (elements ? elements.length : 0)
+  );
+
+  return [spliced, deleted];
+}
+
+export type GetNodes<NodeData = {}> = {
+  (parent: Branch<NodeData>): Node<NodeData>[] | Promise<Node<NodeData>[]>;
+};
