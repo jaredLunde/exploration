@@ -1,32 +1,37 @@
 import { pathFx } from ".";
 import { Branch } from "./tree/branch";
 import { Leaf } from "./tree/leaf";
+import type { GetNodes } from "./tree/tree";
 import { Tree } from "./tree/tree";
 
 export function createFileTree<Meta = {}>(
   getNodes: (
     parent: Dir<Meta>,
     factory: FileTreeFactory<Meta>
-  ) => FileTreeNode<Meta>[],
-  {
-    root,
-  }: {
+  ) => Promise<FileTreeNode<Meta>[]> | FileTreeNode<Meta>[],
+  config: {
+    comparator?: FileTree["comparator"];
     root?: Omit<FileTreeData<Meta>, "type">;
   } = {}
 ) {
+  const { comparator = defaultComparator, root } = config;
   return new FileTree<Meta>({
-    getNodes: (parent) => {
+    async getNodes(parent) {
       const factory: FileTreeFactory<Meta> = {
         createFile(data) {
           return new File(parent, data);
         },
+
         createDir(data, expanded?: boolean) {
           return new Dir(parent, data, expanded);
         },
       };
 
-      return getNodes(parent as Dir<Meta>, factory);
+      const nodes = await getNodes(parent as Dir<Meta>, factory);
+      nodes.sort(comparator);
+      return nodes;
     },
+    comparator,
     root: new Dir(null, root ? { ...root } : { name: "/" }),
   });
 }
@@ -35,6 +40,29 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   protected declare rootBranch: Dir<Meta>;
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
   declare getById: (id: number) => FileTreeNode<Meta> | undefined;
+  declare expand: (
+    dir: Dir<Meta>,
+    options?: {
+      ensureVisible?: boolean;
+      recursive?: boolean;
+    }
+  ) => Promise<void>;
+  declare collapse: (dir: Dir<Meta>) => void;
+  declare remove: (node: FileTreeNode<Meta>) => void;
+  protected comparator;
+
+  constructor({
+    getNodes,
+    comparator,
+    root,
+  }: {
+    getNodes: GetNodes<FileTreeData<Meta>>;
+    comparator: (a: FileTreeNode, b: FileTreeNode) => number;
+    root: Dir<Meta>;
+  }) {
+    super({ getNodes, root });
+    this.comparator = comparator;
+  }
 
   get root(): Dir<Meta> {
     return this.rootBranch;
@@ -49,29 +77,78 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
           node: NodeType,
           insertionIndex?: number
         ): NodeType;
+        sort(): void;
         revert(): void;
       }
     ) => void | (Dir<Meta> | File<Meta>)[]
   ) {
-    return super._produce(dir, (context) =>
-      produceFn({
+    const comparator = this.comparator;
+
+    return this._produce(dir, (context) => {
+      function sort() {
+        // @ts-expect-error
+        context.draft.sort(comparator);
+      }
+
+      const producer = produceFn({
         get draft() {
           return context.draft as (Dir<Meta> | File<Meta>)[];
         },
+
         insert(node, insertionIndex) {
-          return context.insert(node, insertionIndex);
+          const insertedNode = context.insert(node, insertionIndex);
+          return insertedNode;
         },
+
+        sort,
+
         revert() {
           context.revert();
         },
+
         createFile(data) {
           return new File(dir, data);
         },
+
         createDir(data, expanded?: boolean) {
           return new Dir(dir, data, expanded);
         },
-      })
-    );
+      });
+
+      sort();
+      return producer;
+    });
+  }
+
+  sort(dir: Dir<Meta>) {
+    this.produce(dir, ({ draft }) => {
+      draft.sort(this.comparator);
+    });
+  }
+
+  move(node: FileTreeNode<Meta>, to: Dir<Meta>) {
+    // @ts-expect-error
+    return super.move(node, to, this.comparator);
+  }
+
+  newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>) {
+    this.produce(inDir, ({ createFile, insert }) => {
+      insert(createFile(withData));
+    });
+  }
+
+  newDir(inDir: Dir<Meta>, withData: FileTreeData<Meta>, expanded?: boolean) {
+    this.produce(inDir, ({ createDir, insert }) => {
+      insert(createDir(withData, expanded));
+    });
+  }
+
+  rename(node: FileTreeNode<Meta>, newName: string) {
+    node.data.name = newName;
+
+    if (node.parent) {
+      this.sort(node.parent);
+    }
   }
 }
 
@@ -115,9 +192,9 @@ export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
  * @param a - A tree node
  * @param b - A tree node to compare against `a`
  */
-export function comparator(a: FileTreeNode, b: FileTreeNode) {
+export function defaultComparator(a: FileTreeNode, b: FileTreeNode) {
   if (a.constructor === b.constructor) {
-    return a.data.name.localeCompare(b.data.name);
+    return a.basename.localeCompare(b.basename);
   }
 
   return isDir(a) ? -1 : isDir(b) ? 1 : 0;

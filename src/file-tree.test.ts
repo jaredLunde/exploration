@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createFileTree } from ".";
-import { comparator, isFile } from "./file-tree";
-import type { Dir, FileTreeData } from "./file-tree";
+import { defaultComparator, isFile } from "./file-tree";
+import type { Dir, File } from "./file-tree";
 import type { Branch } from "./tree/branch";
-import type { Leaf } from "./tree/leaf";
 import type { Tree } from "./tree/tree";
 import { isLeaf } from "./tree/tree";
 
@@ -27,7 +26,7 @@ describe("createFileTree()", () => {
       expect(tree.root.nodes[0].depth).toBe(1);
       expect(tree.root.nodes[1].depth).toBe(1);
 
-      await tree.expand(tree.root.nodes[0] as Branch<any>);
+      await tree.expand(tree.root.nodes[0] as Dir<any>);
 
       expect((tree.root.nodes[0] as Branch).nodes[0].depth).toBe(2);
       expect((tree.root.nodes[0] as Branch).nodes[1].depth).toBe(2);
@@ -42,7 +41,7 @@ describe("createFileTree()", () => {
 
       await tree.move(
         tree.root.nodes[0],
-        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+        tree.root.nodes.find((n) => n.data.name === "/src") as Dir<any>
       );
 
       expect(tree.root.path).toBe("/");
@@ -59,7 +58,7 @@ describe("createFileTree()", () => {
 
       await tree.move(
         node,
-        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+        tree.root.nodes.find((n) => n.data.name === "/src") as Dir<any>
       );
 
       expect(node.path).toBe("/src/.gitignore");
@@ -223,7 +222,7 @@ describe("createFileTree()", () => {
       await tree.expand(
         removedNode.nodes!.find(
           (node) => node.data.name === "/src/tree"
-        )! as Branch<any>
+        )! as Dir<any>
       );
       tree.remove(removedNode);
 
@@ -249,12 +248,12 @@ describe("createFileTree()", () => {
       expect(handle).toHaveBeenCalledTimes(0);
       expect(tree.flatViewMap.didChange.getSnapshot()).toBe(0);
 
-      await tree.expand(tree.root.nodes[0] as Branch<any>);
+      await tree.expand(tree.root.nodes[0] as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(4);
       expect(tree.flatViewMap.didChange.getSnapshot()).toBeGreaterThan(0);
 
       unsubscribe();
-      await tree.expand(tree.root.nodes[0] as Branch<any>);
+      await tree.expand(tree.root.nodes[0] as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(4);
       expect(tree.flatViewMap.didChange.getSnapshot()).toBeGreaterThan(0);
     });
@@ -277,7 +276,7 @@ describe("createFileTree()", () => {
 
       const branch = tree.root.nodes.find(
         (node) => node.data.name === "/src"
-      )! as Branch<any>;
+      )! as Dir<any>;
 
       await tree.expand(branch);
       expect(tree.isVisible(branch.nodes[0])).toBe(true);
@@ -317,7 +316,7 @@ describe("createFileTree()", () => {
       await waitForTree(tree);
 
       tree.produce(tree.root, ({ draft }) => {
-        draft.sort(comparator);
+        draft.sort(defaultComparator);
       });
 
       expect(tree.root.nodes.map((node) => node.data.name)).toEqual([
@@ -352,9 +351,9 @@ describe("createFileTree()", () => {
 
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 1);
       expect(node.nodes.map((node) => node.data.name)).toEqual([
+        "/.github/pr-templates",
         "/.github/ISSUE_TEMPLATE.md",
         "/.github/PULL_REQUEST_TEMPLATE.md",
-        "/.github/pr-templates",
       ]);
 
       tree.produce(node, ({ createDir, insert }) => {
@@ -367,10 +366,10 @@ describe("createFileTree()", () => {
       });
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
       expect(node.nodes.map((node) => node.data.name)).toEqual([
-        "/.github/ISSUE_TEMPLATE.md",
         "/.github/issue-templates",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/ISSUE_TEMPLATE.md",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
     });
 
@@ -394,8 +393,8 @@ describe("createFileTree()", () => {
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 1);
       expect(node.nodes.map((node) => node.data.name)).toEqual([
         "/.github/ISSUE_TEMPLATE.md",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
 
       tree.produce(node, ({ createFile, insert }) => {
@@ -406,12 +405,13 @@ describe("createFileTree()", () => {
           1
         );
       });
+
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
       expect(node.nodes.map((node) => node.data.name)).toEqual([
         "/.github/ISSUE_TEMPLATE.md",
         "/.github/issue-templates",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
     });
 
@@ -512,10 +512,23 @@ describe("createFileTree()", () => {
         "/.husky",
         "/.husky/hooks",
         "/src",
-        ...mockFs["/src"].map((stat) => stat.name),
-        ...mockFs["/src/tree"].map((stat) => stat.name),
-        ...[...mockFs["/"]].splice(3, 1).map((stat) => stat.name),
-        ...[...mockFs["/"]].splice(4).map((stat) => stat.name),
+        "/src/tree",
+        "/src/tree/tree.test.ts",
+        "/src/tree/tree.ts",
+        "/src/file-tree.ts",
+        "/src/index.ts",
+        "/src/path-fx.ts",
+        "/test",
+        "/types",
+        "/.gitignore",
+        "/babel.config.js",
+        "/CODE_OF_CONDUCT.md",
+        "/CONTRIBUTING.md",
+        "/LICENSE",
+        "/package.json",
+        "/pnpm-lock.yaml",
+        "/README.md",
+        "/tsconfig.json",
       ]);
     });
 
@@ -525,7 +538,7 @@ describe("createFileTree()", () => {
       await waitForTree(tree);
       const node = tree.root.nodes.find(
         (node) => node.data.name === "/.gitignore"
-      ) as Leaf<FileTreeData>;
+      ) as File;
       const toBranch = tree.root.nodes.find(
         (node) => node.data.name === "/.husky"
       ) as Dir;
@@ -569,6 +582,73 @@ describe("createFileTree()", () => {
       expect(initialNodes).toBe(tree.root.nodes);
       expect(tree.root.nodes.length).toBe(mockFs["/"].length);
     });
+  });
+});
+
+describe("file tree actions", () => {
+  let tree = createFileTree(() => []);
+
+  afterEach(() => {
+    tree = createFileTree(() => []);
+  });
+
+  it("should create a file and sort", () => {
+    tree.newFile(tree.root, { name: "foo" });
+    expect(tree.root.nodes[0].data.name).toBe("foo");
+
+    tree.newFile(tree.root, { name: "bar" });
+    expect(tree.root.nodes[0].data.name).toBe("bar");
+  });
+
+  it("should create a directory and sort", () => {
+    tree.newDir(tree.root, { name: "foo" });
+    expect(tree.root.nodes[0].data.name).toBe("foo");
+
+    tree.newDir(tree.root, { name: "bar" });
+    expect(tree.root.nodes[0].data.name).toBe("bar");
+  });
+
+  it("should move a file and sort", async () => {
+    tree.newDir(tree.root, { name: "bar" });
+    tree.newDir(tree.root, { name: "foo" });
+    tree.newFile(tree.root, { name: "a" });
+    tree.newFile(tree.root, { name: "b" });
+
+    const firstDir = tree.root.nodes[0] as Dir;
+    await tree.expand(firstDir);
+    await tree.move(tree.root.nodes.find((n) => n.basename === "b")!, firstDir);
+    await tree.move(tree.root.nodes.find((n) => n.basename === "a")!, firstDir);
+
+    expect(firstDir.nodes[0].data.name).toBe("a");
+  });
+
+  it("should rename and sort", async () => {
+    tree.newFile(tree.root, { name: "foo" });
+    tree.newFile(tree.root, { name: "bar" });
+
+    expect(tree.root.nodes[0].data.name).toBe("bar");
+
+    tree.rename(tree.root.nodes.find((n) => n.basename === "foo")!, "a");
+
+    expect(tree.root.nodes[0].data.name).toBe("a");
+  });
+
+  it("should remove a node", async () => {
+    tree.newFile(tree.root, { name: "foo" });
+
+    expect(tree.root.nodes.length).toBe(1);
+
+    tree.remove(tree.root.nodes.find((n) => n.basename === "foo")!);
+    expect(tree.root.nodes.length).toBe(0);
+  });
+
+  it("should produce and sort", async () => {
+    tree.produce(tree.root, (context) => {
+      context.insert(context.createDir({ name: "foo" }));
+      context.insert(context.createDir({ name: "bar" }));
+    });
+
+    expect(tree.root.nodes[0].data.name).toBe("bar");
   });
 });
 
@@ -635,10 +715,10 @@ const mockFs = {
   "/.husky": [{ name: "/.husky/hooks", type: "dir" }],
   "/.husky/hooks": [{ name: "/.husky/hooks/pre-commit", type: "file" }],
   "/src": [
+    { name: "/src/tree", type: "dir" },
     { name: "/src/index.ts", type: "file" },
     { name: "/src/file-tree.ts", type: "file" },
     { name: "/src/path-fx.ts", type: "file" },
-    { name: "/src/tree", type: "dir" },
   ],
   "/src/tree": [
     { name: "/src/tree/tree.ts", type: "file" },

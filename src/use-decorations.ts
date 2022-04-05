@@ -108,6 +108,15 @@ export function useDecorations<Decor extends string>(
         decorationsMap.set(decoration, decorationSet);
       },
 
+      clearAll() {
+        for (const decoration of storedDecorations.current) {
+          const decorationSet =
+            decorationsMap.get(decoration) ?? new ObservableSet<number>();
+          decorationSet.clear();
+          decorationsMap.set(decoration, decorationSet);
+        }
+      },
+
       clearNode(nodeId: number) {
         for (const decoration of storedDecorations.current) {
           const decorationSet =

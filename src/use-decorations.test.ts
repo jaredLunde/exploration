@@ -1,9 +1,13 @@
 import { act, renderHook } from "@testing-library/react-hooks";
-import { createFileTree } from ".";
+import { createFileTree } from "./file-tree";
 import { useDecorations } from "./use-decorations";
 
 describe("useDecorations()", () => {
-  const fileTree = createFileTree(() => []);
+  let fileTree = createFileTree(() => []);
+
+  afterEach(() => {
+    fileTree = createFileTree(() => []);
+  });
 
   it("should add a decoration", () => {
     const { result } = renderHook(() =>
@@ -46,6 +50,88 @@ describe("useDecorations()", () => {
 
     expect(result.current.getProps(1)).toEqual({ className: "" });
     expect(result.current.getProps(2)).toEqual({ className: "foo" });
+  });
+
+  it("should delete a decoration", () => {
+    const { result } = renderHook(() =>
+      useDecorations(fileTree, ["foo", "bar"])
+    );
+
+    act(() => {
+      result.current.add("foo", 1);
+      result.current.add("bar", 1);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "foo bar" });
+
+    act(() => {
+      result.current.delete("bar", 1);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "foo" });
+  });
+
+  it("should clear all decorations from a node", () => {
+    const { result } = renderHook(() =>
+      useDecorations(fileTree, ["foo", "bar"])
+    );
+
+    act(() => {
+      result.current.add("foo", 1);
+      result.current.add("bar", 1);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "foo bar" });
+
+    act(() => {
+      result.current.clearNode(1);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "" });
+  });
+
+  it("should clear nodes from a decoration", () => {
+    const { result } = renderHook(() =>
+      useDecorations(fileTree, ["foo", "bar"])
+    );
+
+    act(() => {
+      result.current.add("foo", 1);
+      result.current.add("foo", 2);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "foo" });
+    expect(result.current.getProps(2)).toEqual({ className: "foo" });
+
+    act(() => {
+      result.current.clear("foo");
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "" });
+    expect(result.current.getProps(2)).toEqual({ className: "" });
+  });
+
+  it("should clear all decorations", () => {
+    const { result } = renderHook(() =>
+      useDecorations(fileTree, ["foo", "bar"])
+    );
+
+    act(() => {
+      result.current.add("foo", 1);
+      result.current.add("bar", 1);
+      result.current.add("foo", 2);
+      result.current.add("bar", 2);
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "foo bar" });
+    expect(result.current.getProps(2)).toEqual({ className: "foo bar" });
+
+    act(() => {
+      result.current.clearAll();
+    });
+
+    expect(result.current.getProps(1)).toEqual({ className: "" });
+    expect(result.current.getProps(2)).toEqual({ className: "" });
   });
 
   it("should subscribe to getProps", () => {
@@ -110,5 +196,12 @@ describe("useDecorations()", () => {
     first = result.current.getProps(2);
     expect(first).toEqual({ className: "" });
     expect(first).toBe(result.current.getProps(2));
+    expect(result.current.getProps(3)).toEqual({ className: "baz" });
+
+    act(() => {
+      result.current.clearAll();
+    });
+
+    expect(result.current.getProps(3)).toEqual({ className: "" });
   });
 });

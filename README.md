@@ -35,7 +35,7 @@ npm i exploration
 
 - [x] Zero-recursion, expandable tree
 - [x] Virtualization
-- [ ] Create/move/rename/delete
+- [x] Create/move/rename/delete
 - [ ] Drag and drop
 - [ ] Multiselect
 - [x] Decorations
@@ -48,7 +48,7 @@ npm i exploration
 ```tsx
 import {
   createFileTree,
-  useFileTree,
+  useController,
   useMultiselect,
   useDnd,
   useDecorations,
@@ -88,7 +88,6 @@ function Virtualize({
   tree: FileTree;
   searchValue: string;
 }) {
-  const fileTree = useFileTree(fileTree);
   const dndProps = useDnd(fileTree);
   const decorations = useDecorations(fileTree, [
     "active",

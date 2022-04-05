@@ -153,7 +153,11 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
+  async move(
+    node: Node<NodeData>,
+    to: Branch<NodeData>,
+    sort?: (a: Node<NodeData>, b: Node<NodeData>) => number
+  ): Promise<void> {
     const initialParent = node.parent;
 
     if (initialParent === to) {
@@ -178,7 +182,8 @@ export class Tree<NodeData = {}> {
       }
 
       if (to.nodes) {
-        this.setNodes(to, to.nodes.concat(node));
+        const nextNodes = to.nodes.concat(node);
+        this.setNodes(to, sort ? nextNodes.sort(sort) : nextNodes);
         node.parent = to;
       }
 
@@ -236,7 +241,7 @@ export class Tree<NodeData = {}> {
     return promise;
   }
 
-  private setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
+  protected setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
     const restoreExpansionQueue: Branch<NodeData>[] = [];
 
     if (branch.expanded) {

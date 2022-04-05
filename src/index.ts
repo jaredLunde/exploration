@@ -1,6 +1,6 @@
 export {
   createFileTree,
-  comparator,
+  defaultComparator,
   isDir,
   isFile,
   FileTree,
