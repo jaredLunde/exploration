@@ -1,14 +1,14 @@
 import * as React from "react";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import { useDeferredValue } from "./use-deferred-value";
+import { useVisibleNodes } from "./use-visible-nodes";
 
 export function useFilter<Meta>(
   tree: FileTree<Meta>,
   filter: (node: FileTreeNode<Meta>, i: number) => boolean
 ) {
-  const [value, setValue] = React.useState(() => [
-    ...(tree.visibleNodes ?? []),
-  ]);
+  const visibleNodes = useVisibleNodes(tree);
+  const [value, setValue] = React.useState(() => [...visibleNodes]);
   const storedFilter = React.useRef(filter);
 
   React.useEffect(() => {

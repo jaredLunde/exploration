@@ -1,4 +1,4 @@
-export function observable<T>(initialValue: T) {
+export function observable<T>(initialValue: T): Observable<T> {
   const listeners: Set<(value: T) => void> = new Set();
   let snapshot = initialValue;
 
@@ -24,3 +24,9 @@ export function observable<T>(initialValue: T) {
     },
   };
 }
+
+export type Observable<T> = {
+  next(value: T): void;
+  getSnapshot(): T;
+  subscribe(callback: (value: T) => void): () => void;
+};

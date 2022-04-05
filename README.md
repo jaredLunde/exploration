@@ -35,9 +35,9 @@ npm i exploration
 
 - [x] Zero-recursion, expandable tree
 - [x] Virtualization
-- [x] Create/move/rename/delete
-- [x] Drag and drop
-- [x] Multiselect
+- [ ] Create/move/rename/delete
+- [ ] Drag and drop
+- [ ] Multiselect
 - [x] Decorations
 - [x] Filtering/search
 
@@ -66,30 +66,7 @@ const fileTree = createFileTree((parent, { createFile, createDir }) => {
 });
 
 function FileExplorer() {
-  const fileTree = useFileTree(fileTree);
-  const dndProps = useDnd(fileTree);
-  const decorations = useDecorations(fileTree, {
-    activeFile: "active",
-    pseudoActiveFiles: "pseudo-active",
-    dirty: "modified",
-  });
   const [searchValue, setSearchValue] = React.useState("");
-  const useFilter = useFilter(
-    fileTree,
-    (node, i) => !searchValue || node.includes(searchValue)
-  );
-  const multiselectProps = useMultiselect(fileTree, (nodes) => {
-    // Return true if the node should be selected.
-    decorations.add(
-      "pseudoactiveFiles",
-      nodes.map((node) => node.id)
-    );
-  });
-  const windowRef = React.useRef(null);
-  const virtualize = useVirtualize(fileTree, {
-    attach: [fileTree, dnd, multiselect, decorations],
-    windowRef,
-  });
 
   return (
     <div>
@@ -99,7 +76,46 @@ function FileExplorer() {
         onChange={(e) => setSearchValue(e.target.value)}
       />
 
-      <div ref={windowRef}>
+      <Virtualize tree={tree} searchValue={searchValue} />
+    </div>
+  );
+}
+
+function Virtualize({
+  tree,
+  searchValue,
+}: {
+  tree: FileTree;
+  searchValue: string;
+}) {
+  const fileTree = useFileTree(fileTree);
+  const dndProps = useDnd(fileTree);
+  const decorations = useDecorations(fileTree, [
+    "active",
+    "pseudo-active",
+    "modified",
+  ]);
+  const multiselectProps = useMultiselect(fileTree, (nodes) => {
+    // Return true if the node should be selected.
+    decorations.add(
+      "pseudoactiveFiles",
+      nodes.map((node) => node.id)
+    );
+  });
+  const windowRef = React.useRef(null);
+  const visibleNodes = useFilter(
+    fileTree,
+    (node, i) => !searchValue || node.includes(searchValue)
+  );
+  const virtualize = useVirtualize(fileTree, {
+    items: visibleNodes,
+    attach: [fileTree, dnd, multiselect, decorations],
+    windowRef,
+  });
+
+  return (
+    <div ref={windowRef}>
+      <div {...virtualize.props}>
         {virtualize.map(({ node, props }) => (
           <div {...props}>{node.name}</div>
         ))}

@@ -1,19 +1,13 @@
-import React from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { FileTree } from "./file-tree";
 
 export function useVisibleNodes<Meta>(tree: FileTree<Meta>) {
-  const store = React.useMemo(
-    () => ({
-      subscribe(callback: () => void) {
-        return tree.flatViewMap.didChange.subscribe(callback);
-      },
-      getSnapshot() {
-        return tree.visibleNodes;
-      },
-    }),
-    [tree]
+  return (
+    useSyncExternalStore(
+      tree.flatViewMap.didChange.subscribe,
+      () => tree.visibleNodes
+    ) ?? empty
   );
-
-  return useSyncExternalStore(store.subscribe, store.getSnapshot);
 }
+
+const empty = new Uint32Array(0);

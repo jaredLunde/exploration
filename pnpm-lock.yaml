@@ -33,6 +33,8 @@ specifiers:
   react: ^18.0.0
   react-dom: ^18.0.0
   react-test-renderer: latest
+  trie-memoize: ^1.2.0
+  type-fest: ^2.12.2
   typescript: latest
   use-debounce: ^7.0.1
   use-subscription: ^1.6.0
@@ -42,11 +44,9 @@ dependencies:
   '@essentials/request-timeout': 1.3.0
   '@react-hook/passive-layout-effect': 1.2.1_react@18.0.0
   '@react-hook/resize-observer': 1.2.5_react@18.0.0
-  '@types/is-relative': 1.0.0
-  '@types/use-subscription': 1.0.0
-  '@types/use-sync-external-store': 0.0.3
   clsx: 1.1.1
   is-relative: 1.0.0
+  trie-memoize: 1.2.0
   use-debounce: 7.0.1_react@18.0.0
   use-subscription: 1.6.0_react@18.0.0
   use-sync-external-store: 1.0.0_react@18.0.0
@@ -62,9 +62,12 @@ devDependencies:
   '@testing-library/react': 13.0.0_react-dom@18.0.0+react@18.0.0
   '@testing-library/react-hooks': 7.0.2_063947ad87fde2e3846f1cfecffd9644
   '@testing-library/user-event': 14.0.4
+  '@types/is-relative': 1.0.0
   '@types/jest': 27.4.1
   '@types/react': 17.0.43
   '@types/react-dom': 17.0.14
+  '@types/use-subscription': 1.0.0
+  '@types/use-sync-external-store': 0.0.3
   cz-conventional-changelog: 3.3.0
   eslint: 7.32.0
   eslint-config-lunde: 0.7.1_a1aa4a46c63093a0ce0f642d68ebaa46
@@ -76,6 +79,7 @@ devDependencies:
   react: 18.0.0
   react-dom: 18.0.0_react@18.0.0
   react-test-renderer: 18.0.0_react@18.0.0
+  type-fest: 2.12.2
   typescript: 4.6.3
 
 packages:
@@ -2567,7 +2571,7 @@ packages:
 
   /@types/is-relative/1.0.0:
     resolution: {integrity: sha512-jJUil3dUQNrVa2e1TSsu/Qf6Fsg1esxG/e+CoKFq1wbnRrSjxifhhisABFEGKdK175RFl4numHmbp/ylhfqZsg==}
-    dev: false
+    dev: true
 
   /@types/istanbul-lib-coverage/2.0.4:
     resolution: {integrity: sha512-z/QT1XN4K4KYuslS23k62yDIDLwLFkzxOuMplDtObz0+y7VqJCaO2o+SPwHCvLFZh7xazvvoor2tA/hPz9ee7g==}
@@ -2678,11 +2682,11 @@ packages:
 
   /@types/use-subscription/1.0.0:
     resolution: {integrity: sha512-0WWZ5GUDKMXUY/1zy4Ur5/zsC0s/B+JjXfHdkvx6JgDNZzZV5eW+KKhDqsTGyqX56uh99gwGwbsKbVwkcVIKQA==}
-    dev: false
+    dev: true
 
   /@types/use-sync-external-store/0.0.3:
     resolution: {integrity: sha512-EwmlvuaxPNej9+T4v5AuBPJa2x2UOJVdjCtDHgcDqitUeOtjnJKJ+apYjVcAoBEMjKW1VVFGZLUb5+qqa09XFA==}
-    dev: false
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -7591,6 +7595,10 @@ packages:
       punycode: 2.1.1
     dev: true
 
+  /trie-memoize/1.2.0:
+    resolution: {integrity: sha512-hEDLVEP1FCgaRtt0oZDJdz2lK9uK7WlB7ASswt9U9cqruSNueVigtRGxI97hevKlViqhAcRgNgzuY/m8FCCMcg==}
+    dev: false
+
   /trim-newlines/3.0.1:
     resolution: {integrity: sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==}
     engines: {node: '>=8'}
@@ -7701,6 +7709,11 @@ packages:
   /type-fest/0.8.1:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
+    dev: true
+
+  /type-fest/2.12.2:
+    resolution: {integrity: sha512-qt6ylCGpLjZ7AaODxbpyBZSs9fCI9SkL3Z9q2oxMBQhs/uyY+VD8jHA8ULCGmWQJlBgqvO3EJeAngOHD8zQCrQ==}
+    engines: {node: '>=12.20'}
     dev: true
 
   /typedarray-to-buffer/3.1.5:

@@ -11,44 +11,128 @@ import { useVisibleNodes } from "./use-visible-nodes";
 
 export function useVirtualize<Meta>(
   tree: FileTree<Meta>,
-  { overscanBy = 10, itemHeight, itemGap = 0, windowRef }: UseVirtualizeOptions
+  {
+    windowRef,
+    nodeHeight,
+    nodeGap = 0,
+    overscanBy = 10,
+  }: UseVirtualizeOptions<Meta>
 ) {
+  const storedTree = React.useRef(tree);
   const visibleNodes = useVisibleNodes(tree);
   const scrollPosition = useScrollPosition(windowRef);
   const height = useHeight(windowRef);
+  const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
+
+  React.useEffect(() => {
+    storedTree.current = tree;
+  });
+
+  function scrollToNode(nodeId: number, config: ScrollToNodeConfig = {}) {
+    const index = visibleNodes.indexOf(nodeId) ?? -1;
+
+    if (index > -1) {
+      // eslint-disable-next-line prefer-const
+      let { behavior = "auto", align = "start" } = config;
+      const lastNodeOffset = Math.max(
+        0,
+        visibleNodes.length * nodeHeight - height
+      );
+      const nodeOffset = index * (nodeHeight + nodeGap);
+      const minOffset = Math.max(
+        0,
+        nodeOffset - (height + (nodeHeight + nodeGap))
+      );
+      const maxOffset = Math.min(nodeOffset, lastNodeOffset);
+      const windowEl =
+        windowRef && "current" in windowRef ? windowRef.current : windowRef;
+      // use "start" alignment by default
+      let top: number = maxOffset;
+
+      if (align === "smart") {
+        if (
+          scrollPosition.scrollTop >= minOffset - height &&
+          scrollPosition.scrollTop <= maxOffset + height
+        ) {
+          align = "auto";
+        } else {
+          align = "center";
+        }
+      }
+
+      if (align === "end") {
+        top = minOffset;
+      } else if (align === "center") {
+        top = Math.round(minOffset + (maxOffset - minOffset) / 2);
+
+        if (top < Math.ceil(height / 2)) {
+          top = 0; // near the beginning
+        } else if (top > lastNodeOffset + Math.floor(height / 2)) {
+          top = lastNodeOffset; // near the end
+        }
+      } else if (align === "auto") {
+        top = maxOffset;
+
+        if (
+          scrollPosition.scrollTop >= minOffset &&
+          scrollPosition.scrollTop <= maxOffset
+        ) {
+          top = scrollPosition.scrollTop;
+        } else if (scrollPosition.scrollTop < minOffset) {
+          top = minOffset;
+        }
+      }
+
+      if (top !== scrollPosition.scrollTop) {
+        windowEl?.scrollTo({ top, behavior });
+      }
+    }
+  }
 
   return {
     scrollTop: scrollPosition.scrollTop,
     isScrolling: scrollPosition.isScrolling,
-    map(render: (node: FileTreeNode<Meta>) => React.ReactElement) {
-      const totalItemHeight = itemHeight + itemGap;
+    scrollToNode,
+    props: {
+      style: {
+        position: "relative",
+        width: "100%",
+        height: Math.ceil(scrollHeight),
+        willChange: scrollPosition.isScrolling ? "contents" : void 0,
+        pointerEvents: scrollPosition.isScrolling ? "none" : void 0,
+      },
+    },
+    map(render: (config: VirtualizeRenderProps<Meta>) => React.ReactElement) {
+      const totalNodeHeight = nodeHeight + nodeGap;
       overscanBy = height * overscanBy;
 
       let index = Math.floor(
-        Math.max(0, scrollPosition.scrollTop - overscanBy / 2) / totalItemHeight
+        Math.max(0, scrollPosition.scrollTop - overscanBy / 2) / totalNodeHeight
       );
-
       const stopIndex = Math.min(
-        visibleNodes?.length ?? 0,
-        Math.ceil((scrollPosition.scrollTop + overscanBy) / totalItemHeight)
+        visibleNodes.length,
+        Math.ceil((scrollPosition.scrollTop + overscanBy) / totalNodeHeight)
       );
       const children: React.ReactElement[] = [];
 
-      if (!visibleNodes) {
-        return children;
-      }
-
       for (; index < stopIndex; index++) {
-        const node = tree.getById(visibleNodes[index]);
+        const nodeId = visibleNodes[index];
+        const node = tree.getById(nodeId);
         if (!node) continue;
-        const child = render(node);
+
         children.push(
-          React.cloneElement(child, {
-            style: {
-              position: "absolute",
-              width: "100%",
-              top: itemGap * index + index * itemHeight,
-              left: 0,
+          render({
+            node,
+            props: {
+              style: {
+                position: "absolute",
+                width: "100%",
+                top: nodeGap * index + index * nodeHeight,
+                left: 0,
+              },
+            },
+            scrollToNode(config?: ScrollToNodeConfig) {
+              scrollToNode(nodeId, config);
             },
           })
         );
@@ -59,14 +143,20 @@ export function useVirtualize<Meta>(
   };
 }
 
-export function useHeight(windowRef: UseVirtualizeOptions["windowRef"]) {
+export function useHeight(windowRef: WindowRef) {
   const [, startTransition] = useTransition();
   const getWindowHeight = () => {
     const windowEl =
       windowRef && "current" in windowRef ? windowRef.current : windowRef;
 
     if (windowEl instanceof HTMLElement) {
-      return windowEl.offsetHeight;
+      const computedStyle = getComputedStyle(windowEl);
+
+      return (
+        windowEl.clientHeight -
+        parseFloat(computedStyle.paddingTop) -
+        parseFloat(computedStyle.paddingBottom)
+      );
     }
 
     return 0;
@@ -82,9 +172,7 @@ export function useHeight(windowRef: UseVirtualizeOptions["windowRef"]) {
   return useGlobalWindowHeight(windowRef) ?? height;
 }
 
-export function useGlobalWindowHeight(
-  windowRef: UseVirtualizeOptions["windowRef"]
-) {
+export function useGlobalWindowHeight(windowRef: WindowRef) {
   return useSubscription(
     React.useMemo(
       () => ({
@@ -95,7 +183,6 @@ export function useGlobalWindowHeight(
 
           return null;
         },
-
         subscribe(callback) {
           if (typeof window !== "undefined" && windowRef instanceof Window) {
             window.addEventListener("resize", callback);
@@ -116,7 +203,7 @@ export function useGlobalWindowHeight(
 }
 
 export function useScrollPosition(
-  windowRef: UseVirtualizeOptions["windowRef"],
+  windowRef: WindowRef,
   { offset = 0 }: UseScrollPosition = {}
 ): { scrollTop: number; isScrolling: boolean } {
   const [isScrolling, setIsScrolling] = React.useState(false);
@@ -127,7 +214,7 @@ export function useScrollPosition(
           const current =
             windowRef && "current" in windowRef ? windowRef.current : windowRef;
 
-          if (typeof window !== "undefined" && windowRef instanceof Window) {
+          if (typeof window !== "undefined") {
             return !current
               ? 0
               : "scrollTop" in current
@@ -159,6 +246,7 @@ export function useScrollPosition(
 
   React.useEffect(() => {
     let didUnmount = false;
+
     const to = requestTimeout(() => {
       if (didUnmount) return;
       // This is here to prevent premature bail outs while maintaining high resolution
@@ -167,8 +255,8 @@ export function useScrollPosition(
     }, 1000 / 12);
 
     return () => {
-      to && clearRequestTimeout(to);
       didUnmount = true;
+      to && clearRequestTimeout(to);
     };
   }, [scrollTop]);
 
@@ -179,15 +267,29 @@ export interface UseScrollPosition {
   offset?: number;
 }
 
-export interface UseVirtualizeOptions {
+export interface UseVirtualizeOptions<Meta> {
   width: number;
   height: number;
-  itemHeight: number;
-  itemGap?: number;
+  nodes?: FileTreeNode<Meta>[];
+  nodeHeight: number;
+  nodeGap?: number;
   overscanBy?: number;
-  windowRef:
-    | Window
-    | React.MutableRefObject<HTMLElement | null>
-    | HTMLElement
-    | null;
+  windowRef: WindowRef;
+}
+
+export type WindowRef =
+  | Window
+  | React.MutableRefObject<HTMLElement | null>
+  | HTMLElement
+  | null;
+
+export type ScrollToNodeConfig = {
+  behavior?: "smooth" | "auto";
+  align?: "auto" | "smart" | "center" | "start" | "end";
+};
+
+export interface VirtualizeRenderProps<Meta> {
+  node: FileTreeNode<Meta>;
+  props: Record<string, unknown>;
+  scrollToNode(config?: ScrollToNodeConfig): void;
 }
