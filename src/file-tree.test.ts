@@ -505,6 +505,7 @@ describe("createFileTree()", () => {
         "/.husky/hooks",
         "/src",
       ]);
+
       expect(
         [...tree.visibleNodes].map((id) => tree.getById(id).data.name)
       ).toStrictEqual([

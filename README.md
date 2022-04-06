@@ -37,8 +37,8 @@ npm i exploration
 - [x] Virtualization
 - [x] Create/move/rename/delete
 - [ ] Drag and drop
-- [ ] Multiselect
-- [x] Decorations
+- [x] Multiselect
+- [x] Traits
 - [x] Filtering/search
 
 --
@@ -48,10 +48,9 @@ npm i exploration
 ```tsx
 import {
   createFileTree,
-  useController,
   useMultiselect,
   useDnd,
-  useDecorations,
+  useTraits,
   useFilter,
   useVirtualize,
 } from "exploration";
@@ -89,17 +88,16 @@ function Virtualize({
   searchValue: string;
 }) {
   const dndProps = useDnd(fileTree);
-  const decorations = useDecorations(fileTree, [
+  const decorations = useTraits(fileTree, [
     "active",
     "pseudo-active",
+    "selected",
     "modified",
+    "untracked",
   ]);
-  const multiselectProps = useMultiselect(fileTree, (nodes) => {
+  const multiselect = useMultiselect(fileTree, (nodes) => {
     // Return true if the node should be selected.
-    decorations.add(
-      "pseudoactiveFiles",
-      nodes.map((node) => node.id)
-    );
+    decorations.add("pseudo-active", ...nodes.map((node) => node.id));
   });
   const windowRef = React.useRef(null);
   const visibleNodes = useFilter(

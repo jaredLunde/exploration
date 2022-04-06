@@ -3,7 +3,7 @@ import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
 import { ObservableMap, ObservableSet } from "./observable-data";
 
-export function useDecorations<Decor extends string>(
+export function useTraits<Decor extends string>(
   fileTree: FileTree,
   decorations: Decor[]
 ) {

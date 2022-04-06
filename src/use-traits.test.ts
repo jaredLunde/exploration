@@ -1,8 +1,8 @@
 import { act, renderHook } from "@testing-library/react-hooks";
 import { createFileTree } from "./file-tree";
-import { useDecorations } from "./use-decorations";
+import { useTraits } from "./use-traits";
 
-describe("useDecorations()", () => {
+describe("useTraits()", () => {
   let fileTree = createFileTree(() => []);
 
   afterEach(() => {
@@ -10,9 +10,7 @@ describe("useDecorations()", () => {
   });
 
   it("should add a decoration", () => {
-    const { result } = renderHook(() =>
-      useDecorations<"foo">(fileTree, ["foo"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -22,9 +20,7 @@ describe("useDecorations()", () => {
   });
 
   it("should add a decoration to multiple IDs", () => {
-    const { result } = renderHook(() =>
-      useDecorations<"foo">(fileTree, ["foo"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -36,9 +32,7 @@ describe("useDecorations()", () => {
   });
 
   it("should set a decoration", () => {
-    const { result } = renderHook(() =>
-      useDecorations<"foo">(fileTree, ["foo"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -53,9 +47,7 @@ describe("useDecorations()", () => {
   });
 
   it("should delete a decoration", () => {
-    const { result } = renderHook(() =>
-      useDecorations(fileTree, ["foo", "bar"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo", "bar"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -72,9 +64,7 @@ describe("useDecorations()", () => {
   });
 
   it("should clear all decorations from a node", () => {
-    const { result } = renderHook(() =>
-      useDecorations(fileTree, ["foo", "bar"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo", "bar"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -91,9 +81,7 @@ describe("useDecorations()", () => {
   });
 
   it("should clear nodes from a decoration", () => {
-    const { result } = renderHook(() =>
-      useDecorations(fileTree, ["foo", "bar"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo", "bar"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -112,9 +100,7 @@ describe("useDecorations()", () => {
   });
 
   it("should clear all decorations", () => {
-    const { result } = renderHook(() =>
-      useDecorations(fileTree, ["foo", "bar"])
-    );
+    const { result } = renderHook(() => useTraits(fileTree, ["foo", "bar"]));
 
     act(() => {
       result.current.add("foo", 1);
@@ -136,7 +122,7 @@ describe("useDecorations()", () => {
 
   it("should subscribe to getProps", () => {
     const { result } = renderHook(() =>
-      useDecorations(fileTree, ["foo", "bar", "baz"])
+      useTraits(fileTree, ["foo", "bar", "baz"])
     );
 
     const spy = jest.fn();
