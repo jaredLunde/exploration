@@ -10,26 +10,25 @@ import { useTransition } from "./use-transition";
 import { useVisibleNodes } from "./use-visible-nodes";
 
 export function useVirtualize<Meta>(
-  tree: FileTree<Meta>,
+  fileTree: FileTree<Meta>,
   {
     windowRef,
+    nodes,
     nodeHeight,
     nodeGap = 0,
     overscanBy = 10,
   }: UseVirtualizeOptions<Meta>
 ) {
-  const storedTree = React.useRef(tree);
-  const visibleNodes = useVisibleNodes(tree);
+  const _visibleNodes = useVisibleNodes(fileTree);
+  const visibleNodes = nodes ?? _visibleNodes;
   const scrollPosition = useScrollPosition(windowRef);
   const height = useHeight(windowRef);
   const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
 
-  React.useEffect(() => {
-    storedTree.current = tree;
-  });
-
   function scrollToNode(nodeId: number, config: ScrollToNodeConfig = {}) {
-    const index = visibleNodes.indexOf(nodeId) ?? -1;
+    const index = Array.isArray(visibleNodes)
+      ? visibleNodes.findIndex((node) => node.id === nodeId)
+      : visibleNodes.indexOf(nodeId) ?? -1;
 
     if (index > -1) {
       // eslint-disable-next-line prefer-const
@@ -97,8 +96,9 @@ export function useVirtualize<Meta>(
       style: {
         position: "relative",
         width: "100%",
-        height: Math.ceil(scrollHeight),
-        willChange: scrollPosition.isScrolling ? "contents" : void 0,
+        height: Math.max(Math.ceil(scrollHeight), height),
+        contain: "strict",
+        userSelect: "none",
         pointerEvents: scrollPosition.isScrolling ? "none" : void 0,
       },
     },
@@ -116,23 +116,26 @@ export function useVirtualize<Meta>(
       const children: React.ReactElement[] = [];
 
       for (; index < stopIndex; index++) {
-        const nodeId = visibleNodes[index];
-        const node = tree.getById(nodeId);
+        const visibleNode = visibleNodes[index];
+        const nodeId =
+          typeof visibleNode === "number" ? visibleNode : visibleNode.id;
+        const node = fileTree.getById(nodeId);
         if (!node) continue;
 
         children.push(
           render({
             node,
             props: {
+              key: node.id,
               style: {
                 position: "absolute",
                 width: "100%",
+                height: nodeHeight,
+                contain: "strict",
+                userSelect: "none",
                 top: nodeGap * index + index * nodeHeight,
                 left: 0,
               },
-            },
-            scrollToNode(config?: ScrollToNodeConfig) {
-              scrollToNode(nodeId, config);
             },
           })
         );
@@ -149,7 +152,7 @@ export function useHeight(windowRef: WindowRef) {
     const windowEl =
       windowRef && "current" in windowRef ? windowRef.current : windowRef;
 
-    if (windowEl instanceof HTMLElement) {
+    if (typeof window !== "undefined" && windowEl instanceof HTMLElement) {
       const computedStyle = getComputedStyle(windowEl);
 
       return (
@@ -163,11 +166,16 @@ export function useHeight(windowRef: WindowRef) {
   };
   const [height, setHeight] = React.useState(getWindowHeight);
 
-  useResizeObserver(windowRef instanceof Window ? null : windowRef, () => {
-    startTransition(() => {
-      setHeight(getWindowHeight());
-    });
-  });
+  useResizeObserver(
+    typeof window === "undefined" || windowRef instanceof Window
+      ? null
+      : windowRef,
+    () => {
+      startTransition(() => {
+        setHeight(getWindowHeight());
+      });
+    }
+  );
 
   return useGlobalWindowHeight(windowRef) ?? height;
 }
@@ -206,6 +214,7 @@ export function useScrollPosition(
   windowRef: WindowRef,
   { offset = 0 }: UseScrollPosition = {}
 ): { scrollTop: number; isScrolling: boolean } {
+  const [, startTransition] = useTransition();
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTop = useSubscription(
     React.useMemo(
@@ -251,8 +260,14 @@ export function useScrollPosition(
       if (didUnmount) return;
       // This is here to prevent premature bail outs while maintaining high resolution
       // unsets. Without it there will always be a lot of unnecessary DOM writes to style.
-      setIsScrolling(false);
-    }, 1000 / 12);
+      startTransition(() => {
+        setIsScrolling(false);
+      });
+    }, 1000 / 30);
+
+    startTransition(() => {
+      setIsScrolling(true);
+    });
 
     return () => {
       didUnmount = true;
@@ -268,8 +283,6 @@ export interface UseScrollPosition {
 }
 
 export interface UseVirtualizeOptions<Meta> {
-  width: number;
-  height: number;
   nodes?: FileTreeNode<Meta>[];
   nodeHeight: number;
   nodeGap?: number;
@@ -291,5 +304,4 @@ export type ScrollToNodeConfig = {
 export interface VirtualizeRenderProps<Meta> {
   node: FileTreeNode<Meta>;
   props: Record<string, unknown>;
-  scrollToNode(config?: ScrollToNodeConfig): void;
 }
