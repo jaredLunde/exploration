@@ -4,104 +4,99 @@ import type { FileTree } from "./file-tree";
 import { ObservableSet } from "./observable-data";
 import { useVisibleNodes } from "./use-visible-nodes";
 
-export function useSelections<Meta>(fileTree: FileTree<Meta>) {
-  const visibleNodes = useVisibleNodes<Meta>(fileTree);
-  const [selectionsSet, setSelectionsSet] = React.useState(() =>
-    getSelectionsSet(fileTree, visibleNodes)
+export function useSelections<Meta>(
+  fileTree: FileTree<Meta>,
+  nodes?: Uint32Array
+) {
+  const visibleNodes_ = useVisibleNodes(fileTree);
+  const visibleNodes = nodes ?? visibleNodes_;
+  const selectionsSet = React.useMemo(
+    () => getSelectionsSet(fileTree, visibleNodes),
+    [fileTree, visibleNodes]
   );
 
-  React.useEffect(() => {
-    setSelectionsSet(getSelectionsSet(fileTree, visibleNodes));
-  }, [fileTree, visibleNodes]);
+  return {
+    didChange: selectionsSet.didChange,
 
-  const createProps = React.useMemo(
-    () =>
-      trieMemoize(
-        [WeakMap, Map],
-        (
-          selectionsSet: ObservableSetWithTail<number>,
-          nodeId: number
-        ): SelectionsProps => {
-          return {
-            onClick(event) {
-              if (!visibleNodes) {
-                return;
-              }
+    getProps(nodeId: number) {
+      return createProps(selectionsSet, visibleNodes, nodeId);
+    },
 
-              if (event.shiftKey) {
-                const tail = selectionsSet.tail;
+    select(...nodeIds: number[]) {
+      for (const nodeId of nodeIds) {
+        selectionsSet.add(nodeId);
+      }
+    },
 
-                if (tail === nodeId) {
-                  return;
-                }
+    deselect(...nodeIds: number[]) {
+      for (const nodeId of nodeIds) {
+        selectionsSet.delete(nodeId);
+      }
+    },
 
-                let tailIndex = -1;
+    clear() {
+      selectionsSet.clear();
+    },
+  };
+}
 
-                if (tail) {
-                  tailIndex = visibleNodes.indexOf(tail);
-                }
-
-                const nodeIndex = visibleNodes.indexOf(nodeId);
-                const start = Math.min(tailIndex, nodeIndex);
-                const end = Math.max(tailIndex, nodeIndex);
-
-                if (start > -1 && end > -1) {
-                  for (let i = start + 1; i <= end; i++) {
-                    const node = visibleNodes[i];
-
-                    if (selectionsSet.has(node)) {
-                      selectionsSet.delete(node);
-                    } else {
-                      selectionsSet.add(node);
-                    }
-                  }
-                }
-
-                selectionsSet.add(nodeId);
-              } else if (event.metaKey) {
-                if (selectionsSet.has(nodeId)) {
-                  selectionsSet.delete(nodeId);
-                } else {
-                  selectionsSet.add(nodeId);
-                }
-              } else {
-                selectionsSet.clear();
-                selectionsSet.add(nodeId);
-              }
-            },
-          };
+const createProps = trieMemoize(
+  [WeakMap, Map, Map],
+  (
+    selectionsSet: ObservableSetWithTail<number>,
+    visibleNodes: Uint32Array,
+    nodeId: number
+  ): SelectionsProps => {
+    return {
+      onClick(event) {
+        if (!visibleNodes) {
+          return;
         }
-      ),
-    [visibleNodes]
-  );
 
-  return React.useMemo(
-    () => ({
-      didChange: selectionsSet.didChange,
+        if (event.shiftKey) {
+          const tail = selectionsSet.tail;
 
-      getProps(nodeId: number) {
-        return createProps(selectionsSet, nodeId);
-      },
+          if (tail === nodeId) {
+            return;
+          }
 
-      select(...nodeIds: number[]) {
-        for (const nodeId of nodeIds) {
+          let tailIndex = -1;
+
+          if (tail) {
+            tailIndex = visibleNodes.indexOf(tail);
+          }
+
+          const nodeIndex = visibleNodes.indexOf(nodeId);
+          const start = Math.min(tailIndex, nodeIndex);
+          const end = Math.max(tailIndex, nodeIndex);
+
+          if (start > -1 && end > -1) {
+            for (let i = start + 1; i <= end; i++) {
+              const node = visibleNodes[i];
+
+              if (selectionsSet.has(node)) {
+                selectionsSet.delete(node);
+              } else {
+                selectionsSet.add(node);
+              }
+            }
+          }
+
+          selectionsSet.add(nodeId);
+        } else if (event.metaKey) {
+          if (selectionsSet.has(nodeId)) {
+            selectionsSet.delete(nodeId);
+          } else {
+            selectionsSet.add(nodeId);
+          }
+        } else {
+          selectionsSet.clear();
           selectionsSet.add(nodeId);
         }
       },
-
-      deselect(...nodeIds: number[]) {
-        for (const nodeId of nodeIds) {
-          selectionsSet.delete(nodeId);
-        }
-      },
-
-      clear() {
-        selectionsSet.clear();
-      },
-    }),
-    [selectionsSet, createProps]
-  );
-}
+    };
+  }
+);
 
 const getSelectionsSet = trieMemoize(
   [WeakMap, WeakMap],

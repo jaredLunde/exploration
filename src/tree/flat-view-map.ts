@@ -7,9 +7,7 @@ export class FlatViewMap extends Map<K, V> {
     const prev = super.get(key);
 
     if (prev !== value) {
-      const size = this.size;
       super.set(key, value);
-
       this.didChange.next(key);
     }
 

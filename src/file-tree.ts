@@ -1,4 +1,4 @@
-import { pathFx } from ".";
+import * as pathFx from "./path-fx";
 import { Branch } from "./tree/branch";
 import { Leaf } from "./tree/leaf";
 import type { GetNodes } from "./tree/tree";

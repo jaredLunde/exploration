@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createFileTree } from ".";
-import { defaultComparator, isFile } from "./file-tree";
+import { createFileTree, defaultComparator, isFile } from "./file-tree";
 import type { Dir, File } from "./file-tree";
 import type { Branch } from "./tree/branch";
 import type { Tree } from "./tree/tree";

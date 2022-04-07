@@ -37,6 +37,7 @@ npm i exploration
 - [x] Virtualization
 - [x] Create/move/rename/delete
 - [ ] Drag and drop
+- [ ] Hotkeys
 - [x] Multiselect
 - [x] Traits
 - [x] Filtering/search
@@ -106,7 +107,6 @@ function Virtualize({
   );
   const virtualize = useVirtualize(fileTree, {
     items: visibleNodes,
-    attach: [fileTree, dnd, multiselect, decorations],
     windowRef,
   });
 

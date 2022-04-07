@@ -19,7 +19,7 @@ export function useVirtualize<Meta>(
     nodeHeight,
     nodeGap = 0,
     overscanBy = 10,
-  }: UseVirtualizeOptions<Meta>
+  }: UseVirtualizeOptions
 ) {
   const _visibleNodes = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? _visibleNodes;
@@ -28,9 +28,7 @@ export function useVirtualize<Meta>(
   const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
 
   function scrollToNode(nodeId: number, config: ScrollToNodeConfig = {}) {
-    const index = Array.isArray(visibleNodes)
-      ? visibleNodes.findIndex((node) => node.id === nodeId)
-      : visibleNodes.indexOf(nodeId) ?? -1;
+    const index = visibleNodes.indexOf(nodeId) ?? -1;
 
     if (index > -1) {
       // eslint-disable-next-line prefer-const
@@ -118,9 +116,7 @@ export function useVirtualize<Meta>(
       const children: React.ReactElement[] = [];
 
       for (; index < stopIndex; index++) {
-        const visibleNode = visibleNodes[index];
-        const nodeId =
-          typeof visibleNode === "number" ? visibleNode : visibleNode.id;
+        const nodeId = visibleNodes[index];
         const node = fileTree.getById(nodeId);
         if (!node) continue;
 
@@ -295,8 +291,8 @@ export interface UseScrollPosition {
   offset?: number;
 }
 
-export interface UseVirtualizeOptions<Meta> {
-  nodes?: FileTreeNode<Meta>[];
+export interface UseVirtualizeOptions {
+  nodes?: Uint32Array;
   nodeHeight: number;
   nodeGap?: number;
   overscanBy?: number;

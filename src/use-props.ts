@@ -11,16 +11,18 @@ export function useProps(
     getProps: (nodeId: number) => React.HTMLAttributes<HTMLElement>;
   }[]
 ) {
-  const mergeProps = React.useMemo(
-    () =>
-      trieMemoize(
-        subscriptions.map(() => WeakMap),
-        (...props: React.HTMLAttributes<HTMLElement>[]) => {
-          return mergePropsBase(...props);
-        }
-      ),
-    [subscriptions.length]
-  );
+  const numSubscriptions = subscriptions.length;
+  const mergeProps = React.useMemo(() => {
+    const caches: WeakMapConstructor[] = [];
+    for (let i = 0; i < numSubscriptions; i++) caches.push(WeakMap);
+
+    return trieMemoize(
+      caches,
+      (...props: React.HTMLAttributes<HTMLElement>[]) => {
+        return mergePropsBase(...props);
+      }
+    );
+  }, [numSubscriptions]);
 
   return useSyncExternalStore(
     (callback) => {

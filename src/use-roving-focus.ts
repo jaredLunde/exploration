@@ -1,39 +1,25 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
+import type { Observable } from "./tree/observable";
 import { observable } from "./tree/observable";
 
 export function useRovingFocus<Meta>(fileTree: FileTree<Meta>) {
-  const [focusedNodeId] = React.useState(() => getFocusedNodeId(fileTree));
-  const createProps = React.useMemo(
-    () =>
-      trieMemoize(
-        [Map, Map],
-        (nodeId: number, snapshot: number): RovingFocusProps => {
-          return {
-            tabIndex: snapshot === nodeId ? 0 : -1,
-
-            onFocus(e: React.FocusEvent<HTMLElement>) {
-              focusedNodeId.next(nodeId);
-            },
-
-            onBlur(e: React.FocusEvent<HTMLElement>) {
-              const current = snapshot;
-
-              if (current === nodeId) {
-                focusedNodeId.next(-1);
-              }
-            },
-          };
-        }
-      ),
-    [focusedNodeId]
+  const focusedNodeId = React.useMemo(
+    () => getFocusedNodeId(fileTree),
+    [fileTree]
   );
 
   return {
     didChange: focusedNodeId,
-    getProps: (nodeId: number) =>
-      createProps(nodeId, focusedNodeId.getSnapshot()),
+
+    getProps: (nodeId: number) => {
+      return createProps(
+        focusedNodeId,
+        nodeId,
+        nodeId === focusedNodeId.getSnapshot()
+      );
+    },
 
     focus(nodeId: number) {
       focusedNodeId.next(nodeId);
@@ -48,6 +34,29 @@ export function useRovingFocus<Meta>(fileTree: FileTree<Meta>) {
     },
   };
 }
+
+const createProps = trieMemoize(
+  [WeakMap, Map, Map],
+  (
+    focusedNodeId: Observable<number>,
+    nodeId: number,
+    focused: boolean
+  ): RovingFocusProps => {
+    return {
+      tabIndex: focused ? 0 : -1,
+
+      onFocus(e: React.FocusEvent<HTMLElement>) {
+        focusedNodeId.next(nodeId);
+      },
+
+      onBlur(e: React.FocusEvent<HTMLElement>) {
+        if (focused) {
+          focusedNodeId.next(-1);
+        }
+      },
+    };
+  }
+);
 
 const getFocusedNodeId = trieMemoize(
   [WeakMap],

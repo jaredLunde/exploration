@@ -3,58 +3,49 @@ import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
 import { ObservableMap, ObservableSet } from "./observable-data";
 
-export function useTraits<Decor extends string>(
+export function useTraits<Trait extends string>(
   fileTree: FileTree,
-  decorations: Decor[]
+  traits: Trait[]
 ) {
-  const storedDecorations = React.useRef(decorations);
+  const storedTraits = React.useRef(traits);
+  const traitsMap = React.useMemo(() => getTraitsMap(fileTree), [fileTree]);
 
   React.useEffect(() => {
-    storedDecorations.current = decorations;
+    storedTraits.current = traits;
   });
 
-  const [decorationsMap, setDecorationsMap] = React.useState(() =>
-    getDecorationsMap(fileTree)
-  );
-
-  React.useEffect(() => {
-    setDecorationsMap(getDecorationsMap(fileTree));
-  }, [fileTree]);
-
   return {
-    didChange: decorationsMap.didChange,
+    didChange: traitsMap.didChange,
 
     getProps(nodeId: number) {
       let className = "";
 
-      for (const [decoration, set] of decorationsMap) {
+      for (const [trait, set] of traitsMap) {
         if (set.has(nodeId)) {
-          className += decoration + " ";
+          className += trait + " ";
         }
       }
 
       return createProps(className);
     },
 
-    add(decoration: Extract<Decor, string>, ...nodeIds: number[]) {
-      const decorationSet =
-        decorationsMap.get(decoration) ?? new ObservableSet<number>();
+    add(trait: Extract<Trait, string>, ...nodeIds: number[]) {
+      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
 
       for (let i = 0; i < nodeIds.length; i++) {
         const nodeId = nodeIds[i];
-        decorationSet.add(nodeId);
+        traitSet.add(nodeId);
       }
 
-      decorationsMap.set(decoration, decorationSet);
+      traitsMap.set(trait, traitSet);
     },
 
-    set(decoration: Extract<Decor, string>, nodeIds: number[]) {
-      const current =
-        decorationsMap.get(decoration) ?? new ObservableSet<number>();
+    set(trait: Extract<Trait, string>, nodeIds: number[]) {
+      const current = traitsMap.get(trait) ?? new ObservableSet<number>();
 
       if (current) {
         for (const nodeId of current) {
-          this.delete(decoration, nodeId);
+          this.delete(trait, nodeId);
         }
 
         current.clear();
@@ -64,42 +55,38 @@ export function useTraits<Decor extends string>(
         current.add(nodeIds[i]);
       }
 
-      decorationsMap.set(decoration, current);
+      traitsMap.set(trait, current);
     },
 
-    delete(decoration: Extract<Decor, string>, nodeId: number) {
-      const decorationSet =
-        decorationsMap.get(decoration) ?? new ObservableSet<number>();
+    delete(trait: Extract<Trait, string>, nodeId: number) {
+      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
 
-      if (decorationSet) {
-        decorationSet.delete(nodeId);
+      if (traitSet) {
+        traitSet.delete(nodeId);
       }
 
-      decorationsMap.set(decoration, decorationSet);
+      traitsMap.set(trait, traitSet);
     },
 
-    clear(decoration: Extract<Decor, string>) {
-      const decorationSet =
-        decorationsMap.get(decoration) ?? new ObservableSet<number>();
-      decorationSet.clear();
-      decorationsMap.set(decoration, decorationSet);
+    clear(trait: Extract<Trait, string>) {
+      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+      traitSet.clear();
+      traitsMap.set(trait, traitSet);
     },
 
     clearAll() {
-      for (const decoration of storedDecorations.current) {
-        const decorationSet =
-          decorationsMap.get(decoration) ?? new ObservableSet<number>();
-        decorationSet.clear();
-        decorationsMap.set(decoration, decorationSet);
+      for (const trait of storedTraits.current) {
+        const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+        traitSet.clear();
+        traitsMap.set(trait, traitSet);
       }
     },
 
     clearNode(nodeId: number) {
-      for (const decoration of storedDecorations.current) {
-        const decorationSet =
-          decorationsMap.get(decoration) ?? new ObservableSet<number>();
-        decorationSet.delete(nodeId);
-        decorationsMap.set(decoration, decorationSet);
+      for (const trait of storedTraits.current) {
+        const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+        traitSet.delete(nodeId);
+        traitsMap.set(trait, traitSet);
       }
     },
   };
@@ -109,18 +96,18 @@ const createProps = trieMemoize([Map], (className: string) => {
   return { className: className.slice(0, -1) };
 });
 
-const fileTreeDecorationsMap = new WeakMap<
+const fileTreeTraitsMap = new WeakMap<
   FileTree,
   ObservableMap<string, ObservableSet<number>>
 >();
 
-function getDecorationsMap(fileTree: FileTree) {
-  let decorationsMap = fileTreeDecorationsMap.get(fileTree);
+function getTraitsMap(fileTree: FileTree) {
+  let traitsMap = fileTreeTraitsMap.get(fileTree);
 
-  if (!decorationsMap) {
-    decorationsMap = new ObservableMap<string, ObservableSet<number>>();
-    fileTreeDecorationsMap.set(fileTree, decorationsMap);
+  if (!traitsMap) {
+    traitsMap = new ObservableMap<string, ObservableSet<number>>();
+    fileTreeTraitsMap.set(fileTree, traitsMap);
   }
 
-  return decorationsMap;
+  return traitsMap;
 }

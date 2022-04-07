@@ -11,10 +11,6 @@
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
     "types": ["react/next", "react-dom/next"],
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/test/utils": ["src/test/utils.ts"]
-    }
+    "strict": true
   }
 }

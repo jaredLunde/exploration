@@ -16,9 +16,11 @@ describe("useFilter()", () => {
       useFilter(fileTree, (node) => !!node.basename.match(/ith/))
     );
 
-    expect(result.current).toEqual([
-      fileTree.root.nodes.find((node) => node.basename.match(/github/)).id,
-    ]);
+    expect(result.current).toEqual(
+      new Uint32Array([
+        fileTree.root.nodes.find((node) => node.basename.match(/github/)).id,
+      ])
+    );
   });
 
   it("should not filter if the filter is null", async () => {
