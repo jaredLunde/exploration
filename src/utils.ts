@@ -43,20 +43,14 @@ export function mergeProps<T extends Props[]>(
         typeof b === "string"
       ) {
         result[key] = clsx(a, b);
+      } else {
+        result[key] = b;
       }
     }
   }
 
   return result as UnionToIntersection<TupleTypes<T>>;
 }
-
-// const nodeProps = mergeProps((node) => [
-//   fileTree.getProps(node.id),
-//   dnd.getProps(node.id),
-//   multiselect.getProps(node.id),
-//   decorations.getProps(node.id),
-//   virutalize.getProps(node.id),
-// ]);
 
 /**
  * Calls all functions in the order they were chained with the same arguments.

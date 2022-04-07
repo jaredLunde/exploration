@@ -48,7 +48,7 @@ npm i exploration
 ```tsx
 import {
   createFileTree,
-  useMultiselect,
+  useSelections,
   useDnd,
   useTraits,
   useFilter,
@@ -95,7 +95,7 @@ function Virtualize({
     "modified",
     "untracked",
   ]);
-  const multiselect = useMultiselect(fileTree, (nodes) => {
+  const multiselect = useSelections(fileTree, (nodes) => {
     // Return true if the node should be selected.
     decorations.add("pseudo-active", ...nodes.map((node) => node.id));
   });

@@ -5,31 +5,27 @@ import { useVisibleNodes } from "./use-visible-nodes";
 
 export function useFilter<Meta>(
   tree: FileTree<Meta>,
-  filter: (node: FileTreeNode<Meta>, i: number) => boolean
+  filter: ((node: FileTreeNode<Meta>, i: number) => boolean) | null
 ) {
   const visibleNodes = useVisibleNodes(tree);
-  const [value, setValue] = React.useState(() => [...visibleNodes]);
-  const storedFilter = React.useRef(filter);
 
-  React.useEffect(() => {
-    storedFilter.current = filter;
-  });
-
-  React.useEffect(() => {
-    if (storedFilter.current && tree.visibleNodes) {
+  const value = React.useMemo(() => {
+    if (filter) {
       const filteredNodes = [];
 
-      for (let i = 0; i < tree.visibleNodes.length; i++) {
-        const node = tree.getById(tree.visibleNodes[i]);
+      for (let i = 0; i < visibleNodes.length; i++) {
+        const node = tree.getById(visibleNodes[i]);
 
-        if (node && storedFilter.current(node, i)) {
-          filteredNodes.push(tree.visibleNodes[i]);
+        if (node && filter(node, i)) {
+          filteredNodes.push(visibleNodes[i]);
         }
       }
 
-      setValue(filteredNodes);
+      return filteredNodes;
     }
-  }, [tree, tree.visibleNodes]);
+
+    return visibleNodes;
+  }, [tree, visibleNodes, filter]);
 
   return useDeferredValue(value);
 }
