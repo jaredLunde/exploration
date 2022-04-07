@@ -1,6 +1,6 @@
 {
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**"],
   "compilerOptions": {
     "target": "es5",
     "lib": ["esnext", "dom", "dom.iterable"],
@@ -11,6 +11,10 @@
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
     "types": ["react/next", "react-dom/next"],
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/test/utils": ["src/test/utils.ts"]
+    }
   }
 }

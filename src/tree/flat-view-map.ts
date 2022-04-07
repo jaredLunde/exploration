@@ -10,9 +10,7 @@ export class FlatViewMap extends Map<K, V> {
       const size = this.size;
       super.set(key, value);
 
-      if (size) {
-        this.didChange.next(key);
-      }
+      this.didChange.next(key);
     }
 
     return this;
