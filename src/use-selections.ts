@@ -30,6 +30,14 @@ export function useSelections<Meta>(
   return {
     didChange: selectionsSet.didChange,
 
+    get head() {
+      return selectionsSet.head;
+    },
+
+    get tail() {
+      return selectionsSet.tail;
+    },
+
     getProps(nodeId: number) {
       return createProps(selectionsSet, visibleNodes, nodeId);
     },
@@ -53,7 +61,7 @@ export function useSelections<Meta>(
 }
 
 const createProps = trieMemoize(
-  [WeakMap, Map, Map],
+  [WeakMap, WeakMap, Map],
   (
     selectionsSet: ObservableRange<number>,
     visibleNodes: Uint32Array,

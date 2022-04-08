@@ -10,7 +10,6 @@
     "incremental": true,
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["react/next", "react-dom/next"],
     "strict": true
   }
 }

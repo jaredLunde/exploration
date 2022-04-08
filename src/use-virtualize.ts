@@ -7,6 +7,7 @@ import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSubscription } from "use-subscription";
 import type { FileTree, FileTreeNode } from "./file-tree";
+import type { WindowRef } from "./types";
 import { useTransition } from "./use-transition";
 import { useVisibleNodes } from "./use-visible-nodes";
 import { throttle } from "./utils";
@@ -18,7 +19,7 @@ export function useVirtualize<Meta>(
     nodes,
     nodeHeight,
     nodeGap = 0,
-    overscanBy = 10,
+    overscanBy = 2,
   }: UseVirtualizeOptions
 ) {
   const _visibleNodes = useVisibleNodes(fileTree);
@@ -93,6 +94,7 @@ export function useVirtualize<Meta>(
     isScrolling: scrollPosition.isScrolling,
     scrollToNode,
     props: {
+      tabIndex: 0,
       style: {
         position: "relative",
         width: "100%",
@@ -123,6 +125,7 @@ export function useVirtualize<Meta>(
         children.push(
           render({
             key: node.id,
+            index,
             node,
             tree: fileTree,
             style: createStyle(
@@ -292,12 +295,6 @@ export interface UseVirtualizeOptions {
   windowRef: WindowRef;
 }
 
-export type WindowRef =
-  | Window
-  | React.MutableRefObject<HTMLElement | null>
-  | HTMLElement
-  | null;
-
 export type ScrollToNodeConfig = {
   behavior?: "smooth" | "auto";
   align?: "auto" | "smart" | "center" | "start" | "end";
@@ -305,6 +302,7 @@ export type ScrollToNodeConfig = {
 
 export interface VirtualizeRenderProps<Meta> {
   key: number;
+  index: number;
   node: FileTreeNode<Meta>;
   tree: FileTree<Meta>;
   style: React.CSSProperties;

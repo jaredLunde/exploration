@@ -9,6 +9,7 @@ import { useNodeProps } from "./use-node-props";
 export function Node<Meta>({
   tree,
   node,
+  index,
   plugins,
   style,
   children,
@@ -18,7 +19,7 @@ export function Node<Meta>({
     {
       didChange: noopObservable,
       getProps() {
-        return createProps(tree, node, style);
+        return createProps(tree, node, style, index);
       },
     },
   ]);
@@ -27,12 +28,16 @@ export function Node<Meta>({
 }
 
 const createProps = trieMemoize(
-  [WeakMap, WeakMap, WeakMap],
+  [WeakMap, WeakMap, WeakMap, Map],
   <Meta,>(
     tree: FileTree<Meta>,
     node: FileTreeNode<Meta>,
-    style: React.CSSProperties
+    style: React.CSSProperties,
+    index: number
   ): React.HTMLAttributes<HTMLDivElement> => ({
+    id: `exp-${index}`,
+    style,
+    className: `depth-${node.depth}`,
     onClick(event) {
       event.currentTarget.focus();
 
@@ -54,8 +59,6 @@ const createProps = trieMemoize(
         }
       }
     },
-    style,
-    className: `depth-${node.depth}`,
   })
 );
 
@@ -63,6 +66,7 @@ const noopObservable = observable(0);
 
 export interface NodeProps<Meta> {
   node: FileTreeNode<Meta>;
+  index: number;
   tree: FileTree<Meta>;
   plugins: NodePlugin[];
   style: React.CSSProperties;

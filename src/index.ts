@@ -13,6 +13,7 @@ export { ObservableMap, ObservableSet } from "./observable-data";
 export * as pathFx from "./path-fx";
 export { observable } from "./tree/observable";
 export { useFilter } from "./use-filter";
+export { useHotkeys } from "./use-hotkeys";
 export { useNodeProps } from "./use-node-props";
 export type { NodePlugin } from "./use-node-props";
 export { useTraits } from "./use-traits";

@@ -4,6 +4,7 @@ specifiers:
   '@commitlint/cli': latest
   '@commitlint/config-conventional': latest
   '@essentials/request-timeout': ^1.3.0
+  '@react-hook/hotkey': ^3.1.0
   '@react-hook/passive-layout-effect': ^1.2.1
   '@react-hook/resize-observer': ^1.2.5
   '@semantic-release/changelog': ^6.0.0
@@ -16,8 +17,8 @@ specifiers:
   '@testing-library/user-event': latest
   '@types/is-relative': ^1.0.0
   '@types/jest': latest
-  '@types/react': ^17.0.43
-  '@types/react-dom': ^17.0.14
+  '@types/react': ^18.0.0
+  '@types/react-dom': ^18.0.0
   '@types/use-subscription': ^1.0.0
   '@types/use-sync-external-store': ^0.0.3
   clsx: ^1.1.1
@@ -42,6 +43,7 @@ specifiers:
 
 dependencies:
   '@essentials/request-timeout': 1.3.0
+  '@react-hook/hotkey': 3.1.0_react@18.0.0
   '@react-hook/passive-layout-effect': 1.2.1_react@18.0.0
   '@react-hook/resize-observer': 1.2.5_react@18.0.0
   clsx: 1.1.1
@@ -64,8 +66,8 @@ devDependencies:
   '@testing-library/user-event': 14.0.4
   '@types/is-relative': 1.0.0
   '@types/jest': 27.4.1
-  '@types/react': 17.0.43
-  '@types/react-dom': 17.0.14
+  '@types/react': 18.0.0
+  '@types/react-dom': 18.0.0
   '@types/use-subscription': 1.0.0
   '@types/use-sync-external-store': 0.0.3
   cz-conventional-changelog: 3.3.0
@@ -2091,6 +2093,23 @@ packages:
       react: 16.14.0
     dev: true
 
+  /@react-hook/event/1.2.6_react@18.0.0:
+    resolution: {integrity: sha512-JUL5IluaOdn5w5Afpe/puPa1rj8X6udMlQ9dt4hvMuKmTrBS1Ya6sb4sVgvfe2eU4yDuOfAhik8xhbcCekbg9Q==}
+    peerDependencies:
+      react: '>=16.8'
+    dependencies:
+      react: 18.0.0
+    dev: false
+
+  /@react-hook/hotkey/3.1.0_react@18.0.0:
+    resolution: {integrity: sha512-ekIIW8S12P/fP9krrsOWZCIqzQPzjz2WVkD3v1epP6SAy/XxDIWgJrItd2ySh0RKLkYcfW8z+eii3W/h1TKjOg==}
+    peerDependencies:
+      react: '>=16.8'
+    dependencies:
+      '@react-hook/event': 1.2.6_react@18.0.0
+      react: 18.0.0
+    dev: false
+
   /@react-hook/latest/1.0.3_react@16.14.0:
     resolution: {integrity: sha512-dy6duzl+JnAZcDbNTfmaP3xHiKtbXYOaz3G51MGVljh548Y8MWzTr+PHLOfvpypEVW9zwvl+VyKjbWKEVbV1Rg==}
     peerDependencies:
@@ -2463,8 +2482,8 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.17.8
-      '@types/react': 17.0.43
-      '@types/react-dom': 17.0.14
+      '@types/react': 18.0.0
+      '@types/react-dom': 18.0.0
       '@types/react-test-renderer': 17.0.1
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
@@ -2481,7 +2500,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.17.8
       '@testing-library/dom': 8.12.0
-      '@types/react-dom': 17.0.14
+      '@types/react-dom': 18.0.0
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
     dev: true
@@ -2624,16 +2643,16 @@ packages:
     resolution: {integrity: sha512-Ha+EnKHFIh9EKW0/XZJPUd3EGDFisEvauaBd4VVCRPKeOqUxNEc9TodiY2Zhk33XCgzJucoFEcaoNcBAPHTQ2A==}
     dev: false
 
-  /@types/react-dom/17.0.14:
-    resolution: {integrity: sha512-H03xwEP1oXmSfl3iobtmQ/2dHF5aBHr8aUMwyGZya6OW45G+xtdzmq6HkncefiBt5JU8DVyaWl/nWZbjZCnzAQ==}
+  /@types/react-dom/18.0.0:
+    resolution: {integrity: sha512-49897Y0UiCGmxZqpC8Blrf6meL8QUla6eb+BBhn69dTXlmuOlzkfr7HHY/O8J25e1lTUMs+YYxSlVDAaGHCOLg==}
     dependencies:
-      '@types/react': 17.0.43
+      '@types/react': 18.0.0
     dev: true
 
   /@types/react-test-renderer/17.0.1:
     resolution: {integrity: sha512-3Fi2O6Zzq/f3QR9dRnlnHso9bMl7weKCviFmfF6B4LS1Uat6Hkm15k0ZAQuDz+UBq6B3+g+NM6IT2nr5QgPzCw==}
     dependencies:
-      '@types/react': 17.0.43
+      '@types/react': 18.0.0
     dev: true
 
   /@types/react/16.14.24:
@@ -2644,8 +2663,8 @@ packages:
       csstype: 3.0.11
     dev: true
 
-  /@types/react/17.0.43:
-    resolution: {integrity: sha512-8Q+LNpdxf057brvPu1lMtC5Vn7J119xrP1aq4qiaefNioQUYANF/CYeK4NsKorSZyUGJ66g0IM+4bbjwx45o2A==}
+  /@types/react/18.0.0:
+    resolution: {integrity: sha512-7+K7zEQYu7NzOwQGLR91KwWXXDzmTFODRVizJyIALf6RfLv2GDpqpknX64pvRVILXCpXi7O/pua8NGk44dLvJw==}
     dependencies:
       '@types/prop-types': 15.7.4
       '@types/scheduler': 0.16.2

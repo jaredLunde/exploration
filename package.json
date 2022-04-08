@@ -33,6 +33,7 @@
   "types": "types/index.d.ts",
   "dependencies": {
     "@essentials/request-timeout": "^1.3.0",
+    "@react-hook/hotkey": "^3.1.0",
     "@react-hook/passive-layout-effect": "^1.2.1",
     "@react-hook/resize-observer": "^1.2.5",
     "clsx": "^1.1.1",
@@ -58,8 +59,8 @@
     "@testing-library/user-event": "latest",
     "@types/is-relative": "^1.0.0",
     "@types/jest": "latest",
-    "@types/react": "^17.0.43",
-    "@types/react-dom": "^17.0.14",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "@types/use-subscription": "^1.0.0",
     "@types/use-sync-external-store": "^0.0.3",
     "cz-conventional-changelog": "latest",
