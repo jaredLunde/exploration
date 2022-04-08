@@ -10,10 +10,24 @@ export function useSelections<Meta>(
 ) {
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
-  const selectionsSet = React.useMemo(
-    () => getSelectionsSet(fileTree, visibleNodes),
-    [fileTree, visibleNodes]
-  );
+  const prevSelectionsSet = React.useRef<ObservableRange<number> | null>(null);
+  const selectionsSet = React.useMemo(() => {
+    const next = getSelectionsSet(fileTree, visibleNodes);
+
+    if (prevSelectionsSet.current) {
+      prevSelectionsSet.current.forEach((id) => {
+        if (visibleNodes.includes(id)) {
+          next.add(id);
+        }
+      });
+    }
+
+    return next;
+  }, [fileTree, visibleNodes]);
+
+  React.useEffect(() => {
+    prevSelectionsSet.current = selectionsSet;
+  }, [selectionsSet]);
 
   return {
     didChange: selectionsSet.didChange,
@@ -43,7 +57,7 @@ export function useSelections<Meta>(
 const createProps = trieMemoize(
   [WeakMap, Map, Map],
   (
-    selectionsSet: ObservableSetWithTail<number>,
+    selectionsSet: ObservableRange<number>,
     visibleNodes: Uint32Array,
     nodeId: number
   ): SelectionsProps => {
@@ -54,45 +68,67 @@ const createProps = trieMemoize(
         }
 
         if (event.shiftKey) {
-          const tail = selectionsSet.tail;
-
-          if (tail === nodeId) {
-            return;
-          }
-
-          let tailIndex = -1;
-
-          if (tail) {
-            tailIndex = visibleNodes.indexOf(tail);
-          }
-
+          const { head, tail } = selectionsSet;
+          const headIndex = !head ? -1 : visibleNodes.indexOf(head);
+          const tailIndex = !tail ? -1 : visibleNodes.indexOf(tail);
           const nodeIndex = visibleNodes.indexOf(nodeId);
-          const start = Math.min(tailIndex, nodeIndex);
-          const end = Math.max(tailIndex, nodeIndex);
+          const direction = tailIndex > nodeIndex ? -1 : 1;
 
-          if (start > -1 && end > -1) {
-            for (let i = start + 1; i <= end; i++) {
+          // Select range
+          let selectStart = tailIndex;
+          let selectEnd = nodeIndex;
+
+          if (direction === 1) {
+            selectStart = tailIndex;
+          } else {
+            selectStart = nodeIndex;
+            selectEnd = tailIndex;
+          }
+
+          if (selectStart > -1 && selectEnd > -1) {
+            for (let i = selectStart; i <= selectEnd; i++) {
               const node = visibleNodes[i];
-
-              if (selectionsSet.has(node)) {
-                selectionsSet.delete(node);
-              } else {
-                selectionsSet.add(node);
-              }
+              selectionsSet.add(node);
             }
           }
 
-          selectionsSet.add(nodeId);
+          // Deselect range
+          let deselectStart = -1;
+          let deselectEnd = -1;
+
+          if (direction === 1 && headIndex > tailIndex) {
+            deselectStart = tailIndex;
+            deselectEnd = Math.min(headIndex, nodeIndex) - 1;
+          } else if (direction === -1 && headIndex < tailIndex) {
+            deselectStart = Math.max(headIndex, nodeIndex) + 1;
+            deselectEnd = tailIndex;
+          }
+
+          if (deselectStart > -1 && deselectEnd > -1) {
+            for (let i = deselectStart; i <= deselectEnd; i++) {
+              const node = visibleNodes[i];
+              selectionsSet.delete(node);
+            }
+          }
+
+          if (selectionsSet.head === null) {
+            selectionsSet.head = nodeId;
+          }
         } else if (event.metaKey) {
           if (selectionsSet.has(nodeId)) {
             selectionsSet.delete(nodeId);
           } else {
             selectionsSet.add(nodeId);
           }
+
+          selectionsSet.head = nodeId;
         } else {
           selectionsSet.clear();
           selectionsSet.add(nodeId);
+          selectionsSet.head = nodeId;
         }
+
+        selectionsSet.tail = nodeId;
       },
     };
   }
@@ -101,41 +137,37 @@ const createProps = trieMemoize(
 const getSelectionsSet = trieMemoize(
   [WeakMap, WeakMap],
   <Meta>(fileTree: FileTree<Meta>, visibleNodes: Uint32Array) =>
-    new ObservableSetWithTail<number>()
+    new ObservableRange<number>()
 );
 
-export type SelectionsProps = {
-  onClick: React.MouseEventHandler<HTMLElement>;
-};
-
-class ObservableSetWithTail<T> extends ObservableSet<T> {
+class ObservableRange<T> extends ObservableSet<T> {
+  head: T | null = null;
   tail: T | null = null;
 
   add(value: T) {
     super.add(value);
+
+    if (this.head === null) {
+      this.head = value;
+    }
+
     this.tail = value;
     return this;
   }
 
   delete(value: T) {
     const deleted = super.delete(value);
-
-    if (this.tail === value) {
-      this.tail = getTail(this);
-    }
-
     return deleted;
   }
 
   clear() {
     super.clear();
+    this.head = null;
     this.tail = null;
     return this;
   }
 }
 
-function getTail<T>(set: Set<T>): T | null {
-  let value: T | null = null;
-  for (value of set);
-  return value;
+export interface SelectionsProps {
+  onClick: React.MouseEventHandler<HTMLElement>;
 }

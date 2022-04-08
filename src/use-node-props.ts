@@ -4,17 +4,11 @@ import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Observable } from "./tree/observable";
 import { mergeProps as mergePropsBase } from "./utils";
 
-export function useProps(
-  nodeId: number,
-  subscriptions: {
-    didChange: Observable<unknown>;
-    getProps: (nodeId: number) => React.HTMLAttributes<HTMLElement>;
-  }[]
-) {
-  const numSubscriptions = subscriptions.length;
+export function useNodeProps(nodeId: number, plugins: NodePlugin[] = []) {
+  const numPlugins = plugins.length;
   const mergeProps = React.useMemo(() => {
     const caches: WeakMapConstructor[] = [];
-    for (let i = 0; i < numSubscriptions; i++) caches.push(WeakMap);
+    for (let i = 0; i < numPlugins; i++) caches.push(WeakMap);
 
     return trieMemoize(
       caches,
@@ -22,11 +16,11 @@ export function useProps(
         return mergePropsBase(...props);
       }
     );
-  }, [numSubscriptions]);
+  }, [numPlugins]);
 
   return useSyncExternalStore(
     (callback) => {
-      const unsubs = subscriptions.map((subscription) =>
+      const unsubs = plugins.map((subscription) =>
         subscription.didChange.subscribe(callback)
       );
 
@@ -36,13 +30,18 @@ export function useProps(
     },
     () => {
       return mergeProps(
-        ...subscriptions.map((subscription) => subscription.getProps(nodeId))
+        ...plugins.map((subscription) => subscription.getProps(nodeId))
       );
     },
     () => {
       return mergeProps(
-        ...subscriptions.map((subscription) => subscription.getProps(nodeId))
+        ...plugins.map((subscription) => subscription.getProps(nodeId))
       );
     }
   );
 }
+
+export type NodePlugin<T = unknown> = {
+  didChange: Observable<T>;
+  getProps: (nodeId: number) => React.HTMLAttributes<HTMLElement>;
+};

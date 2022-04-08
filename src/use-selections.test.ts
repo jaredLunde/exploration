@@ -212,6 +212,7 @@ describe("useSelections()", () => {
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
+      fileTree.visibleNodes[4],
       fileTree.visibleNodes[3],
     ]);
   });

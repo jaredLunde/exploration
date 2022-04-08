@@ -3,11 +3,9 @@ import {
   requestTimeout,
 } from "@essentials/request-timeout";
 import useResizeObserver from "@react-hook/resize-observer";
-import clsx from "clsx";
 import * as React from "react";
 import { useSubscription } from "use-subscription";
 import type { FileTree, FileTreeNode } from "./file-tree";
-import { isDir } from "./file-tree";
 import { useTransition } from "./use-transition";
 import { useVisibleNodes } from "./use-visible-nodes";
 
@@ -122,29 +120,17 @@ export function useVirtualize<Meta>(
 
         children.push(
           render({
+            key: node.id,
             node,
-            props: {
-              key: node.id,
-              className: clsx(`depth-${node.depth}`),
-              onClick() {
-                if (isDir(node)) {
-                  if (fileTree.isExpanded(node)) {
-                    fileTree.collapse(node);
-                  } else {
-                    fileTree.expand(node);
-                  }
-                }
-              },
-              style: {
-                position: "absolute",
-                width: "100%",
-                height: nodeHeight,
-                contain: "strict",
-                userSelect: "none",
-                top: nodeGap * index + index * nodeHeight,
-                left: 0,
-              },
-              tabIndex: -1,
+            tree: fileTree,
+            style: {
+              position: "absolute",
+              width: "100%",
+              height: nodeHeight,
+              contain: "strict",
+              userSelect: "none",
+              top: nodeGap * index + index * nodeHeight,
+              left: 0,
             },
           })
         );
@@ -311,8 +297,8 @@ export type ScrollToNodeConfig = {
 };
 
 export interface VirtualizeRenderProps<Meta> {
+  key: number;
   node: FileTreeNode<Meta>;
-  props: {
-    key: number;
-  } & React.HTMLAttributes<HTMLElement>;
+  tree: FileTree<Meta>;
+  style: React.CSSProperties;
 }

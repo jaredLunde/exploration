@@ -15,7 +15,7 @@ export function mergeProps<T extends Props[]>(
 ): UnionToIntersection<TupleTypes<T>> {
   // Start with a base clone of the first argument. This is a lot faster than starting
   // with an empty object and adding properties as we go.
-  const result: Props = { ...args[0] };
+  const result: Props = { ...args[0], style: { ...args[0]?.style } };
 
   for (let i = 1; i < args.length; i++) {
     const props = args[i];
@@ -43,6 +43,12 @@ export function mergeProps<T extends Props[]>(
         typeof b === "string"
       ) {
         result[key] = clsx(a, b);
+      } else if (
+        key === "style" &&
+        typeof a === "object" &&
+        typeof b === "object"
+      ) {
+        result[key] = Object.assign(a, b);
       } else {
         result[key] = b;
       }

@@ -20,18 +20,6 @@ export function useRovingFocus<Meta>(fileTree: FileTree<Meta>) {
         nodeId === focusedNodeId.getSnapshot()
       );
     },
-
-    focus(nodeId: number) {
-      focusedNodeId.next(nodeId);
-    },
-
-    blur(nodeId: number) {
-      const current = focusedNodeId.getSnapshot();
-
-      if (current === nodeId) {
-        focusedNodeId.next(-1);
-      }
-    },
   };
 }
 

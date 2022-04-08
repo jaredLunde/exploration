@@ -14,9 +14,6 @@ describe("useRovingFocus()", () => {
     await waitForTree(fileTree);
     const { result } = renderHook(() => useRovingFocus(fileTree));
 
-    result.current.focus(0);
-    expect(result.current.didChange.getSnapshot()).toBe(0);
-
     act(() => {
       // @ts-expect-error
       result.current.getProps(1).onFocus({});
@@ -30,19 +27,30 @@ describe("useRovingFocus()", () => {
     await waitForTree(fileTree);
     const { result } = renderHook(() => useRovingFocus(fileTree));
 
-    result.current.focus(0);
-    result.current.blur(0);
+    act(() => {
+      // @ts-expect-error
+      result.current.getProps(0).onFocus({});
+    });
+    act(() => {
+      // @ts-expect-error
+      result.current.getProps(0).onBlur({});
+    });
     expect(result.current.didChange.getSnapshot()).toBe(-1);
 
-    result.current.focus(1);
-    result.current.blur(0);
+    act(() => {
+      // @ts-expect-error
+      result.current.getProps(1).onFocus({});
+    });
+    act(() => {
+      // @ts-expect-error
+      result.current.getProps(0).onBlur({});
+    });
     expect(result.current.didChange.getSnapshot()).toBe(1);
 
     act(() => {
       // @ts-expect-error
       result.current.getProps(1).onBlur({});
     });
-
     expect(result.current.didChange.getSnapshot()).toBe(-1);
     expect(result.current.getProps(1).tabIndex).toBe(-1);
   });

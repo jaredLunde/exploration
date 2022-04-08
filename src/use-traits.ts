@@ -92,7 +92,7 @@ export function useTraits<Trait extends string>(
   };
 }
 
-const createProps = trieMemoize([Map], (className: string) => {
+const createProps = trieMemoize([Map], (className: string): TraitsProps => {
   return { className: className.slice(0, -1) };
 });
 
@@ -110,4 +110,8 @@ function getTraitsMap(fileTree: FileTree) {
   }
 
   return traitsMap;
+}
+
+export interface TraitsProps {
+  className?: string;
 }
