@@ -2,7 +2,7 @@ import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Observable } from "./tree/observable";
-import { mergeProps as mergePropsBase } from "./utils";
+import { mergeProps as mergeProps_, throttle } from "./utils";
 
 export function useNodeProps(nodeId: number, plugins: NodePlugin[] = []) {
   const numPlugins = plugins.length;
@@ -13,31 +13,36 @@ export function useNodeProps(nodeId: number, plugins: NodePlugin[] = []) {
     return trieMemoize(
       caches,
       (...props: React.HTMLAttributes<HTMLElement>[]) => {
-        return mergePropsBase(...props);
+        return mergeProps_(props);
       }
     );
   }, [numPlugins]);
 
+  function getSnapshot() {
+    const props: React.HTMLAttributes<HTMLElement>[] = [];
+
+    for (let i = 0; i < numPlugins; i++) {
+      props.push(plugins[i].getProps(nodeId));
+    }
+
+    return mergeProps(...props);
+  }
+
   return useSyncExternalStore(
     (callback) => {
-      const unsubs = plugins.map((subscription) =>
-        subscription.didChange.subscribe(callback)
-      );
+      callback = throttle(callback, 60);
+      const unsubs: (() => void)[] = [];
+
+      for (let i = 0; i < numPlugins; i++) {
+        unsubs.push(plugins[i].didChange.subscribe(callback));
+      }
 
       return () => {
-        unsubs.forEach((unsub) => unsub);
+        for (let i = 0; i < unsubs.length; i++) unsubs[i]();
       };
     },
-    () => {
-      return mergeProps(
-        ...plugins.map((subscription) => subscription.getProps(nodeId))
-      );
-    },
-    () => {
-      return mergeProps(
-        ...plugins.map((subscription) => subscription.getProps(nodeId))
-      );
-    }
+    getSnapshot,
+    getSnapshot
   );
 }
 

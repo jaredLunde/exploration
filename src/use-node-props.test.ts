@@ -25,6 +25,7 @@ describe("useNodeProps()", () => {
 
     act(() => {
       traits.result.current.add("foo", fileTree.root.nodes[0].id);
+      jest.advanceTimersByTime(100);
     });
 
     const prev = props.result.current;
@@ -38,6 +39,7 @@ describe("useNodeProps()", () => {
 
     act(() => {
       traits.result.current.add("foo", fileTree.root.nodes[0].id);
+      jest.advanceTimersByTime(100);
     });
 
     expect(props.result.current).toBe(prev);

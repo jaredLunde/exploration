@@ -15,11 +15,9 @@ export function useSelections<Meta>(
     const next = getSelectionsSet(fileTree, visibleNodes);
 
     if (prevSelectionsSet.current) {
-      prevSelectionsSet.current.forEach((id) => {
-        if (visibleNodes.includes(id)) {
-          next.add(id);
-        }
-      });
+      for (const nodeId of prevSelectionsSet.current) {
+        next.add(nodeId);
+      }
     }
 
     return next;

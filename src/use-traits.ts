@@ -1,7 +1,7 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
-import { ObservableMap, ObservableSet } from "./observable-data";
+import { ObservableMap } from "./observable-data";
 
 export function useTraits<Trait extends string>(
   fileTree: FileTree,
@@ -30,7 +30,7 @@ export function useTraits<Trait extends string>(
     },
 
     add(trait: Extract<Trait, string>, ...nodeIds: number[]) {
-      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+      const traitSet = traitsMap.get(trait) ?? new Set<number>();
 
       for (let i = 0; i < nodeIds.length; i++) {
         const nodeId = nodeIds[i];
@@ -41,25 +41,21 @@ export function useTraits<Trait extends string>(
     },
 
     set(trait: Extract<Trait, string>, nodeIds: number[]) {
-      const current = traitsMap.get(trait) ?? new ObservableSet<number>();
+      const traitSet = traitsMap.get(trait) ?? new Set<number>();
 
-      if (current) {
-        for (const nodeId of current) {
-          this.delete(trait, nodeId);
-        }
-
-        current.clear();
+      if (traitSet) {
+        traitSet.clear();
       }
 
       for (let i = 0; i < nodeIds.length; i++) {
-        current.add(nodeIds[i]);
+        traitSet.add(nodeIds[i]);
       }
 
-      traitsMap.set(trait, current);
+      traitsMap.set(trait, traitSet);
     },
 
     delete(trait: Extract<Trait, string>, nodeId: number) {
-      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+      const traitSet = traitsMap.get(trait) ?? new Set<number>();
 
       if (traitSet) {
         traitSet.delete(nodeId);
@@ -69,14 +65,14 @@ export function useTraits<Trait extends string>(
     },
 
     clear(trait: Extract<Trait, string>) {
-      const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+      const traitSet = traitsMap.get(trait) ?? new Set<number>();
       traitSet.clear();
       traitsMap.set(trait, traitSet);
     },
 
     clearAll() {
       for (const trait of storedTraits.current) {
-        const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+        const traitSet = traitsMap.get(trait) ?? new Set<number>();
         traitSet.clear();
         traitsMap.set(trait, traitSet);
       }
@@ -84,7 +80,7 @@ export function useTraits<Trait extends string>(
 
     clearNode(nodeId: number) {
       for (const trait of storedTraits.current) {
-        const traitSet = traitsMap.get(trait) ?? new ObservableSet<number>();
+        const traitSet = traitsMap.get(trait) ?? new Set<number>();
         traitSet.delete(nodeId);
         traitsMap.set(trait, traitSet);
       }
@@ -98,14 +94,14 @@ const createProps = trieMemoize([Map], (className: string): TraitsProps => {
 
 const fileTreeTraitsMap = new WeakMap<
   FileTree,
-  ObservableMap<string, ObservableSet<number>>
+  ObservableMap<string, Set<number>>
 >();
 
 function getTraitsMap(fileTree: FileTree) {
   let traitsMap = fileTreeTraitsMap.get(fileTree);
 
   if (!traitsMap) {
-    traitsMap = new ObservableMap<string, ObservableSet<number>>();
+    traitsMap = new ObservableMap<string, Set<number>>();
     fileTreeTraitsMap.set(fileTree, traitsMap);
   }
 

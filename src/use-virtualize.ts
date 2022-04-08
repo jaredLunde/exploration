@@ -4,10 +4,12 @@ import {
 } from "@essentials/request-timeout";
 import useResizeObserver from "@react-hook/resize-observer";
 import * as React from "react";
+import trieMemoize from "trie-memoize";
 import { useSubscription } from "use-subscription";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import { useTransition } from "./use-transition";
 import { useVisibleNodes } from "./use-visible-nodes";
+import { throttle } from "./utils";
 
 export function useVirtualize<Meta>(
   fileTree: FileTree<Meta>,
@@ -123,15 +125,10 @@ export function useVirtualize<Meta>(
             key: node.id,
             node,
             tree: fileTree,
-            style: {
-              position: "absolute",
-              width: "100%",
-              height: nodeHeight,
-              contain: "strict",
-              userSelect: "none",
-              top: nodeGap * index + index * nodeHeight,
-              left: 0,
-            },
+            style: createStyle(
+              nodeHeight,
+              nodeGap * index + index * nodeHeight
+            ),
           })
         );
       }
@@ -140,6 +137,19 @@ export function useVirtualize<Meta>(
     },
   };
 }
+
+const createStyle = trieMemoize(
+  [Map, Map],
+  (height: number, top: number): React.CSSProperties => ({
+    position: "absolute",
+    width: "100%",
+    height,
+    contain: "strict",
+    userSelect: "none",
+    top,
+    left: 0,
+  })
+);
 
 export function useHeight(windowRef: WindowRef) {
   const [, startTransition] = useTransition();
@@ -187,6 +197,7 @@ export function useGlobalWindowHeight(windowRef: WindowRef) {
           return null;
         },
         subscribe(callback) {
+          callback = throttle(callback, 12, true);
           if (typeof window !== "undefined" && windowRef instanceof Window) {
             window.addEventListener("resize", callback);
             window.addEventListener("orientationchange", callback);
@@ -209,7 +220,6 @@ export function useScrollPosition(
   windowRef: WindowRef,
   { offset = 0 }: UseScrollPosition = {}
 ): { scrollTop: number; isScrolling: boolean } {
-  const [, startTransition] = useTransition();
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTop = useSubscription(
     React.useMemo(
@@ -232,6 +242,7 @@ export function useScrollPosition(
         subscribe(callback) {
           const current =
             windowRef && "current" in windowRef ? windowRef.current : windowRef;
+          callback = throttle(callback, 12, true);
 
           if (current) {
             current.addEventListener("scroll", callback);
@@ -255,14 +266,10 @@ export function useScrollPosition(
       if (didUnmount) return;
       // This is here to prevent premature bail outs while maintaining high resolution
       // unsets. Without it there will always be a lot of unnecessary DOM writes to style.
-      startTransition(() => {
-        setIsScrolling(false);
-      });
-    }, 1000 / 30);
+      setIsScrolling(false);
+    }, 1000 / 8);
 
-    startTransition(() => {
-      setIsScrolling(true);
-    });
+    setIsScrolling(true);
 
     return () => {
       didUnmount = true;

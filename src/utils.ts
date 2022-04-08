@@ -11,7 +11,7 @@ import clsx from "clsx";
  * @param args - Multiple sets of props to merge together.
  */
 export function mergeProps<T extends Props[]>(
-  ...args: T
+  args: T
 ): UnionToIntersection<TupleTypes<T>> {
   // Start with a base clone of the first argument. This is a lot faster than starting
   // with an empty object and adding properties as we go.
@@ -74,6 +74,45 @@ export function chain<Args extends any[]>(
     }
   };
 }
+
+export function throttle<CallbackArguments extends any[]>(
+  callback: (...args: CallbackArguments) => void,
+  fps = 30,
+  leading = false
+): (...args: CallbackArguments) => void {
+  const ms = 1000 / fps;
+  let prev = 0;
+  let trailingTimeout: ReturnType<typeof setTimeout>;
+  const clearTrailing = () => trailingTimeout && clearTimeout(trailingTimeout);
+
+  return function () {
+    // eslint-disable-next-line prefer-rest-params
+    const args = arguments;
+    const rightNow = perf.now();
+    const call = () => {
+      prev = rightNow;
+      clearTrailing();
+      // eslint-disable-next-line prefer-spread
+      callback.apply(null, args as any);
+    };
+    const current = prev;
+    // leading
+    if (leading && current === 0) return call();
+    // body
+    if (rightNow - current > ms) {
+      if (current > 0) return call();
+      prev = rightNow;
+    }
+    // trailing
+    clearTrailing();
+    trailingTimeout = setTimeout(() => {
+      call();
+      prev = 0;
+    }, ms);
+  };
+}
+
+const perf = typeof performance !== "undefined" ? performance : Date;
 
 interface Props {
   [key: string]: any;
