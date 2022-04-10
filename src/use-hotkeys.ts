@@ -38,30 +38,6 @@ export function useHotkeys(
   // @ts-expect-error: `window` isn't explicitly allowed but it works
   useHotkeys_(windowRef, [
     [
-      "down",
-      (event) => {
-        if (
-          event.target instanceof HTMLInputElement ||
-          event.target instanceof HTMLTextAreaElement
-        ) {
-          return;
-        }
-
-        event.preventDefault();
-        const selectedIndex = getSelectedIndex();
-        const nextSelector = querySelectorPattern.replace(
-          "{index}",
-          `${Math.min(selectedIndex + 1, visibleNodes.length)}`
-        );
-
-        const element = document.querySelector(nextSelector);
-
-        if (element instanceof HTMLElement) {
-          element.focus();
-        }
-      },
-    ],
-    [
       "up",
       (event) => {
         if (
@@ -85,6 +61,32 @@ export function useHotkeys(
         }
       },
     ],
+
+    [
+      "down",
+      (event) => {
+        if (
+          event.target instanceof HTMLInputElement ||
+          event.target instanceof HTMLTextAreaElement
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        const selectedIndex = getSelectedIndex();
+        const nextSelector = querySelectorPattern.replace(
+          "{index}",
+          `${Math.min(selectedIndex + 1, visibleNodes.length)}`
+        );
+
+        const element = document.querySelector(nextSelector);
+
+        if (element instanceof HTMLElement) {
+          element.focus();
+        }
+      },
+    ],
+
     [
       "right",
       async (event) => {
@@ -118,6 +120,7 @@ export function useHotkeys(
         }
       },
     ],
+
     [
       "left",
       (event) => {
@@ -151,6 +154,7 @@ export function useHotkeys(
         }
       },
     ],
+
     [
       "space",
       (event) => {
@@ -190,6 +194,7 @@ export function useHotkeys(
         }
       },
     ],
+
     [
       "home",
       (event) => {
@@ -209,6 +214,7 @@ export function useHotkeys(
         }
       },
     ],
+
     [
       "end",
       (event) => {
@@ -228,6 +234,7 @@ export function useHotkeys(
         }
       },
     ],
+
     [
       "escape",
       (event) => {

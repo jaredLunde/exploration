@@ -114,6 +114,18 @@ export function throttle<CallbackArguments extends any[]>(
 
 const perf = typeof performance !== "undefined" ? performance : Date;
 
+export function shallowEqual<
+  A extends Record<string | number | symbol, unknown> | null,
+  B extends Record<string | number | symbol, unknown> | null
+>(objA: A, objB: B | A): boolean {
+  if (objA === objB) return true;
+  if (objA === null || objB === null) return false;
+  const keysA = Object.keys(objA);
+  for (let i = 0; i < keysA.length; i++)
+    if (objA[keysA[i]] !== objB[keysA[i]]) return false;
+  return true;
+}
+
 interface Props {
   [key: string]: any;
 }

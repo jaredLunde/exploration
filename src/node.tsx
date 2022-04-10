@@ -19,7 +19,7 @@ export function Node<Meta>({
     {
       didChange: noopObservable,
       getProps() {
-        return createProps(tree, node, style, index);
+        return createProps(tree, node, style, node.depth, index);
       },
     },
   ]);
@@ -28,16 +28,17 @@ export function Node<Meta>({
 }
 
 const createProps = trieMemoize(
-  [WeakMap, WeakMap, WeakMap, Map],
+  [WeakMap, WeakMap, WeakMap, Map, Map],
   <Meta,>(
     tree: FileTree<Meta>,
     node: FileTreeNode<Meta>,
     style: React.CSSProperties,
+    depth: number,
     index: number
   ): React.HTMLAttributes<HTMLDivElement> => ({
     id: `exp-${index}`,
     style,
-    className: `depth-${node.depth}`,
+    className: `depth-${depth}`,
     onClick(event) {
       event.currentTarget.focus();
 

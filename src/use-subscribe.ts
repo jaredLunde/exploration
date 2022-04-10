@@ -3,7 +3,7 @@ import type { Observable } from "./tree/observable";
 
 export function useSubscribe<T>(
   toObservable: Observable<T>,
-  onChange: (value: T) => void
+  onChange: (value: T) => void | (() => void)
 ) {
   const storedOnChange = React.useRef(onChange);
 
@@ -13,14 +13,17 @@ export function useSubscribe<T>(
 
   React.useEffect(() => {
     let didUnmount = false;
+    let cleanup: void | (() => void);
 
     const unsubscribe = toObservable.subscribe(() => {
       if (didUnmount) return;
-      storedOnChange.current(toObservable.getSnapshot());
+      cleanup?.();
+      cleanup = storedOnChange.current(toObservable.getSnapshot());
     });
 
     return () => {
       didUnmount = true;
+      cleanup?.();
       unsubscribe();
     };
   }, [toObservable]);
