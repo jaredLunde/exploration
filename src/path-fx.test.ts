@@ -92,6 +92,7 @@ describe("depth()", () => {
 
 describe("basename()", () => {
   it("should return the basename of the path", () => {
+    expect(pathFx.basename("/")).toBe("");
     expect(pathFx.basename("/foo/bar")).toBe("bar");
     expect(pathFx.basename("/foo/bar/baz")).toBe("baz");
     expect(pathFx.basename("/foo/bar/baz/qux.ts")).toBe("qux.ts");

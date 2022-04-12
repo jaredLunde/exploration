@@ -1,4 +1,5 @@
 import { Leaf } from "./leaf";
+import { nodesById } from "./nodes-by-id";
 
 export class Branch<NodeData = {}> extends Leaf<NodeData> {
   public nodes?: number[];
@@ -26,9 +27,9 @@ export class Branch<NodeData = {}> extends Leaf<NodeData> {
   }
 
   contains(node: Node<NodeData>): boolean {
-    while (node.parent) {
-      if (node.parent === this) return true;
-      node = node.parent;
+    while (node.parentId > -1) {
+      if (node.parentId === this.id) return true;
+      node = nodesById[node.parentId] as Branch<NodeData>;
     }
 
     return false;

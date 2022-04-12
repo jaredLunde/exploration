@@ -1,6 +1,7 @@
 import * as pathFx from "./path-fx";
 import { Branch } from "./tree/branch";
 import { Leaf } from "./tree/leaf";
+import { nodesById } from "./tree/nodes-by-id";
 import type { GetNodes } from "./tree/tree";
 import { Tree } from "./tree/tree";
 
@@ -37,8 +38,8 @@ export function createFileTree<Meta = {}>(
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   declare root: Dir<Meta>;
-  declare nodesById: FileTreeNode<Meta>[];
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
+  declare nodesById: FileTreeNode<Meta>[];
   declare getById: (id: number) => FileTreeNode<Meta> | undefined;
   declare expand: (
     dir: Dir<Meta>,
@@ -123,26 +124,31 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
 
   rename(node: FileTreeNode<Meta>, newName: string) {
     node.data.name = newName;
+    const parent = node.parent;
 
-    if (node.parent && node.parent.nodes) {
+    if (parent && parent.nodes) {
       this.setNodes(
-        node.parent,
-        node.parent.nodes.map((id) => this.nodesById[id])
+        parent,
+        parent.nodes.map((id) => this.getById(id)!)
       );
     }
   }
 }
 
 export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
-  public declare parent: Dir<Meta> | null;
+  get parent(): Dir<Meta> | null {
+    return this.parentId === -1
+      ? null
+      : (nodesById[this.parentId] as Dir<Meta>);
+  }
 
   get basename() {
     return pathFx.basename(this.data.name);
   }
 
   get path() {
-    if (this.parent) {
-      return pathFx.join(this.parent.data.name, this.basename);
+    if (this.parentId > -1) {
+      return pathFx.join(this.parent!.data.name, this.basename);
     }
 
     return this.data.name;
@@ -150,15 +156,19 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 }
 
 export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
-  public declare parent: Dir<Meta> | null;
+  get parent(): Dir<Meta> | null {
+    return this.parentId === -1
+      ? null
+      : (nodesById[this.parentId] as Dir<Meta>);
+  }
 
   get basename() {
     return pathFx.basename(this.data.name);
   }
 
   get path() {
-    if (this.parent) {
-      return pathFx.join(this.parent.data.name, this.basename);
+    if (this.parentId > -1) {
+      return pathFx.join(this.parent!.data.name, this.basename);
     }
 
     return this.data.name;

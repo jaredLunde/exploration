@@ -2,8 +2,13 @@
 import { createFileTree, defaultComparator, isFile } from "./file-tree";
 import type { Dir, File } from "./file-tree";
 import type { Branch } from "./tree/branch";
+import { nodesById } from "./tree/nodes-by-id";
 import type { Tree } from "./tree/tree";
 import { isLeaf } from "./tree/tree";
+
+afterEach(() => {
+  nodesById.length = 0;
+});
 
 describe("createFileTree()", () => {
   describe("structure", () => {

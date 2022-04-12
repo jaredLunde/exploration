@@ -2,10 +2,10 @@ import memoizeOne from "@essentials/memoize-one";
 import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { Leaf } from "./leaf";
+import { nodesById } from "./nodes-by-id";
 import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  nodesById: Node<NodeData>[] = [];
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
@@ -14,6 +14,7 @@ export class Tree<NodeData = {}> {
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
   flatView = observable<number>(0);
   root: Branch<NodeData>;
+  nodesById = nodesById as Node<NodeData>[];
 
   constructor({
     getNodes,
@@ -76,8 +77,12 @@ export class Tree<NodeData = {}> {
     if (branch.expanded) {
       if (ensureVisible) {
         while (branch.parent) {
-          branch = branch.parent;
-          branch.expanded = true;
+          const node = branch.parent;
+
+          if (isBranch(node)) {
+            branch = node;
+            branch.expanded = true;
+          }
         }
       }
 
@@ -152,20 +157,27 @@ export class Tree<NodeData = {}> {
       }
     }
 
-    if (nodeToRemove.parent?.nodes) {
-      this.setNodes(
-        nodeToRemove.parent,
-        nodeToRemove.parent.nodes
-          .filter((nodeId) => nodeId !== nodeToRemove.id)
-          .map((nodeId) => this.nodesById[nodeId])
-      );
+    const nodeToRemoveParent = nodeToRemove.parent ?? this.root;
+
+    if (nodeToRemoveParent?.nodes) {
+      const nextNodes: number[] = [];
+
+      for (let i = 0; i < nodeToRemoveParent.nodes.length; i++) {
+        const nodeId = nodeToRemoveParent.nodes[i];
+
+        if (nodeId !== nodeToRemove.id) {
+          nextNodes.push(nodeId);
+        }
+      }
+
+      this.setNodes(nodeToRemoveParent, nextNodes);
     }
 
     this.invalidateFlatView();
   }
 
   async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
-    const initialParent = node.parent;
+    const initialParent = node.parent ?? this.root;
 
     if (
       // If the node is already in the target branch, do nothing
@@ -183,20 +195,22 @@ export class Tree<NodeData = {}> {
     // Parent may have changed in the meantime
     if (node.parent === initialParent) {
       if (initialParent?.nodes) {
-        this.setNodes(
-          initialParent,
-          initialParent.nodes
-            .filter((n) => n !== node.id)
-            .map((nodeId) => this.nodesById[nodeId])
-        );
+        const nextNodes: number[] = [];
+
+        for (let i = 0; i < initialParent.nodes.length; i++) {
+          const nodeId = initialParent.nodes[i];
+
+          if (nodeId !== node.id) {
+            nextNodes.push(nodeId);
+          }
+        }
+
+        this.setNodes(initialParent, nextNodes);
       }
 
       if (to.nodes) {
-        node.parent = to;
-        this.setNodes(
-          to,
-          to.nodes.concat(node.id).map((nodeId) => this.nodesById[nodeId])
-        );
+        node.parentId = to.id;
+        this.setNodes(to, [...to.nodes, node.id]);
       }
 
       this.invalidateFlatView();
@@ -257,15 +271,29 @@ export class Tree<NodeData = {}> {
     return promise;
   }
 
-  protected setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
+  protected setNodes(
+    branch: Branch<NodeData>,
+    nodeIds: number[] | Node<NodeData>[]
+  ): void {
     const comparator = this.comparator;
-    branch.nodes = (comparator ? nodes.sort(comparator) : nodes).map(
-      (node) => node.id
-    );
+    let nodes: Node<NodeData>[] = nodeIds as Node<NodeData>[];
+
+    if (typeof nodeIds[0] === "number") {
+      for (let i = 0; i < nodeIds.length; i++) {
+        const nodeId = nodeIds[i] as number;
+        nodes[i] = this.nodesById[nodeId];
+      }
+    }
+
+    nodes = comparator ? nodes.sort(comparator) : nodes;
+
+    branch.nodes = [];
     this.nodesById[branch.id] = branch;
 
     for (let i = 0; i < nodes.length; i++) {
-      this.nodesById[nodes[i].id] = nodes[i];
+      const node = nodes[i];
+      branch.nodes.push(node.id);
+      this.nodesById[node.id] = node;
     }
   }
 
@@ -298,6 +326,13 @@ export class Tree<NodeData = {}> {
     },
     (prevArgs, args) => prevArgs[0] === args[0]
   );
+
+  dispose(): void {
+    for (const nodeId of this.visibleNodes) {
+      // @ts-expect-error
+      nodesById[nodeId] = undefined;
+    }
+  }
 }
 
 function createDraft<NodeData = {}>(
