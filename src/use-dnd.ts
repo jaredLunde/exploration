@@ -33,7 +33,7 @@ export function useDnd(
       storedDir.current = event.dir;
 
       storedTimeout.current.timeout = setTimeout(() => {
-        if (!fileTree.isExpanded(event.dir)) {
+        if (!event.dir.expanded) {
           fileTree.expand(event.dir).then(() => {
             if (event.dir === storedDir.current) {
               dnd.next({ ...event, type: "expanded" });

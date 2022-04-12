@@ -3,6 +3,7 @@ lockfileVersion: 5.3
 specifiers:
   '@commitlint/cli': latest
   '@commitlint/config-conventional': latest
+  '@essentials/memoize-one': ^1.1.0
   '@essentials/request-timeout': ^1.3.0
   '@react-hook/hotkey': ^3.1.0
   '@react-hook/passive-layout-effect': ^1.2.1
@@ -42,6 +43,7 @@ specifiers:
   use-sync-external-store: ^1.0.0
 
 dependencies:
+  '@essentials/memoize-one': 1.1.0
   '@essentials/request-timeout': 1.3.0
   '@react-hook/hotkey': 3.1.0_react@18.0.0
   '@react-hook/passive-layout-effect': 1.2.1_react@18.0.0
@@ -61,9 +63,9 @@ devDependencies:
   '@swc-node/core': 1.8.2
   '@swc-node/jest': 1.4.3
   '@testing-library/jest-dom': 5.16.4
-  '@testing-library/react': 13.0.0_react-dom@18.0.0+react@18.0.0
-  '@testing-library/react-hooks': 7.0.2_063947ad87fde2e3846f1cfecffd9644
-  '@testing-library/user-event': 14.0.4
+  '@testing-library/react': 13.0.1_react-dom@18.0.0+react@18.0.0
+  '@testing-library/react-hooks': 8.0.0_cd4527864787a867d693ee49f6050614
+  '@testing-library/user-event': 14.1.0
   '@types/is-relative': 1.0.0
   '@types/jest': 27.4.1
   '@types/react': 18.0.0
@@ -1633,6 +1635,10 @@ packages:
       - supports-color
     dev: true
 
+  /@essentials/memoize-one/1.1.0:
+    resolution: {integrity: sha512-HMkuIkKNe0EWSUpZhlaq9+5Yp47YhrMhxLMnXTRnEyE5N4xKLspAvMGjUFdi794VnEF1EcOZFS8rdROeujrgag==}
+    dev: false
+
   /@essentials/raf/1.2.0:
     resolution: {integrity: sha512-AWJvpprE2o7ATMb7HBYMVUVmPJBCt2wZp2rY7d+rAcNSMvzLbDepy9KFeqqrPZh+s9aIpbw1LgmuAW7kuRFgrQ==}
     dev: false
@@ -2468,14 +2474,17 @@ packages:
       redent: 3.0.0
     dev: true
 
-  /@testing-library/react-hooks/7.0.2_063947ad87fde2e3846f1cfecffd9644:
-    resolution: {integrity: sha512-dYxpz8u9m4q1TuzfcUApqi8iFfR6R0FaMbr2hjZJy1uC8z+bO/K4v8Gs9eogGKYQop7QsrBTFkv/BCF7MzD2Cg==}
+  /@testing-library/react-hooks/8.0.0_cd4527864787a867d693ee49f6050614:
+    resolution: {integrity: sha512-uZqcgtcUUtw7Z9N32W13qQhVAD+Xki2hxbTR461MKax8T6Jr8nsUvZB+vcBTkzY2nFvsUet434CsgF0ncW2yFw==}
     engines: {node: '>=12'}
     peerDependencies:
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-      react-test-renderer: '>=16.9.0'
+      '@types/react': ^16.9.0 || ^17.0.0
+      react: ^16.9.0 || ^17.0.0
+      react-dom: ^16.9.0 || ^17.0.0
+      react-test-renderer: ^16.9.0 || ^17.0.0
     peerDependenciesMeta:
+      '@types/react':
+        optional: true
       react-dom:
         optional: true
       react-test-renderer:
@@ -2483,16 +2492,14 @@ packages:
     dependencies:
       '@babel/runtime': 7.17.8
       '@types/react': 18.0.0
-      '@types/react-dom': 18.0.0
-      '@types/react-test-renderer': 17.0.1
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
       react-error-boundary: 3.1.4_react@18.0.0
       react-test-renderer: 18.0.0_react@18.0.0
     dev: true
 
-  /@testing-library/react/13.0.0_react-dom@18.0.0+react@18.0.0:
-    resolution: {integrity: sha512-p0lYA1M7uoEmk2LnCbZLGmHJHyH59sAaZVXChTXlyhV/PRW9LoIh4mdf7tiXsO8BoNG+vN8UnFJff1hbZeXv+w==}
+  /@testing-library/react/13.0.1_react-dom@18.0.0+react@18.0.0:
+    resolution: {integrity: sha512-zeHx3PohYYp+4bTJwrixQY8zSBZjWUGwYc7OhD1EpWTHS92RleApLoP72NdwaWxOrM1P1Uezt3XvGf6t2XSWPQ==}
     engines: {node: '>=12'}
     peerDependencies:
       react: ^18.0.0
@@ -2505,8 +2512,8 @@ packages:
       react-dom: 18.0.0_react@18.0.0
     dev: true
 
-  /@testing-library/user-event/14.0.4:
-    resolution: {integrity: sha512-VBZe5lcUsmrQyOwIFvqOxLBoaTw1/Qy4Ek+VgmFYs719bs2SxUp42vbsb7ATlQDkHdj4OIQlucfpwxe5WoG1jA==}
+  /@testing-library/user-event/14.1.0:
+    resolution: {integrity: sha512-+CGfMXlVM+OwREHDEsfTGsXIMI+rjr3a7YBUSutq7soELht+8kQrM5k46xa/WLfHdtX/wqsDIleL6bi4i+xz0w==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
@@ -2645,12 +2652,6 @@ packages:
 
   /@types/react-dom/18.0.0:
     resolution: {integrity: sha512-49897Y0UiCGmxZqpC8Blrf6meL8QUla6eb+BBhn69dTXlmuOlzkfr7HHY/O8J25e1lTUMs+YYxSlVDAaGHCOLg==}
-    dependencies:
-      '@types/react': 18.0.0
-    dev: true
-
-  /@types/react-test-renderer/17.0.1:
-    resolution: {integrity: sha512-3Fi2O6Zzq/f3QR9dRnlnHso9bMl7weKCviFmfF6B4LS1Uat6Hkm15k0ZAQuDz+UBq6B3+g+NM6IT2nr5QgPzCw==}
     dependencies:
       '@types/react': 18.0.0
     dev: true

@@ -1,3 +1,4 @@
+import memoizeOne from "@essentials/memoize-one";
 import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { Leaf } from "./leaf";
@@ -11,7 +12,7 @@ export class Tree<NodeData = {}> {
   >();
   private getNodes: GetNodes<NodeData>;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
-  flatView = observable<number[]>([]);
+  flatView = observable<number>(0);
   root: Branch<NodeData>;
 
   constructor({
@@ -30,12 +31,10 @@ export class Tree<NodeData = {}> {
   }
 
   get visibleNodes(): number[] {
-    return this.flatView.getSnapshot();
+    return this.createFlatView(this.flatView.getSnapshot());
   }
 
-  getById = (id: number): Node<NodeData> | undefined => {
-    return this.treeNodeMap.get(id);
-  };
+  getById = this.treeNodeMap.get.bind(this.treeNodeMap);
 
   /**
    * Ensures that the children of any given branch have been loaded and ready to be worked with.
@@ -88,14 +87,14 @@ export class Tree<NodeData = {}> {
         );
       }
 
-      this.createFlatView();
+      this.invalidateFlatView();
     }
   }
 
   collapse(branch: Branch<NodeData>): void {
     if (branch.expanded) {
       branch.expanded = false;
-      this.createFlatView();
+      this.invalidateFlatView();
     }
   }
 
@@ -129,7 +128,7 @@ export class Tree<NodeData = {}> {
 
     if (draftResult.modified) {
       this.setNodes(branch, draftResult.draft);
-      this.createFlatView();
+      this.invalidateFlatView();
     }
   }
 
@@ -156,13 +155,18 @@ export class Tree<NodeData = {}> {
       );
     }
 
-    this.createFlatView();
+    this.invalidateFlatView();
   }
 
   async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
     const initialParent = node.parent;
 
-    if (initialParent === to) {
+    if (
+      // If the node is already in the target branch, do nothing
+      initialParent === to ||
+      // You can't move a node to a child of itself
+      (isBranch(node) && node.contains(to))
+    ) {
       return;
     }
 
@@ -170,7 +174,7 @@ export class Tree<NodeData = {}> {
       await this.expand(to);
     }
 
-    // parent may have changed in the meantime
+    // Parent may have changed in the meantime
     if (node.parent === initialParent) {
       if (initialParent?.nodes) {
         this.setNodes(
@@ -184,8 +188,12 @@ export class Tree<NodeData = {}> {
         this.setNodes(to, to.nodes.concat(node));
       }
 
-      this.createFlatView();
+      this.invalidateFlatView();
     }
+  }
+
+  invalidateFlatView(): void {
+    this.flatView.next(this.flatView.getSnapshot() + 1);
   }
 
   /**
@@ -202,7 +210,14 @@ export class Tree<NodeData = {}> {
   }
 
   isVisible(node: Node<NodeData>): boolean {
-    return !this.findNearestCollapsedParent(node);
+    let p = node.parent;
+
+    while (p) {
+      if (!p.expanded) return false;
+      p = p.parent;
+    }
+
+    return true;
   }
 
   async loadNodes(branch: Branch<NodeData>): Promise<void> {
@@ -240,46 +255,34 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  private findNearestCollapsedParent(
-    node: Node<NodeData>
-  ): Branch<NodeData> | undefined {
-    let p = node.parent;
+  private createFlatView = memoizeOne(
+    (id: number) => {
+      const flatView: number[] = [];
+      const nodes: Node<NodeData>[] = [];
 
-    while (p) {
-      if (!p.expanded) return p;
-      p = p.parent;
-    }
-  }
+      if (this.root.nodes) {
+        nodes.push(...[...this.root.nodes].reverse());
 
-  private createFlatView() {
-    const flatView: number[] = [];
-    const nodes: Node<NodeData>[] = [];
+        let node: Node<NodeData> | undefined;
 
-    if (this.root.nodes) {
-      for (let i = this.root.nodes.length - 1; i >= 0; i--) {
-        nodes.push(this.root.nodes[i]);
-      }
+        while ((node = nodes.pop())) {
+          flatView.push(node.id);
 
-      let node: Node<NodeData> | undefined;
-
-      while ((node = nodes.pop())) {
-        flatView.push(node.id);
-
-        if (
-          isBranch(node) &&
-          node.expanded &&
-          node.nodes &&
-          node.nodes.length
-        ) {
-          for (let i = node.nodes.length - 1; i >= 0; i--) {
-            nodes.push(node.nodes[i]);
+          if (
+            isBranch(node) &&
+            node.expanded &&
+            node.nodes &&
+            node.nodes.length > 0
+          ) {
+            nodes.push(...[...node.nodes].reverse());
           }
         }
       }
-    }
 
-    this.flatView.next(flatView);
-  }
+      return flatView;
+    },
+    (prevArgs, args) => prevArgs[0] === args[0]
+  );
 }
 
 function createDraft<NodeData = {}>(

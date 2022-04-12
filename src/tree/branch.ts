@@ -24,6 +24,15 @@ export class Branch<NodeData = {}> extends Leaf<NodeData> {
     super(parent, data);
     this.expanded = expanded;
   }
+
+  contains(node: Node<NodeData>): boolean {
+    while (node.parent) {
+      if (node.parent === this) return true;
+      node = node.parent;
+    }
+
+    return false;
+  }
 }
 
 export type Node<NodeData = {}> = Leaf<NodeData> | Branch<NodeData>;

@@ -53,7 +53,7 @@ const createProps = trieMemoize(
       }
 
       if (isDir(node)) {
-        if (tree.isExpanded(node)) {
+        if (node.expanded) {
           tree.collapse(node);
         } else {
           tree.expand(node);

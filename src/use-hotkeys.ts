@@ -136,7 +136,7 @@ export function useHotkeys(
         const node = fileTree.getById(nodeId);
 
         if (node && isDir(node)) {
-          if (fileTree.isExpanded(node)) {
+          if (node.expanded) {
             fileTree.collapse(node);
             return;
           }
@@ -181,7 +181,7 @@ export function useHotkeys(
 
           if (node) {
             if (isDir(node)) {
-              if (fileTree.isExpanded(node)) {
+              if (node.expanded) {
                 fileTree.collapse(node);
               } else {
                 fileTree.expand(node);

@@ -226,16 +226,16 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
       expect(handle).toHaveBeenCalledTimes(1);
-      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
       await tree.expand(tree.root.nodes[0] as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(2);
-      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
       unsubscribe();
       await tree.expand(tree.root.nodes[0] as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(2);
-      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
     });
   });
 
