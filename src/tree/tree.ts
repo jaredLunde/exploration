@@ -5,7 +5,7 @@ import { Leaf } from "./leaf";
 import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  protected treeNodeMap = new Map<number, Node<NodeData>>();
+  protected treeNodesById: (Node<NodeData> | undefined)[] = [];
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
@@ -34,7 +34,9 @@ export class Tree<NodeData = {}> {
     return this.createFlatView(this.flatView.getSnapshot());
   }
 
-  getById = this.treeNodeMap.get.bind(this.treeNodeMap);
+  getById(id: number): Node<NodeData> | undefined {
+    return this.treeNodesById[id];
+  }
 
   /**
    * Ensures that the children of any given branch have been loaded and ready to be worked with.
@@ -133,17 +135,20 @@ export class Tree<NodeData = {}> {
   }
 
   remove(nodeToRemove: Node<NodeData>): void {
-    this.treeNodeMap.delete(nodeToRemove.id);
-
     if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
       const nodes = nodeToRemove.nodes.slice();
+      this.treeNodesById[nodeToRemove.id] = undefined;
       let node: Node<NodeData> | undefined;
 
       while ((node = nodes.pop())) {
-        this.treeNodeMap.delete(node.id);
+        this.treeNodesById[node.id] = undefined;
 
         if (isBranch(node) && node.nodes) {
           nodes.push(...node.nodes);
+
+          for (let i = 0; i < node.nodes.length; i++) {
+            this.treeNodesById[node.nodes[i].id] = undefined;
+          }
         }
       }
     }
@@ -248,10 +253,10 @@ export class Tree<NodeData = {}> {
 
   protected setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
     branch.nodes = this.comparator ? nodes.sort(this.comparator) : nodes;
-    this.treeNodeMap.set(branch.id, branch);
+    this.treeNodesById[branch.id] = branch;
 
     for (let i = 0; i < nodes.length; i++) {
-      this.treeNodeMap.set(nodes[i].id, nodes[i]);
+      this.treeNodesById[nodes[i].id] = nodes[i];
     }
   }
 
