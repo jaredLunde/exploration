@@ -124,7 +124,7 @@ export function useVirtualize<Meta>(
 
         children.push(
           render({
-            key: node.id,
+            key: nodeId,
             index,
             node,
             tree: fileTree,

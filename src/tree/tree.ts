@@ -5,7 +5,7 @@ import { Leaf } from "./leaf";
 import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  protected treeNodesById: (Node<NodeData> | undefined)[] = [];
+  nodesById: Node<NodeData>[] = [];
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
@@ -31,11 +31,11 @@ export class Tree<NodeData = {}> {
   }
 
   get visibleNodes(): number[] {
-    return this.createFlatView(this.flatView.getSnapshot());
+    return this.createVisibleNodes(this.flatView.getSnapshot());
   }
 
   getById(id: number): Node<NodeData> | undefined {
-    return this.treeNodesById[id];
+    return this.nodesById[id];
   }
 
   /**
@@ -83,9 +83,10 @@ export class Tree<NodeData = {}> {
 
       if (recursive && branch.nodes) {
         await Promise.all(
-          branch.nodes.map((node) =>
-            isBranch(node) ? this.expand(node, options) : null
-          )
+          branch.nodes.map((nodeId) => {
+            const node = this.nodesById[nodeId];
+            return isBranch(node) ? this.expand(node, options) : null;
+          })
         );
       }
 
@@ -111,7 +112,8 @@ export class Tree<NodeData = {}> {
       revert(): void;
     }) => void | Node<NodeData>[]
   ): void {
-    let draftResult = createDraft(branch.nodes ?? []);
+    const nodes = (branch.nodes ?? []).map((nodeId) => this.nodesById[nodeId]);
+    let draftResult = createDraft(nodes);
 
     draftResult.draft =
       produceFn({
@@ -123,8 +125,10 @@ export class Tree<NodeData = {}> {
           draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
           return node;
         },
-        revert() {
-          draftResult = createDraft(branch.nodes ?? []);
+        revert: () => {
+          draftResult = createDraft(
+            (branch.nodes ?? []).map((nodeId) => this.nodesById[nodeId])
+          );
         },
       }) ?? draftResult.draft;
 
@@ -137,18 +141,13 @@ export class Tree<NodeData = {}> {
   remove(nodeToRemove: Node<NodeData>): void {
     if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
       const nodes = nodeToRemove.nodes.slice();
-      this.treeNodesById[nodeToRemove.id] = undefined;
-      let node: Node<NodeData> | undefined;
+      let nodeId: number | undefined;
 
-      while ((node = nodes.pop())) {
-        this.treeNodesById[node.id] = undefined;
+      while ((nodeId = nodes.pop())) {
+        const node = this.nodesById[nodeId];
 
         if (isBranch(node) && node.nodes) {
           nodes.push(...node.nodes);
-
-          for (let i = 0; i < node.nodes.length; i++) {
-            this.treeNodesById[node.nodes[i].id] = undefined;
-          }
         }
       }
     }
@@ -156,7 +155,9 @@ export class Tree<NodeData = {}> {
     if (nodeToRemove.parent?.nodes) {
       this.setNodes(
         nodeToRemove.parent,
-        nodeToRemove.parent.nodes.filter((n) => n !== nodeToRemove)
+        nodeToRemove.parent.nodes
+          .filter((nodeId) => nodeId !== nodeToRemove.id)
+          .map((nodeId) => this.nodesById[nodeId])
       );
     }
 
@@ -184,13 +185,18 @@ export class Tree<NodeData = {}> {
       if (initialParent?.nodes) {
         this.setNodes(
           initialParent,
-          initialParent.nodes.filter((n) => n !== node)
+          initialParent.nodes
+            .filter((n) => n !== node.id)
+            .map((nodeId) => this.nodesById[nodeId])
         );
       }
 
       if (to.nodes) {
         node.parent = to;
-        this.setNodes(to, to.nodes.concat(node));
+        this.setNodes(
+          to,
+          to.nodes.concat(node.id).map((nodeId) => this.nodesById[nodeId])
+        );
       }
 
       this.invalidateFlatView();
@@ -252,26 +258,30 @@ export class Tree<NodeData = {}> {
   }
 
   protected setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
-    branch.nodes = this.comparator ? nodes.sort(this.comparator) : nodes;
-    this.treeNodesById[branch.id] = branch;
+    const comparator = this.comparator;
+    branch.nodes = (comparator ? nodes.sort(comparator) : nodes).map(
+      (node) => node.id
+    );
+    this.nodesById[branch.id] = branch;
 
     for (let i = 0; i < nodes.length; i++) {
-      this.treeNodesById[nodes[i].id] = nodes[i];
+      this.nodesById[nodes[i].id] = nodes[i];
     }
   }
 
-  private createFlatView = memoizeOne(
+  private createVisibleNodes = memoizeOne(
     (id: number) => {
       const flatView: number[] = [];
-      const nodes: Node<NodeData>[] = [];
+      const nodes: number[] = [];
 
       if (this.root.nodes) {
         nodes.push(...[...this.root.nodes].reverse());
 
-        let node: Node<NodeData> | undefined;
+        let nodeId: number | undefined;
 
-        while ((node = nodes.pop())) {
-          flatView.push(node.id);
+        while ((nodeId = nodes.pop())) {
+          flatView.push(nodeId);
+          const node = this.nodesById[nodeId];
 
           if (
             isBranch(node) &&
@@ -328,11 +338,11 @@ function createDraft<NodeData = {}>(
   return draftResult;
 }
 
-export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
+export function isLeaf<T>(node: Node<T> | undefined): node is Leaf<T> {
   return node instanceof Leaf && !(node instanceof Branch);
 }
 
-export function isBranch<T>(node: Node<T>): node is Branch<T> {
+export function isBranch<T>(node: Node<T> | undefined): node is Branch<T> {
   return node instanceof Branch;
 }
 

@@ -37,6 +37,7 @@ export function createFileTree<Meta = {}>(
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   declare root: Dir<Meta>;
+  declare nodesById: FileTreeNode<Meta>[];
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
   declare getById: (id: number) => FileTreeNode<Meta> | undefined;
   declare expand: (
@@ -124,13 +125,15 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     node.data.name = newName;
 
     if (node.parent && node.parent.nodes) {
-      this.setNodes(node.parent, node.parent.nodes);
+      this.setNodes(
+        node.parent,
+        node.parent.nodes.map((id) => this.nodesById[id])
+      );
     }
   }
 }
 
 export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
-  public declare nodes?: FileTreeNode<Meta>[];
   public declare parent: Dir<Meta> | null;
 
   get basename() {
@@ -147,7 +150,6 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 }
 
 export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
-  public declare nodes?: FileTreeNode<Meta>[];
   public declare parent: Dir<Meta> | null;
 
   get basename() {

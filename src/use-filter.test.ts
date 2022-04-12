@@ -17,7 +17,11 @@ describe("useFilter()", () => {
     );
 
     expect(result.current).toEqual([
-      fileTree.root.nodes.find((node) => node.basename.match(/github/)).id,
+      fileTree.getById(
+        fileTree.root.nodes.find((node) =>
+          fileTree.getById(node).basename.match(/github/)
+        )
+      ).id,
     ]);
   });
 

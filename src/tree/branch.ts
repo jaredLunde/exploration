@@ -1,7 +1,7 @@
 import { Leaf } from "./leaf";
 
 export class Branch<NodeData = {}> extends Leaf<NodeData> {
-  public nodes?: Node<NodeData>[];
+  public nodes?: number[];
   /**
    * A flag indicating the "intended" expansion status of this branch. If this is `true`, the branch
    * is either already expanded OR is about to be expanded. Explained below.
