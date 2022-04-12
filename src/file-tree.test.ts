@@ -11,9 +11,7 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      expect(tree.flatViewMap.get(tree.root.id).length).toBe(
-        mockFs["/"].length
-      );
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
     });
 
@@ -77,8 +75,6 @@ describe("createFileTree()", () => {
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/.github"].length
       );
-
-      expect(tree.flatViewMap.get(node.id)).toBeUndefined();
     });
 
     it("should expand a nested directory recursively", async () => {
@@ -92,8 +88,6 @@ describe("createFileTree()", () => {
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-
-      expect(tree.flatViewMap.get(node.id)).toBeUndefined();
     });
 
     it("should not expand a directory that is already visible", async () => {
@@ -171,20 +165,15 @@ describe("createFileTree()", () => {
       await tree.expand(nestedNode);
       tree.collapse(node);
 
-      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
-      expect(tree.flatViewMap.get(node.id).length).toBe(
-        mockFs["/src"].length + mockFs["/src/tree"].length
-      );
-
+      expect(nestedNode.expanded).toBe(true);
       await tree.expand(node);
 
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-      expect(tree.flatViewMap.get(tree.root.id).length).toBe(
+      expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-      expect(tree.flatViewMap.get(node.id)).toBeUndefined();
     });
   });
 
@@ -201,12 +190,8 @@ describe("createFileTree()", () => {
 
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
       expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
-      expect(tree.flatViewMap.get(tree.root.id).length).toBe(
-        mockFs["/"].length - 1
-      );
-      expect(tree.flatViewMap.get(tree.root.id).indexOf(removedNode.id)).toBe(
-        -1
-      );
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
+      expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
     });
 
     it("should remove branch node", async () => {
@@ -227,12 +212,8 @@ describe("createFileTree()", () => {
 
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
       expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
-      expect(tree.flatViewMap.get(tree.root.id).length).toBe(
-        mockFs["/"].length - 1
-      );
-      expect(tree.flatViewMap.get(tree.root.id).indexOf(removedNode.id)).toBe(
-        -1
-      );
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
+      expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
     });
   });
 
@@ -241,20 +222,20 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       const handle = jest.fn();
-      const unsubscribe = tree.flatViewMap.didChange.subscribe(handle);
+      const unsubscribe = tree.flatView.subscribe(handle);
 
       await waitForTree(tree);
       expect(handle).toHaveBeenCalledTimes(1);
-      expect(tree.flatViewMap.didChange.getSnapshot()).toBeGreaterThan(-1);
+      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
 
       await tree.expand(tree.root.nodes[0] as Dir<any>);
-      expect(handle).toHaveBeenCalledTimes(5);
-      expect(tree.flatViewMap.didChange.getSnapshot()).toBeGreaterThan(0);
+      expect(handle).toHaveBeenCalledTimes(2);
+      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
 
       unsubscribe();
       await tree.expand(tree.root.nodes[0] as Dir<any>);
-      expect(handle).toHaveBeenCalledTimes(5);
-      expect(tree.flatViewMap.didChange.getSnapshot()).toBeGreaterThan(0);
+      expect(handle).toHaveBeenCalledTimes(2);
+      expect(tree.flatView.getSnapshot().length).toBeGreaterThan(0);
     });
   });
 

@@ -6,7 +6,7 @@ import { useVisibleNodes } from "./use-visible-nodes";
 
 export function useSelections<Meta>(
   fileTree: FileTree<Meta>,
-  nodes?: Uint32Array
+  nodes?: number[]
 ) {
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
@@ -64,7 +64,7 @@ const createProps = trieMemoize(
   [WeakMap, WeakMap, Map],
   (
     selectionsSet: ObservableRange<number>,
-    visibleNodes: Uint32Array,
+    visibleNodes: number[],
     nodeId: number
   ): SelectionsProps => {
     return {
@@ -142,7 +142,7 @@ const createProps = trieMemoize(
 
 const getSelectionsSet = trieMemoize(
   [WeakMap, WeakMap],
-  <Meta>(fileTree: FileTree<Meta>, visibleNodes: Uint32Array) =>
+  <Meta>(fileTree: FileTree<Meta>, visibleNodes: number[]) =>
     new ObservableRange<number>()
 );
 

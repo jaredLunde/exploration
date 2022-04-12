@@ -30,7 +30,7 @@ export function useFilter<Meta>(
         }
       }
 
-      return new Uint32Array(filteredNodes);
+      return filteredNodes;
     }
 
     return visibleNodes;

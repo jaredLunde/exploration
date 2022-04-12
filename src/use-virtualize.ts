@@ -288,7 +288,7 @@ export interface UseScrollPosition {
 }
 
 export interface UseVirtualizeOptions {
-  nodes?: Uint32Array;
+  nodes?: number[];
   nodeHeight: number;
   nodeGap?: number;
   overscanBy?: number;

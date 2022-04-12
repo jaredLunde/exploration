@@ -1,36 +1,36 @@
 import type { Node } from "./branch";
 import { Branch } from "./branch";
-import { FlatViewMap } from "./flat-view-map";
 import { Leaf } from "./leaf";
+import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  protected rootBranch: Branch<NodeData>;
-  flatViewMap = new FlatViewMap();
   protected treeNodeMap = new Map<number, Node<NodeData>>();
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
   >();
   private getNodes: GetNodes<NodeData>;
+  comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
+  flatView = observable<number[]>([]);
+  root: Branch<NodeData>;
 
   constructor({
     getNodes,
     root,
+    comparator,
   }: {
     getNodes: GetNodes<NodeData>;
     root: Branch<NodeData>;
+    comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
   }) {
-    this.rootBranch = root;
+    this.root = root;
     this.getNodes = getNodes;
-    this.expand(this.rootBranch);
+    this.comparator = comparator;
+    this.expand(this.root);
   }
 
-  get root(): Branch<NodeData> {
-    return this.rootBranch;
-  }
-
-  get visibleNodes(): Uint32Array | undefined {
-    return this.flatViewMap.get(this.rootBranch.id);
+  get visibleNodes(): number[] {
+    return this.flatView.getSnapshot();
   }
 
   getById = (id: number): Node<NodeData> | undefined => {
@@ -47,9 +47,7 @@ export class Tree<NodeData = {}> {
    *
    * @param branch - The branch to check
    */
-  async ensureLoaded(
-    branch: Branch<NodeData> = this.rootBranch
-  ): Promise<void> {
+  async ensureLoaded(branch: Branch<NodeData> = this.root): Promise<void> {
     if (!branch.nodes) {
       await this.loadNodes(branch);
     }
@@ -75,7 +73,12 @@ export class Tree<NodeData = {}> {
 
     // Check again as collapse might have been called in the meantime
     if (branch.expanded) {
-      this.connectBranchToClosestFlatView(branch, ensureVisible);
+      if (ensureVisible) {
+        while (branch.parent) {
+          branch = branch.parent;
+          branch.expanded = true;
+        }
+      }
 
       if (recursive && branch.nodes) {
         await Promise.all(
@@ -84,12 +87,15 @@ export class Tree<NodeData = {}> {
           )
         );
       }
+
+      this.createFlatView();
     }
   }
 
   collapse(branch: Branch<NodeData>): void {
     if (branch.expanded) {
-      this.disconnectBranchFromClosestFlatView(branch);
+      branch.expanded = false;
+      this.createFlatView();
     }
   }
 
@@ -123,12 +129,11 @@ export class Tree<NodeData = {}> {
 
     if (draftResult.modified) {
       this.setNodes(branch, draftResult.draft);
+      this.createFlatView();
     }
   }
 
   remove(nodeToRemove: Node<NodeData>): void {
-    // TODO: dispatch remove event
-    this.removeNodeFromFlatView(nodeToRemove);
     this.treeNodeMap.delete(nodeToRemove.id);
 
     if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
@@ -136,28 +141,25 @@ export class Tree<NodeData = {}> {
       let node: Node<NodeData> | undefined;
 
       while ((node = nodes.pop())) {
-        this.removeNodeFromFlatView(node);
         this.treeNodeMap.delete(node.id);
 
         if (isBranch(node) && node.nodes) {
-          // eslint-disable-next-line prefer-spread
-          nodes.push.apply(nodes, node.nodes);
+          nodes.push(...node.nodes);
         }
       }
     }
 
     if (nodeToRemove.parent?.nodes) {
-      nodeToRemove.parent.nodes = nodeToRemove.parent.nodes.filter(
-        (n) => n !== nodeToRemove
+      this.setNodes(
+        nodeToRemove.parent,
+        nodeToRemove.parent.nodes.filter((n) => n !== nodeToRemove)
       );
     }
+
+    this.createFlatView();
   }
 
-  async move(
-    node: Node<NodeData>,
-    to: Branch<NodeData>,
-    sort?: (a: Node<NodeData>, b: Node<NodeData>) => number
-  ): Promise<void> {
+  async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
     const initialParent = node.parent;
 
     if (initialParent === to) {
@@ -170,10 +172,6 @@ export class Tree<NodeData = {}> {
 
     // parent may have changed in the meantime
     if (node.parent === initialParent) {
-      if (isBranch(node)) {
-        this.disconnectBranchFromClosestFlatView(node);
-      }
-
       if (initialParent?.nodes) {
         this.setNodes(
           initialParent,
@@ -182,14 +180,11 @@ export class Tree<NodeData = {}> {
       }
 
       if (to.nodes) {
-        const nextNodes = to.nodes.concat(node);
-        this.setNodes(to, sort ? nextNodes.sort(sort) : nextNodes);
         node.parent = to;
+        this.setNodes(to, to.nodes.concat(node));
       }
 
-      if (isBranch(node)) {
-        this.connectBranchToClosestFlatView(node);
-      }
+      this.createFlatView();
     }
   }
 
@@ -203,25 +198,20 @@ export class Tree<NodeData = {}> {
    * @param branch - The branch to check
    */
   isExpanded(branch: Branch<NodeData>): boolean {
-    return !!(
-      branch.nodes &&
-      branch.expanded &&
-      !this.flatViewMap.has(branch.id)
-    );
+    return !!(branch.nodes && branch.expanded);
   }
 
   isVisible(node: Node<NodeData>): boolean {
-    return !this.findClosestDisconnectedParent(node);
+    return !this.findNearestCollapsedParent(node);
   }
 
-  private async loadNodes(branch: Branch<NodeData>): Promise<void> {
+  async loadNodes(branch: Branch<NodeData>): Promise<void> {
     const promise = this.pendingLoadChildrenRequests.get(branch);
 
     if (!promise) {
       const promise = (async (): Promise<void> => {
         if (branch) {
           const nodes = await this.getNodes(branch);
-
           this.setNodes(branch, nodes);
 
           for (let i = 0; i < nodes.length; i++) {
@@ -242,131 +232,15 @@ export class Tree<NodeData = {}> {
   }
 
   protected setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
-    const restoreExpansionQueue: Branch<NodeData>[] = [];
+    branch.nodes = this.comparator ? nodes.sort(this.comparator) : nodes;
+    this.treeNodeMap.set(branch.id, branch);
 
-    if (branch.expanded) {
-      this.disconnectBranchFromClosestFlatView(branch);
-      restoreExpansionQueue.unshift(branch);
-    }
-
-    if (branch.nodes) {
-      for (let i = 0; i < branch.nodes.length; i++) {
-        const node = branch.nodes[i];
-        // if a child branch is expanded, we must disconnect it (will be reconnected later)
-        if (isBranch(node) && node.expanded) {
-          this.disconnectBranchFromClosestFlatView(node);
-          restoreExpansionQueue.unshift(node);
-        }
-      }
-    }
-
-    branch.nodes! = nodes;
-    const flatView = new Uint32Array(branch.nodes.length);
-
-    if (branch === this.root) {
-      this.treeNodeMap.set(branch.id, branch);
-    }
-
-    for (let i = 0; i < branch.nodes.length; i++) {
-      const child = branch.nodes[i];
-      flatView[i] = child.id;
-      this.treeNodeMap.set(child.id, child);
-    }
-
-    // save the updated flat projection
-    this.flatViewMap.set(branch.id, flatView);
-
-    for (let i = 0; i < restoreExpansionQueue.length; i++) {
-      this.connectBranchToClosestFlatView(restoreExpansionQueue[i]);
+    for (let i = 0; i < nodes.length; i++) {
+      this.treeNodeMap.set(nodes[i].id, nodes[i]);
     }
   }
 
-  private removeNodeFromFlatView(node: Node<NodeData>): void {
-    // if the node (branch) was in a disconnected state, remove its records
-    this.flatViewMap.delete(node.id);
-    // proceed with the complete removal from the shadow parent
-    const shadowParent =
-      this.findClosestDisconnectedParent(node) ?? this.rootBranch;
-    const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-    if (parentFlatView) {
-      const { start, end } = this.getNodeProjectionRangeWithinFlatView(
-        parentFlatView,
-        node
-      );
-
-      const spliced = spliceTypedArray(parentFlatView, start, end - start)[0];
-
-      if (isBranch(node)) {
-        node.expanded = false;
-      }
-
-      this.flatViewMap.set(shadowParent.id, spliced);
-    }
-  }
-
-  private disconnectBranchFromClosestFlatView(branch: Branch<NodeData>): void {
-    // if is NOT root branch, and is connected to a shadow parent
-    if (!this.isRootBranch(branch) && !this.flatViewMap.has(branch.id)) {
-      const shadowParent =
-        this.findClosestDisconnectedParent(branch) || this.rootBranch;
-      const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-      if (parentFlatView) {
-        const { start, end } = this.getNodeProjectionRangeWithinFlatView(
-          parentFlatView,
-          branch
-        );
-        const [spliced, deleted] = spliceTypedArray(
-          parentFlatView,
-          start + 1,
-          end - start - 1
-        );
-
-        branch.expanded = false;
-        this.flatViewMap.set(shadowParent.id, spliced);
-        this.flatViewMap.set(branch.id, deleted);
-      }
-    }
-  }
-
-  private connectBranchToClosestFlatView(
-    branch: Branch<NodeData>,
-    liftToRoot = false
-  ): void {
-    const shadowParent =
-      this.findClosestDisconnectedParent(branch) || this.rootBranch;
-
-    // if is NOT root branch, and is disconnected from its shadow parent
-    if (!this.isRootBranch(branch) && this.flatViewMap.has(branch.id)) {
-      const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-      if (parentFlatView) {
-        const fromIdx = parentFlatView.indexOf(branch.id) + 1;
-        const selfFlatView = this.flatViewMap.get(branch.id);
-        const spliced = spliceTypedArray(
-          parentFlatView,
-          fromIdx,
-          0,
-          selfFlatView
-        )[0];
-
-        branch.expanded = true;
-        this.flatViewMap.set(shadowParent.id, spliced);
-        this.flatViewMap.delete(branch.id);
-      }
-    }
-
-    if (liftToRoot && !this.isRootBranch(shadowParent)) {
-      this.connectBranchToClosestFlatView(shadowParent, true);
-    }
-  }
-
-  private isRootBranch(branch: Branch<NodeData>): boolean {
-    return branch === this.rootBranch;
-  }
-
-  private findClosestDisconnectedParent(
+  private findNearestCollapsedParent(
     node: Node<NodeData>
   ): Branch<NodeData> | undefined {
     let p = node.parent;
@@ -377,31 +251,34 @@ export class Tree<NodeData = {}> {
     }
   }
 
-  private getNodeProjectionRangeWithinFlatView(
-    flatView: Uint32Array,
-    node: Node<NodeData>
-  ): { start: number; end: number } {
-    let b = node;
+  private createFlatView() {
+    const flatView: number[] = [];
+    const nodes: Node<NodeData>[] = [];
 
-    // keep walking up until we find a branch that is NOT the last child of its parent
-    while (b.parent?.nodes?.[b.parent.nodes.length - 1] === b) {
-      b = b.parent;
+    if (this.root.nodes) {
+      for (let i = this.root.nodes.length - 1; i >= 0; i--) {
+        nodes.push(this.root.nodes[i]);
+      }
+
+      let node: Node<NodeData> | undefined;
+
+      while ((node = nodes.pop())) {
+        flatView.push(node.id);
+
+        if (
+          isBranch(node) &&
+          node.expanded &&
+          node.nodes &&
+          node.nodes.length
+        ) {
+          for (let i = node.nodes.length - 1; i >= 0; i--) {
+            nodes.push(node.nodes[i]);
+          }
+        }
+      }
     }
 
-    const startIndex = flatView.indexOf(node.id);
-
-    if (b.parent?.nodes) {
-      // once we have that, just return the immediate next sibling node
-      const nextSibling = b.parent.nodes[b.parent.nodes.indexOf(b) + 1];
-      const endIndex = flatView.indexOf(nextSibling.id);
-
-      return {
-        start: startIndex,
-        end: endIndex > -1 ? endIndex : flatView.length,
-      };
-    }
-
-    return { start: startIndex, end: -1 };
+    this.flatView.next(flatView);
   }
 }
 
@@ -449,45 +326,6 @@ export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
 
 export function isBranch<T>(node: Node<T>): node is Branch<T> {
   return node instanceof Branch;
-}
-
-/**
- * Like Array.prototype.splice except this method won't throw
- * RangeError when given too many items (with spread operator as `...items`)
- *
- * Also items are concated straight up without having to use the spread operator
- *
- * Performance is more or less same as Array.prototype.splice
- *
- * @param arr - Array to splice
- * @param start - Start index where splicing should begin
- * @param deleteCount - Items to delete (optionally replace with given items)
- * @param elements - Items to insert (when deleteCount is same as items.length, it becomes a replace)
- */
-export function spliceTypedArray(
-  arr: Uint32Array,
-  start: number,
-  deleteCount = 0,
-  elements?: Uint32Array
-): [Uint32Array, Uint32Array] {
-  /* It's creating a new array with the same length as the original array. */
-  const deleted = arr.slice(start, start + deleteCount);
-  const spliced = new Uint32Array(
-    arr.length - deleteCount + (elements ? elements.length : 0)
-  );
-
-  spliced.set(arr.slice(0, start));
-
-  if (elements) {
-    spliced.set(elements, start);
-  }
-
-  spliced.set(
-    arr.slice(start + deleteCount, arr.length),
-    start + (elements ? elements.length : 0)
-  );
-
-  return [spliced, deleted];
 }
 
 export type GetNodes<NodeData = {}> = {

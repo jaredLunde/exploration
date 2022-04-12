@@ -128,7 +128,7 @@ describe("useTraits()", () => {
     const spy = jest.fn();
 
     result.current.didChange.subscribe((iterable) => {
-      const next = iterable.next().value;
+      const next = iterable.entries().next().value;
       if (!next) return;
       const [k, v] = next;
       spy([k, [...v]]);

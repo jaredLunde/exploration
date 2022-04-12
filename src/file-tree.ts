@@ -15,6 +15,7 @@ export function createFileTree<Meta = {}>(
   } = {}
 ) {
   const { comparator = defaultComparator, root } = config;
+
   return new FileTree<Meta>({
     async getNodes(parent) {
       const factory: FileTreeFactory<Meta> = {
@@ -27,9 +28,7 @@ export function createFileTree<Meta = {}>(
         },
       };
 
-      const nodes = await getNodes(parent as Dir<Meta>, factory);
-      nodes.sort(comparator);
-      return nodes;
+      return getNodes(parent as Dir<Meta>, factory);
     },
     comparator,
     root: new Dir(null, root ? { ...root } : { name: "/" }),
@@ -37,7 +36,7 @@ export function createFileTree<Meta = {}>(
 }
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
-  protected declare rootBranch: Dir<Meta>;
+  declare root: Dir<Meta>;
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
   declare getById: (id: number) => FileTreeNode<Meta> | undefined;
   declare expand: (
@@ -49,7 +48,6 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   ) => Promise<void>;
   declare collapse: (dir: Dir<Meta>) => void;
   declare remove: (node: FileTreeNode<Meta>) => void;
-  protected comparator;
 
   constructor({
     getNodes,
@@ -57,15 +55,12 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     root,
   }: {
     getNodes: GetNodes<FileTreeData<Meta>>;
-    comparator: (a: FileTreeNode, b: FileTreeNode) => number;
+    comparator: (a: FileTreeNode<Meta>, b: FileTreeNode<Meta>) => number;
     root: Dir<Meta>;
   }) {
     super({ getNodes, root });
+    // @ts-expect-error
     this.comparator = comparator;
-  }
-
-  get root(): Dir<Meta> {
-    return this.rootBranch;
   }
 
   public produce(
@@ -77,19 +72,11 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
           node: NodeType,
           insertionIndex?: number
         ): NodeType;
-        sort(): void;
         revert(): void;
       }
     ) => void | (Dir<Meta> | File<Meta>)[]
   ) {
-    const comparator = this.comparator;
-
     return this._produce(dir, (context) => {
-      function sort() {
-        // @ts-expect-error
-        context.draft.sort(comparator);
-      }
-
       const producer = produceFn({
         get draft() {
           return context.draft as (Dir<Meta> | File<Meta>)[];
@@ -99,8 +86,6 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
           const insertedNode = context.insert(node, insertionIndex);
           return insertedNode;
         },
-
-        sort,
 
         revert() {
           context.revert();
@@ -115,20 +100,12 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
         },
       });
 
-      sort();
       return producer;
     });
   }
 
-  sort(dir: Dir<Meta>) {
-    this.produce(dir, ({ draft }) => {
-      draft.sort(this.comparator);
-    });
-  }
-
   move(node: FileTreeNode<Meta>, to: Dir<Meta>) {
-    // @ts-expect-error
-    return super.move(node, to, this.comparator);
+    return super.move(node, to);
   }
 
   newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>) {
@@ -146,8 +123,8 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   rename(node: FileTreeNode<Meta>, newName: string) {
     node.data.name = newName;
 
-    if (node.parent) {
-      this.sort(node.parent);
+    if (node.parent && node.parent.nodes) {
+      this.setNodes(node.parent, node.parent.nodes);
     }
   }
 }

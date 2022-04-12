@@ -9,7 +9,7 @@ import { useVisibleNodes } from "./use-visible-nodes";
 export function useHotkeys(
   fileTree: FileTree,
   options: {
-    nodes?: Uint32Array;
+    nodes?: number[];
     windowRef: WindowRef;
     rovingFocus: ReturnType<typeof useRovingFocus>;
     selections: ReturnType<typeof useSelections>;
