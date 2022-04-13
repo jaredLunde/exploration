@@ -240,7 +240,7 @@ describe("createFileTree()", () => {
       const unsubscribe = tree.flatView.subscribe(handle);
 
       await waitForTree(tree);
-      expect(handle).toHaveBeenCalledTimes(1);
+      expect(handle).toHaveBeenCalledTimes(0);
       expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
       await tree.expand(tree.getById(tree.root.nodes[0]) as Dir<any>);

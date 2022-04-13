@@ -250,22 +250,21 @@ export class Tree<NodeData = {}> {
 
     if (!promise) {
       const promise = (async (): Promise<void> => {
-        if (branch) {
-          const nodes = await this.getNodes(branch);
-          this.setNodes(branch, nodes);
+        const nodes = await this.getNodes(branch);
+        this.setNodes(branch, nodes);
 
-          for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i];
 
-            if (isBranch(node) && node.expanded) {
-              this.expand(node);
-            }
+          if (isBranch(node) && node.expanded) {
+            this.expand(node);
           }
         }
       })();
 
       promise.finally(() => this.pendingLoadChildrenRequests.delete(branch));
       this.pendingLoadChildrenRequests.set(branch, promise);
+      return promise;
     }
 
     return promise;
