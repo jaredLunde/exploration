@@ -88,6 +88,7 @@ function Virtualize({
   tree: FileTree;
   searchValue: string;
 }) {
+  const windowRef = React.useRef(null);
   const dndProps = useDnd(fileTree);
   const decorations = useTraits(fileTree, [
     "active",
@@ -97,25 +98,30 @@ function Virtualize({
     "untracked",
   ]);
   const multiselect = useSelections(fileTree, (nodes) => {
-    // Return true if the node should be selected.
-    decorations.add("pseudo-active", ...nodes.map((node) => node.id));
+    decorations.add("selected", ...nodes.map((node) => node.id));
   });
-  const windowRef = React.useRef(null);
-  const visibleNodes = useFilter(
+  const nodes = useFilter(
     fileTree,
     (node, i) => !searchValue || node.includes(searchValue)
   );
   const virtualize = useVirtualize(fileTree, {
-    items: visibleNodes,
+    nodes,
     windowRef,
   });
 
   return (
-    <div ref={windowRef}>
+    <div
+      ref={windowRef}
+      style={{ height: "100vh", padding: 8, width: "100%", overflow: "auto" }}
+    >
       <div {...virtualize.props}>
-        {virtualize.map(({ node, props }) => (
-          <div {...props}>{node.name}</div>
-        ))}
+        {virtualize.map((props) => {
+          return (
+            <Node plugins={[traits, rovingFocus, selections, dnd]} {...props}>
+              {isDir(props.node) ? "📁" : ""} {props.node.basename}
+            </Node>
+          );
+        })}
       </div>
     </div>
   );
