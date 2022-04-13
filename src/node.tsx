@@ -3,8 +3,8 @@ import trieMemoize from "trie-memoize";
 import { isDir } from "./file-tree";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import { observable } from "./tree/observable";
-import type { NodePlugin } from "./use-node-props";
-import { useNodeProps } from "./use-node-props";
+import type { NodePlugin } from "./use-node-plugins";
+import { useNodePlugins } from "./use-node-plugins";
 
 export function Node<Meta>({
   tree,
@@ -14,7 +14,7 @@ export function Node<Meta>({
   style,
   children,
 }: NodeProps<Meta>) {
-  const nodeProps = useNodeProps(node.id, [
+  const props = useNodePlugins(node.id, [
     ...plugins,
     {
       didChange: noopObservable,
@@ -24,7 +24,7 @@ export function Node<Meta>({
     },
   ]);
 
-  return React.createElement("div", nodeProps, children);
+  return React.createElement("div", props, children);
 }
 
 const createProps = trieMemoize(

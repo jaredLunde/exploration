@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Observable } from "./tree/observable";
 import { mergeProps as mergeProps_, throttle } from "./utils";
 
-export function useNodeProps(nodeId: number, plugins: NodePlugin[] = []) {
+export function useNodePlugins(nodeId: number, plugins: NodePlugin[] = []) {
   const numPlugins = plugins.length;
   const mergeProps = React.useMemo(() => {
     const caches: WeakMapConstructor[] = [];

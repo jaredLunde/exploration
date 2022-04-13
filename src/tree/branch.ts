@@ -13,7 +13,7 @@ export class Branch<NodeData = {}> extends Leaf<NodeData> {
    * take effect until the children are loaded. So in that interim time while children are loading,
    * the branch isn't truly expanded even if the value is `true`.
    *
-   * Depending on your use case you might want to rely on `Tree#isTrulyExpanded` for a "real-time" status.
+   * Depending on your use case you might want to rely on `Tree#isExpanded` for a "real-time" status.
    */
   public expanded: boolean;
 

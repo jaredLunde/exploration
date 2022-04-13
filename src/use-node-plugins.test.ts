@@ -1,11 +1,11 @@
 import { act, renderHook } from "@testing-library/react-hooks";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useNodeProps } from "./use-node-props";
+import { useNodePlugins } from "./use-node-plugins";
 import { useRovingFocus } from "./use-roving-focus";
 import { useTraits } from "./use-traits";
 
-describe("useNodeProps()", () => {
+describe("useNodePlugins()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);
 
   afterEach(() => {
@@ -17,14 +17,14 @@ describe("useNodeProps()", () => {
     const traits = renderHook(() => useTraits(fileTree, ["foo", "bar"]));
     const rovingFocus = renderHook(() => useRovingFocus(fileTree));
     const props = renderHook(() =>
-      useNodeProps(fileTree.root.nodes[0].id, [
+      useNodePlugins(fileTree.root.nodes[0], [
         traits.result.current,
         rovingFocus.result.current,
       ])
     );
 
     act(() => {
-      traits.result.current.add("foo", fileTree.root.nodes[0].id);
+      traits.result.current.add("foo", fileTree.root.nodes[0]);
       jest.advanceTimersByTime(100);
     });
 
@@ -38,7 +38,7 @@ describe("useNodeProps()", () => {
     });
 
     act(() => {
-      traits.result.current.add("foo", fileTree.root.nodes[0].id);
+      traits.result.current.add("foo", fileTree.root.nodes[0]);
       jest.advanceTimersByTime(100);
     });
 

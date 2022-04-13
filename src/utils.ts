@@ -120,9 +120,7 @@ export function shallowEqual<
 >(objA: A, objB: B | A): boolean {
   if (objA === objB) return true;
   if (objA === null || objB === null) return false;
-  const keysA = Object.keys(objA);
-  for (let i = 0; i < keysA.length; i++)
-    if (objA[keysA[i]] !== objB[keysA[i]]) return false;
+  for (const key in objA) if (objA[key] !== objB[key]) return false;
   return true;
 }
 
