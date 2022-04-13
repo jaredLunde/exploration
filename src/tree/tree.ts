@@ -328,9 +328,9 @@ export class Tree<NodeData = {}> {
   );
 
   dispose(): void {
-    for (const nodeId of this.visibleNodes) {
+    for (let i = 0; i < this.visibleNodes.length; i++) {
       // @ts-expect-error
-      nodesById[nodeId] = undefined;
+      nodesById[this.visibleNodes[i]] = undefined;
     }
   }
 }
@@ -338,7 +338,7 @@ export class Tree<NodeData = {}> {
 function createDraft<NodeData = {}>(
   nodes: ReadonlyArray<Node<NodeData>>
 ): { draft: Node<NodeData>[]; modified: boolean } {
-  const draft = new Proxy(nodes.slice(), {
+  const draft = new Proxy([...nodes], {
     set(target, index, value) {
       if (typeof index === "string" || typeof index === "number") {
         target[parseInt(index)] = value;
