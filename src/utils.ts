@@ -112,7 +112,7 @@ export function throttle<CallbackArguments extends any[]>(
   };
 }
 
-const perf = typeof performance !== "undefined" ? performance : Date;
+export const perf = typeof performance !== "undefined" ? performance : Date;
 
 export function shallowEqual<
   A extends Record<string | number | symbol, unknown> | null,
