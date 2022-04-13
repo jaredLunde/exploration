@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/jaredLunde/exploration/compare/v1.1.1...v1.1.2) (2022-04-13)
+
+### Bug Fixes
+
+- more closely mimic use deferred value ([#5](https://github.com/jaredLunde/exploration/issues/5)) ([c5c2b73](https://github.com/jaredLunde/exploration/commit/c5c2b73e8ab21abdafa1a6468c59ca4fc69c57dc))
+
 ## [1.1.1](https://github.com/jaredLunde/exploration/compare/v1.1.0...v1.1.1) (2022-04-13)
 
 ### Bug Fixes
