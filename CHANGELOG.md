@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/jaredLunde/exploration/compare/v1.1.0...v1.1.1) (2022-04-13)
+
+### Bug Fixes
+
+- fix async node resolution ([#4](https://github.com/jaredLunde/exploration/issues/4)) ([d02ddc4](https://github.com/jaredLunde/exploration/commit/d02ddc4d7c3b227036288d26167f1797c3a5865b))
+
 # [1.1.0](https://github.com/jaredLunde/exploration/compare/v1.0.0...v1.1.0) (2022-04-13)
 
 ### Features
