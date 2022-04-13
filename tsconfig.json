@@ -1,6 +1,6 @@
 {
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**"],
   "compilerOptions": {
     "target": "es5",
     "lib": ["esnext", "dom", "dom.iterable"],
@@ -8,6 +8,7 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "incremental": true,
+    "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
     "strict": true
   }

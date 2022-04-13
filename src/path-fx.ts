@@ -88,7 +88,7 @@ export function depth(path: string): number {
 
 export function basename(path: string): string {
   const frags = split(path);
-  return frags[frags.length - 1];
+  return frags[frags.length - 1] ?? "";
 }
 
 export function extname(path: string): string {

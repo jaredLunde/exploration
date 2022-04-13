@@ -1,55 +1,43 @@
+import memoizeOne from "@essentials/memoize-one";
+import type { Node } from "./branch";
 import { Branch } from "./branch";
-import { FlatViewMap } from "./flat-view-map";
 import { Leaf } from "./leaf";
-import type { GetNodes, Node } from "./types";
-import { spliceTypedArray } from "./utils";
+import { nodesById } from "./nodes-by-id";
+import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  protected rootBranch: Branch<NodeData>;
-  private flatViewMap = new FlatViewMap();
-  protected treeNodeMap = new Map<number, Node<NodeData>>();
   private pendingLoadChildrenRequests = new Map<
     Branch<NodeData>,
     Promise<void>
   >();
-  private onVisibleNodesChangeCallback: () => void = () => {};
   private getNodes: GetNodes<NodeData>;
+  comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
+  flatView = observable<number>(0);
+  root: Branch<NodeData>;
+  nodesById = nodesById as Node<NodeData>[];
 
   constructor({
     getNodes,
     root,
+    comparator,
   }: {
     getNodes: GetNodes<NodeData>;
     root: Branch<NodeData>;
+    comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
   }) {
-    this.rootBranch = root;
+    this.root = root;
     this.getNodes = getNodes;
-    let didSetInitial = false;
-    this.flatViewMap.onDidSetKey = (key: number): void => {
-      if (didSetInitial && key === this.rootBranch.id) {
-        return this.onVisibleNodesChangeCallback();
-      }
-
-      didSetInitial = true;
-    };
-    this.expand(this.rootBranch);
+    this.comparator = comparator;
+    this.expand(this.root);
   }
 
-  onVisibleNodesChange(cb: () => void): void {
-    this.onVisibleNodesChangeCallback = cb;
+  get visibleNodes(): number[] {
+    return this.createVisibleNodes(this.flatView.getSnapshot());
   }
 
-  get root(): Branch<NodeData> {
-    return this.rootBranch;
+  getById(id: number): Node<NodeData> | undefined {
+    return this.nodesById[id];
   }
-
-  get visibleNodes(): Uint32Array | undefined {
-    return this.flatViewMap.get(this.rootBranch.id);
-  }
-
-  getById = (id: number): Node<NodeData> | undefined => {
-    return this.treeNodeMap.get(id);
-  };
 
   /**
    * Ensures that the children of any given branch have been loaded and ready to be worked with.
@@ -61,9 +49,7 @@ export class Tree<NodeData = {}> {
    *
    * @param branch - The branch to check
    */
-  async ensureLoaded(
-    branch: Branch<NodeData> = this.rootBranch
-  ): Promise<void> {
+  async ensureLoaded(branch: Branch<NodeData> = this.root): Promise<void> {
     if (!branch.nodes) {
       await this.loadNodes(branch);
     }
@@ -89,21 +75,34 @@ export class Tree<NodeData = {}> {
 
     // Check again as collapse might have been called in the meantime
     if (branch.expanded) {
-      this.connectBranchToClosestFlatView(branch, ensureVisible);
+      if (ensureVisible) {
+        while (branch.parent) {
+          const node = branch.parent;
+
+          if (isBranch(node)) {
+            branch = node;
+            branch.expanded = true;
+          }
+        }
+      }
 
       if (recursive && branch.nodes) {
         await Promise.all(
-          branch.nodes.map((node) =>
-            isBranch(node) ? this.expand(node, options) : null
-          )
+          branch.nodes.map((nodeId) => {
+            const node = this.nodesById[nodeId];
+            return isBranch(node) ? this.expand(node, options) : null;
+          })
         );
       }
+
+      this.invalidateFlatView();
     }
   }
 
   collapse(branch: Branch<NodeData>): void {
     if (branch.expanded) {
-      this.disconnectBranchFromClosestFlatView(branch);
+      branch.expanded = false;
+      this.invalidateFlatView();
     }
   }
 
@@ -118,7 +117,8 @@ export class Tree<NodeData = {}> {
       revert(): void;
     }) => void | Node<NodeData>[]
   ): void {
-    let draftResult = createDraft(branch.nodes ?? []);
+    const nodes = (branch.nodes ?? []).map((nodeId) => this.nodesById[nodeId]);
+    let draftResult = createDraft(nodes);
 
     draftResult.draft =
       produceFn({
@@ -130,47 +130,61 @@ export class Tree<NodeData = {}> {
           draftResult.draft.splice(insertionIndex ?? Infinity, 0, node);
           return node;
         },
-        revert() {
-          draftResult = createDraft(branch.nodes ?? []);
+        revert: () => {
+          draftResult = createDraft(
+            (branch.nodes ?? []).map((nodeId) => this.nodesById[nodeId])
+          );
         },
       }) ?? draftResult.draft;
 
     if (draftResult.modified) {
       this.setNodes(branch, draftResult.draft);
+      this.invalidateFlatView();
     }
   }
 
   remove(nodeToRemove: Node<NodeData>): void {
-    // TODO: dispatch remove event
-    this.removeNodeFromFlatView(nodeToRemove);
-    this.treeNodeMap.delete(nodeToRemove.id);
-
     if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
       const nodes = nodeToRemove.nodes.slice();
-      let node: Node<NodeData> | undefined;
+      let nodeId: number | undefined;
 
-      while ((node = nodes.pop())) {
-        this.removeNodeFromFlatView(node);
-        this.treeNodeMap.delete(node.id);
+      while ((nodeId = nodes.pop())) {
+        const node = this.nodesById[nodeId];
 
         if (isBranch(node) && node.nodes) {
-          // eslint-disable-next-line prefer-spread
-          nodes.push.apply(nodes, node.nodes);
+          nodes.push(...node.nodes);
         }
       }
     }
 
-    if (nodeToRemove.parent?.nodes) {
-      nodeToRemove.parent.nodes = nodeToRemove.parent.nodes.filter(
-        (n) => n !== nodeToRemove
-      );
+    const nodeToRemoveParent = nodeToRemove.parent ?? this.root;
+
+    if (nodeToRemoveParent?.nodes) {
+      const nextNodes: number[] = [];
+
+      for (let i = 0; i < nodeToRemoveParent.nodes.length; i++) {
+        const nodeId = nodeToRemoveParent.nodes[i];
+
+        if (nodeId !== nodeToRemove.id) {
+          nextNodes.push(nodeId);
+        }
+      }
+
+      this.setNodes(nodeToRemoveParent, nextNodes);
     }
+
+    this.invalidateFlatView();
   }
 
   async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
-    const initialParent = node.parent;
+    const initialParent = node.parent ?? this.root;
 
-    if (initialParent === to) {
+    if (
+      // If the node is already in the target branch, do nothing
+      initialParent === to ||
+      // You can't move a node to a child of itself
+      (isBranch(node) && node.contains(to))
+    ) {
       return;
     }
 
@@ -178,28 +192,33 @@ export class Tree<NodeData = {}> {
       await this.expand(to);
     }
 
-    // parent may have changed in the meantime
+    // Parent may have changed in the meantime
     if (node.parent === initialParent) {
-      if (isBranch(node)) {
-        this.disconnectBranchFromClosestFlatView(node);
-      }
-
       if (initialParent?.nodes) {
-        this.setNodes(
-          initialParent,
-          initialParent.nodes.filter((n) => n !== node)
-        );
+        const nextNodes: number[] = [];
+
+        for (let i = 0; i < initialParent.nodes.length; i++) {
+          const nodeId = initialParent.nodes[i];
+
+          if (nodeId !== node.id) {
+            nextNodes.push(nodeId);
+          }
+        }
+
+        this.setNodes(initialParent, nextNodes);
       }
 
       if (to.nodes) {
-        this.setNodes(to, to.nodes.concat(node));
-        node.parent = to;
+        node.parentId = to.id;
+        this.setNodes(to, [...to.nodes, node.id]);
       }
 
-      if (isBranch(node)) {
-        this.connectBranchToClosestFlatView(node);
-      }
+      this.invalidateFlatView();
     }
+  }
+
+  invalidateFlatView(): void {
+    this.flatView.next(this.flatView.getSnapshot() + 1);
   }
 
   /**
@@ -212,25 +231,27 @@ export class Tree<NodeData = {}> {
    * @param branch - The branch to check
    */
   isExpanded(branch: Branch<NodeData>): boolean {
-    return !!(
-      branch.nodes &&
-      branch.expanded &&
-      !this.flatViewMap.has(branch.id)
-    );
+    return !!(branch.nodes && branch.expanded);
   }
 
   isVisible(node: Node<NodeData>): boolean {
-    return !this.findClosestDisconnectedParent(node);
+    let p = node.parent;
+
+    while (p) {
+      if (!p.expanded) return false;
+      p = p.parent;
+    }
+
+    return true;
   }
 
-  private async loadNodes(branch: Branch<NodeData>): Promise<void> {
+  async loadNodes(branch: Branch<NodeData>): Promise<void> {
     const promise = this.pendingLoadChildrenRequests.get(branch);
 
     if (!promise) {
       const promise = (async (): Promise<void> => {
         if (branch) {
           const nodes = await this.getNodes(branch);
-
           this.setNodes(branch, nodes);
 
           for (let i = 0; i < nodes.length; i++) {
@@ -250,174 +271,74 @@ export class Tree<NodeData = {}> {
     return promise;
   }
 
-  private setNodes(branch: Branch<NodeData>, nodes: Node<NodeData>[]): void {
-    const restoreExpansionQueue: Branch<NodeData>[] = [];
+  protected setNodes(
+    branch: Branch<NodeData>,
+    nodeIds: number[] | Node<NodeData>[]
+  ): void {
+    const comparator = this.comparator;
+    let nodes: Node<NodeData>[] = nodeIds as Node<NodeData>[];
 
-    if (branch.expanded) {
-      this.disconnectBranchFromClosestFlatView(branch);
-      restoreExpansionQueue.unshift(branch);
+    if (typeof nodeIds[0] === "number") {
+      for (let i = 0; i < nodeIds.length; i++) {
+        const nodeId = nodeIds[i] as number;
+        nodes[i] = this.nodesById[nodeId];
+      }
     }
 
-    if (branch.nodes) {
-      for (let i = 0; i < branch.nodes.length; i++) {
-        const node = branch.nodes[i];
-        // if a child branch is expanded, we must disconnect it (will be reconnected later)
-        if (isBranch(node) && node.expanded) {
-          this.disconnectBranchFromClosestFlatView(node);
-          restoreExpansionQueue.unshift(node);
+    nodes = comparator ? nodes.sort(comparator) : nodes;
+
+    branch.nodes = [];
+    this.nodesById[branch.id] = branch;
+
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      branch.nodes.push(node.id);
+      this.nodesById[node.id] = node;
+    }
+  }
+
+  private createVisibleNodes = memoizeOne(
+    (id: number) => {
+      const flatView: number[] = [];
+      const nodes: number[] = [];
+
+      if (this.root.nodes) {
+        nodes.push(...[...this.root.nodes].reverse());
+
+        let nodeId: number | undefined;
+
+        while ((nodeId = nodes.pop())) {
+          flatView.push(nodeId);
+          const node = this.nodesById[nodeId];
+
+          if (
+            isBranch(node) &&
+            node.expanded &&
+            node.nodes &&
+            node.nodes.length > 0
+          ) {
+            nodes.push(...[...node.nodes].reverse());
+          }
         }
       }
+
+      return flatView;
+    },
+    (prevArgs, args) => prevArgs[0] === args[0]
+  );
+
+  dispose(): void {
+    for (let i = 0; i < this.visibleNodes.length; i++) {
+      // @ts-expect-error
+      nodesById[this.visibleNodes[i]] = undefined;
     }
-
-    branch.nodes! = nodes;
-    const flatView = new Uint32Array(branch.nodes.length);
-
-    if (branch === this.root) {
-      this.treeNodeMap.set(branch.id, branch);
-    }
-
-    for (let i = 0; i < branch.nodes.length; i++) {
-      const child = branch.nodes[i];
-      flatView[i] = child.id;
-      this.treeNodeMap.set(child.id, child);
-    }
-
-    // save the updated flat projection
-    this.flatViewMap.set(branch.id, flatView);
-
-    for (let i = 0; i < restoreExpansionQueue.length; i++) {
-      this.connectBranchToClosestFlatView(restoreExpansionQueue[i]);
-    }
-  }
-
-  private removeNodeFromFlatView(node: Node<NodeData>): void {
-    // if the node (branch) was in a disconnected state, remove its records
-    this.flatViewMap.delete(node.id);
-    // proceed with the complete removal from the shadow parent
-    const shadowParent =
-      this.findClosestDisconnectedParent(node) ?? this.rootBranch;
-    const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-    if (parentFlatView) {
-      const { start, end } = this.getNodeProjectionRangeWithinFlatView(
-        parentFlatView,
-        node
-      );
-
-      const spliced = spliceTypedArray(parentFlatView, start, end - start)[0];
-
-      if (isBranch(node)) {
-        node.expanded = false;
-      }
-
-      this.flatViewMap.set(shadowParent.id, spliced);
-    }
-  }
-
-  private disconnectBranchFromClosestFlatView(branch: Branch<NodeData>): void {
-    // if is NOT root branch, and is connected to a shadow parent
-    if (!this.isRootBranch(branch) && !this.flatViewMap.has(branch.id)) {
-      const shadowParent =
-        this.findClosestDisconnectedParent(branch) || this.rootBranch;
-      const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-      if (parentFlatView) {
-        const { start, end } = this.getNodeProjectionRangeWithinFlatView(
-          parentFlatView,
-          branch
-        );
-        const [spliced, deleted] = spliceTypedArray(
-          parentFlatView,
-          start + 1,
-          end - start - 1
-        );
-
-        branch.expanded = false;
-        this.flatViewMap.set(shadowParent.id, spliced);
-        this.flatViewMap.set(branch.id, deleted);
-      }
-    }
-  }
-
-  private connectBranchToClosestFlatView(
-    branch: Branch<NodeData>,
-    liftToRoot = false
-  ): void {
-    const shadowParent =
-      this.findClosestDisconnectedParent(branch) || this.rootBranch;
-
-    // if is NOT root branch, and is disconnected from its shadow parent
-    if (!this.isRootBranch(branch) && this.flatViewMap.has(branch.id)) {
-      const parentFlatView = this.flatViewMap.get(shadowParent.id);
-
-      if (parentFlatView) {
-        const fromIdx = parentFlatView.indexOf(branch.id) + 1;
-        const selfFlatView = this.flatViewMap.get(branch.id);
-        const spliced = spliceTypedArray(
-          parentFlatView,
-          fromIdx,
-          0,
-          selfFlatView
-        )[0];
-
-        branch.expanded = true;
-        this.flatViewMap.set(shadowParent.id, spliced);
-        this.flatViewMap.delete(branch.id);
-      }
-    }
-
-    if (liftToRoot && !this.isRootBranch(shadowParent)) {
-      this.connectBranchToClosestFlatView(shadowParent, true);
-    }
-  }
-
-  private isRootBranch(branch: Branch<NodeData>): boolean {
-    return branch === this.rootBranch;
-  }
-
-  private findClosestDisconnectedParent(
-    node: Node<NodeData>
-  ): Branch<NodeData> | undefined {
-    let p = node.parent;
-
-    while (p) {
-      if (!p.expanded) return p;
-      p = p.parent;
-    }
-  }
-
-  private getNodeProjectionRangeWithinFlatView(
-    flatView: Uint32Array,
-    node: Node<NodeData>
-  ): { start: number; end: number } {
-    let b = node;
-
-    // keep walking up until we find a branch that is NOT the last child of its parent
-    while (b.parent?.nodes?.[b.parent.nodes.length - 1] === b) {
-      b = b.parent;
-    }
-
-    const startIndex = flatView.indexOf(node.id);
-
-    if (b.parent?.nodes) {
-      // once we have that, just return the immediate next sibling node
-      const nextSibling = b.parent.nodes[b.parent.nodes.indexOf(b) + 1];
-      const endIndex = flatView.indexOf(nextSibling.id);
-
-      return {
-        start: startIndex,
-        end: endIndex > -1 ? endIndex : flatView.length,
-      };
-    }
-
-    return { start: startIndex, end: -1 };
   }
 }
 
 function createDraft<NodeData = {}>(
   nodes: ReadonlyArray<Node<NodeData>>
 ): { draft: Node<NodeData>[]; modified: boolean } {
-  const draft = new Proxy(nodes.slice(), {
+  const draft = new Proxy([...nodes], {
     set(target, index, value) {
       if (typeof index === "string" || typeof index === "number") {
         target[parseInt(index)] = value;
@@ -452,10 +373,14 @@ function createDraft<NodeData = {}>(
   return draftResult;
 }
 
-export function isLeaf<T>(node: Node<T>): node is Leaf<T> {
+export function isLeaf<T>(node: Node<T> | undefined): node is Leaf<T> {
   return node instanceof Leaf && !(node instanceof Branch);
 }
 
-export function isBranch<T>(node: Node<T>): node is Branch<T> {
+export function isBranch<T>(node: Node<T> | undefined): node is Branch<T> {
   return node instanceof Branch;
 }
+
+export type GetNodes<NodeData = {}> = {
+  (parent: Branch<NodeData>): Node<NodeData>[] | Promise<Node<NodeData>[]>;
+};

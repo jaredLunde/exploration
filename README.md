@@ -36,17 +36,96 @@ npm i exploration
 - [x] Zero-recursion, expandable tree
 - [x] Virtualization
 - [x] Create/move/rename/delete
-- [x] Drag and drop
+- [ ] Drag and drop
+- [ ] Hotkeys
 - [x] Multiselect
-- [x] Decorations
-- [x] Search
+- [x] Traits
+- [x] Filtering/search
 
 --
 
 ## Quick start
 
-```js
-import { useTree } from "exploration";
+```tsx
+import {
+  createFileTree,
+  useSelections,
+  useDnd,
+  useTraits,
+  useFilter,
+  useVirtualize,
+} from "exploration";
+
+const fileTree = createFileTree((parent, { createFile, createDir }) => {
+  // Return the files that live at the current depth within the tree or a promise
+  // containing the files at the current depth.
+  return Promise.resolve([
+    createDir({ name: "src" }),
+    createFile({ name: "README.md" }),
+  ]);
+});
+
+function FileExplorer() {
+  const [searchValue, setSearchValue] = React.useState("");
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+      />
+
+      <Virtualize tree={tree} searchValue={searchValue} />
+    </div>
+  );
+}
+
+function Virtualize({
+  tree,
+  searchValue,
+}: {
+  tree: FileTree;
+  searchValue: string;
+}) {
+  const windowRef = React.useRef(null);
+  const dndProps = useDnd(fileTree);
+  const decorations = useTraits(fileTree, [
+    "active",
+    "pseudo-active",
+    "selected",
+    "modified",
+    "untracked",
+  ]);
+  const multiselect = useSelections(fileTree, (nodes) => {
+    decorations.add("selected", ...nodes.map((node) => node.id));
+  });
+  const nodes = useFilter(
+    fileTree,
+    (node, i) => !searchValue || node.includes(searchValue)
+  );
+  const virtualize = useVirtualize(fileTree, {
+    nodes,
+    windowRef,
+  });
+
+  return (
+    <div
+      ref={windowRef}
+      style={{ height: "100vh", padding: 8, width: "100%", overflow: "auto" }}
+    >
+      <div {...virtualize.props}>
+        {virtualize.map((props) => {
+          return (
+            <Node plugins={[traits, rovingFocus, selections, dnd]} {...props}>
+              {isDir(props.node) ? "📁" : ""} {props.node.basename}
+            </Node>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 ```
 
 ## API

@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Tree } from ".";
-import { createFileTree } from ".";
-import { comparator, isFile } from "./file-tree";
-import type { Dir, FileTreeData } from "./file-tree";
+import { createFileTree, defaultComparator, isFile } from "./file-tree";
+import type { Dir, File } from "./file-tree";
 import type { Branch } from "./tree/branch";
-import type { Leaf } from "./tree/leaf";
+import { nodesById } from "./tree/nodes-by-id";
+import type { Tree } from "./tree/tree";
 import { isLeaf } from "./tree/tree";
+
+afterEach(() => {
+  nodesById.length = 0;
+});
 
 describe("createFileTree()", () => {
   describe("structure", () => {
@@ -13,9 +16,7 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      expect(getFlatViewMap(tree).get(tree.root.id).length).toBe(
-        mockFs["/"].length
-      );
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
     });
 
@@ -24,25 +25,31 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
       expect(tree.root.depth).toBe(0);
-      expect(tree.root.nodes[0].depth).toBe(1);
-      expect(tree.root.nodes[1].depth).toBe(1);
+      expect(tree.getById(tree.root.nodes[0]).depth).toBe(1);
+      expect(tree.getById(tree.root.nodes[1]).depth).toBe(1);
 
-      await tree.expand(tree.root.nodes[0] as Branch<any>);
+      await tree.expand(tree.getById(tree.root.nodes[0]) as Dir<any>);
 
-      expect((tree.root.nodes[0] as Branch).nodes[0].depth).toBe(2);
-      expect((tree.root.nodes[0] as Branch).nodes[1].depth).toBe(2);
+      expect(
+        tree.getById((tree.getById(tree.root.nodes[0]) as Branch).nodes[0])
+          .depth
+      ).toBe(2);
+      expect(
+        tree.getById((tree.getById(tree.root.nodes[0]) as Branch).nodes[1])
+          .depth
+      ).toBe(2);
     });
 
     it("should create dir paths based on a node parent", async () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes[0];
+      const node = tree.getById(tree.root.nodes[0]);
       expect(node.path).toBe("/.github");
 
       await tree.move(
-        tree.root.nodes[0],
-        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+        tree.getById(tree.root.nodes[0]),
+        tree.nodesById.find((n) => n?.data.name === "/src") as Dir<any>
       );
 
       expect(tree.root.path).toBe("/");
@@ -54,12 +61,12 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find((n) => n.basename === ".gitignore");
+      const node = tree.nodesById.find((n) => n?.basename === ".gitignore");
       expect(node.path).toBe("/.gitignore");
 
       await tree.move(
         node,
-        tree.root.nodes.find((n) => n.data.name === "/src") as Branch<any>
+        tree.nodesById.find((n) => n?.data.name === "/src") as Dir<any>
       );
 
       expect(node.path).toBe("/src/.gitignore");
@@ -72,38 +79,34 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/.github"
       )!;
       await tree.expand(node);
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/.github"].length
       );
-
-      expect(getFlatViewMap(tree).get(node.id)).toBeUndefined();
     });
 
     it("should expand a nested directory recursively", async () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/src"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/src"
       )!;
       await tree.expand(node, { recursive: true });
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-
-      expect(getFlatViewMap(tree).get(node.id)).toBeUndefined();
     });
 
     it("should not expand a directory that is already visible", async () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/src"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/src"
       )!;
       await tree.expand(node);
       await tree.expand(node);
@@ -116,8 +119,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/src"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/src"
       )!;
       await Promise.race([tree.expand(node), tree.expand(node)]);
       expect(tree.visibleNodes.length).toBe(
@@ -129,15 +132,17 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const srcNode = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/src"
+      const srcNode = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/src"
       )!;
       await tree.expand(srcNode);
       tree.collapse(srcNode);
       await tree.expand(
-        srcNode.nodes.find(
-          (node): node is Dir => node.data.name === "/src/tree"
-        )!,
+        tree.getById(
+          srcNode.nodes.find(
+            (node) => tree.getById(node).data.name === "/src/tree"
+          )!
+        ) as Dir,
         { ensureVisible: true }
       );
       expect(tree.visibleNodes.length).toBe(
@@ -149,8 +154,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/.github"
       )!;
 
       await tree.expand(node);
@@ -162,31 +167,26 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node): node is Dir => node.data.name === "/src"
+      const node = tree.nodesById.find(
+        (node): node is Dir => node?.data.name === "/src"
       )!;
       await tree.expand(node);
 
-      const nestedNode = node.nodes.find(
-        (node): node is Dir => node.data.name === "/src/tree"
-      )!;
+      const nestedNode = tree.getById(
+        node.nodes.find((node) => tree.getById(node).data.name === "/src/tree")!
+      ) as Dir;
       await tree.expand(nestedNode);
       tree.collapse(node);
 
-      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
-      expect(getFlatViewMap(tree).get(node.id).length).toBe(
-        mockFs["/src"].length + mockFs["/src/tree"].length
-      );
-
+      expect(nestedNode.expanded).toBe(true);
       await tree.expand(node);
 
       expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-      expect(getFlatViewMap(tree).get(tree.root.id).length).toBe(
+      expect(tree.visibleNodes.length).toBe(
         mockFs["/"].length + mockFs["/src"].length + mockFs["/src/tree"].length
       );
-      expect(getFlatViewMap(tree).get(node.id)).toBeUndefined();
     });
   });
 
@@ -196,19 +196,15 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
 
-      const removedNode = tree.root.nodes.find(
-        (node) => node.data.name === "/.gitignore"
+      const removedNode = tree.nodesById.find(
+        (node) => node?.data.name === "/.gitignore"
       )!;
       tree.remove(removedNode);
 
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
       expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
-      expect(getFlatViewMap(tree).get(tree.root.id).length).toBe(
-        mockFs["/"].length - 1
-      );
-      expect(
-        getFlatViewMap(tree).get(tree.root.id).indexOf(removedNode.id)
-      ).toBe(-1);
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
+      expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
     });
 
     it("should remove branch node", async () => {
@@ -216,25 +212,23 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
 
-      const removedNode = tree.root.nodes.find(
-        (node) => node.data.name === "/src"
+      const removedNode = tree.nodesById.find(
+        (node) => node?.data.name === "/src"
       ) as Dir;
       await tree.expand(removedNode);
       await tree.expand(
-        removedNode.nodes!.find(
-          (node) => node.data.name === "/src/tree"
-        )! as Branch<any>
+        tree.getById(
+          removedNode.nodes!.find(
+            (node) => tree.getById(node).data.name === "/src/tree"
+          )!
+        ) as Dir
       );
       tree.remove(removedNode);
 
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
       expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
-      expect(getFlatViewMap(tree).get(tree.root.id).length).toBe(
-        mockFs["/"].length - 1
-      );
-      expect(
-        getFlatViewMap(tree).get(tree.root.id).indexOf(removedNode.id)
-      ).toBe(-1);
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length - 1);
+      expect(tree.visibleNodes.indexOf(removedNode.id)).toBe(-1);
     });
   });
 
@@ -243,16 +237,20 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       const handle = jest.fn();
-      tree.onVisibleNodesChange(handle);
+      const unsubscribe = tree.flatView.subscribe(handle);
 
       await waitForTree(tree);
-      expect(handle).toHaveBeenCalledTimes(0);
+      expect(handle).toHaveBeenCalledTimes(1);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
-      await tree.expand(tree.root.nodes[0] as Branch<any>);
+      await tree.expand(tree.getById(tree.root.nodes[0]) as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(2);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
-      tree.collapse(tree.root.nodes[0] as Branch<any>);
-      expect(handle).toHaveBeenCalledTimes(3);
+      unsubscribe();
+      await tree.expand(tree.getById(tree.root.nodes[0]) as Dir<any>);
+      expect(handle).toHaveBeenCalledTimes(2);
+      expect(tree.visibleNodes.length).toBeGreaterThan(0);
     });
   });
 
@@ -262,8 +260,8 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
       expect(tree.isVisible(tree.root)).toBe(true);
-      expect(tree.isVisible(tree.root.nodes[0])).toBe(true);
-      expect(tree.isVisible(tree.root.nodes[1])).toBe(true);
+      expect(tree.isVisible(tree.getById(tree.root.nodes[0]))).toBe(true);
+      expect(tree.isVisible(tree.getById(tree.root.nodes[1]))).toBe(true);
     });
 
     it("should return false for invisible nodes", async () => {
@@ -271,15 +269,15 @@ describe("createFileTree()", () => {
 
       await waitForTree(tree);
 
-      const branch = tree.root.nodes.find(
-        (node) => node.data.name === "/src"
-      )! as Branch<any>;
+      const branch = tree.nodesById.find(
+        (node) => node?.data.name === "/src"
+      )! as Dir<any>;
 
       await tree.expand(branch);
-      expect(tree.isVisible(branch.nodes[0])).toBe(true);
+      expect(tree.isVisible(tree.getById(branch.nodes[0]))).toBe(true);
 
       tree.collapse(branch);
-      expect(tree.isVisible(branch.nodes[0])).toBe(false);
+      expect(tree.isVisible(tree.getById(branch.nodes[0]))).toBe(false);
     });
   });
 
@@ -290,7 +288,6 @@ describe("createFileTree()", () => {
       await waitForTree(tree);
 
       expect(tree.getById(tree.root.id)).toBe(tree.root);
-      expect(tree.getById(tree.root.nodes[0].id)).toBe(tree.root.nodes[0]);
     });
   });
 
@@ -313,10 +310,12 @@ describe("createFileTree()", () => {
       await waitForTree(tree);
 
       tree.produce(tree.root, ({ draft }) => {
-        draft.sort(comparator);
+        draft.sort(defaultComparator);
       });
 
-      expect(tree.root.nodes.map((node) => node.data.name)).toEqual([
+      expect(
+        tree.root.nodes.map((node) => tree.getById(node).data.name)
+      ).toEqual([
         "/bar",
         "/Bar",
         "/Bza",
@@ -333,8 +332,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.github"
       ) as Dir;
       await tree.expand(node);
 
@@ -347,10 +346,10 @@ describe("createFileTree()", () => {
       });
 
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 1);
-      expect(node.nodes.map((node) => node.data.name)).toEqual([
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
+        "/.github/pr-templates",
         "/.github/ISSUE_TEMPLATE.md",
         "/.github/PULL_REQUEST_TEMPLATE.md",
-        "/.github/pr-templates",
       ]);
 
       tree.produce(node, ({ createDir, insert }) => {
@@ -362,11 +361,11 @@ describe("createFileTree()", () => {
         );
       });
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
-      expect(node.nodes.map((node) => node.data.name)).toEqual([
-        "/.github/ISSUE_TEMPLATE.md",
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
         "/.github/issue-templates",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/ISSUE_TEMPLATE.md",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
     });
 
@@ -374,8 +373,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.github"
       ) as Dir;
       await tree.expand(node);
 
@@ -388,10 +387,10 @@ describe("createFileTree()", () => {
       });
 
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 1);
-      expect(node.nodes.map((node) => node.data.name)).toEqual([
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
         "/.github/ISSUE_TEMPLATE.md",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
 
       tree.produce(node, ({ createFile, insert }) => {
@@ -402,12 +401,13 @@ describe("createFileTree()", () => {
           1
         );
       });
+
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
-      expect(node.nodes.map((node) => node.data.name)).toEqual([
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
         "/.github/ISSUE_TEMPLATE.md",
         "/.github/issue-templates",
-        "/.github/PULL_REQUEST_TEMPLATE.md",
         "/.github/pr-templates",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
     });
 
@@ -415,8 +415,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.github"
       ) as Dir;
       await tree.expand(node);
 
@@ -431,7 +431,7 @@ describe("createFileTree()", () => {
       });
 
       expect(node.nodes.length).toBe(mockFs["/.github"].length);
-      expect(node.nodes.map((node) => node.data.name)).toEqual([
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
         "/.github/ISSUE_TEMPLATE.md",
         "/.github/PULL_REQUEST_TEMPLATE.md",
       ]);
@@ -448,7 +448,7 @@ describe("createFileTree()", () => {
         );
       });
 
-      expect(tree.root.nodes[0]!.data.name).toEqual("/moo");
+      expect(tree.getById(tree.root.nodes[0]!).data.name).toEqual("/moo");
     });
 
     it("should produce a new tree by mutating the draft with an array index", () => {
@@ -460,7 +460,7 @@ describe("createFileTree()", () => {
         });
       });
 
-      expect(tree.root.nodes[0]!.data.name).toEqual("/moo");
+      expect(tree.getById(tree.root.nodes[0]!).data.name).toEqual("/moo");
     });
 
     it("should revert the draft with an array index", async () => {
@@ -475,7 +475,7 @@ describe("createFileTree()", () => {
         revert();
       });
 
-      expect(tree.root.nodes[0]!.data.name).not.toEqual("/moo");
+      expect(tree.getById(tree.root.nodes[0]!).data.name).not.toEqual("/moo");
     });
   });
 
@@ -484,23 +484,23 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/src"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/src"
       ) as Dir;
-      const toBranch = tree.root.nodes.find(
-        (node) => node.data.name === "/.husky"
+      const toBranch = tree.nodesById.find(
+        (node) => node?.data.name === "/.husky"
       ) as Dir;
       await tree.expand(node);
-      const nodeB = node.nodes.find(
-        (node) => node.data.name === "/src/tree"
+      const nodeB = tree.getById(
+        node.nodes.find((node) => tree.getById(node).data.name === "/src/tree")
       ) as Dir;
       await tree.expand(nodeB);
       await tree.move(node, toBranch);
 
-      expect(toBranch.nodes.map((node) => node.data.name)).toEqual([
-        "/.husky/hooks",
-        "/src",
-      ]);
+      expect(
+        toBranch.nodes.map((node) => tree.getById(node).data.name)
+      ).toEqual(["/.husky/hooks", "/src"]);
+
       expect(
         [...tree.visibleNodes].map((id) => tree.getById(id).data.name)
       ).toStrictEqual([
@@ -508,10 +508,23 @@ describe("createFileTree()", () => {
         "/.husky",
         "/.husky/hooks",
         "/src",
-        ...mockFs["/src"].map((stat) => stat.name),
-        ...mockFs["/src/tree"].map((stat) => stat.name),
-        ...[...mockFs["/"]].splice(3, 1).map((stat) => stat.name),
-        ...[...mockFs["/"]].splice(4).map((stat) => stat.name),
+        "/src/tree",
+        "/src/tree/tree.test.ts",
+        "/src/tree/tree.ts",
+        "/src/file-tree.ts",
+        "/src/index.ts",
+        "/src/path-fx.ts",
+        "/test",
+        "/types",
+        "/.gitignore",
+        "/babel.config.js",
+        "/CODE_OF_CONDUCT.md",
+        "/CONTRIBUTING.md",
+        "/LICENSE",
+        "/package.json",
+        "/pnpm-lock.yaml",
+        "/README.md",
+        "/tsconfig.json",
       ]);
     });
 
@@ -519,18 +532,17 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/.gitignore"
-      ) as Leaf<FileTreeData>;
-      const toBranch = tree.root.nodes.find(
-        (node) => node.data.name === "/.husky"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.gitignore"
+      ) as File;
+      const toBranch = tree.nodesById.find(
+        (node) => node?.data.name === "/.husky"
       ) as Dir;
       await tree.move(node, toBranch);
 
-      expect(toBranch.nodes.map((node) => node.data.name)).toEqual([
-        "/.husky/hooks",
-        "/.gitignore",
-      ]);
+      expect(
+        toBranch.nodes.map((node) => tree.getById(node).data.name)
+      ).toEqual(["/.husky/hooks", "/.gitignore"]);
       expect(
         [...tree.visibleNodes].map((id) => tree.getById(id).data.name)
       ).toStrictEqual([
@@ -556,8 +568,8 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       await waitForTree(tree);
-      const node = tree.root.nodes.find(
-        (node) => node.data.name === "/.github"
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.github"
       ) as Dir;
       const initialNodes = tree.root.nodes;
       await tree.move(node, tree.root);
@@ -568,6 +580,73 @@ describe("createFileTree()", () => {
   });
 });
 
+describe("file tree actions", () => {
+  let tree = createFileTree(() => []);
+
+  afterEach(() => {
+    tree = createFileTree(() => []);
+  });
+
+  it("should create a file and sort", () => {
+    tree.newFile(tree.root, { name: "foo" });
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("foo");
+
+    tree.newFile(tree.root, { name: "bar" });
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
+  });
+
+  it("should create a directory and sort", () => {
+    tree.newDir(tree.root, { name: "foo" });
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("foo");
+
+    tree.newDir(tree.root, { name: "bar" });
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
+  });
+
+  it("should move a file and sort", async () => {
+    tree.newDir(tree.root, { name: "bar" });
+    tree.newDir(tree.root, { name: "foo" });
+    tree.newFile(tree.root, { name: "a" });
+    tree.newFile(tree.root, { name: "b" });
+
+    const firstDir = tree.getById(tree.root.nodes[0]) as Dir;
+    await tree.expand(firstDir);
+    await tree.move(tree.nodesById.find((n) => n?.basename === "b")!, firstDir);
+    await tree.move(tree.nodesById.find((n) => n?.basename === "a")!, firstDir);
+
+    expect(tree.getById(firstDir.nodes[0]).data.name).toBe("a");
+  });
+
+  it("should rename and sort", async () => {
+    tree.newFile(tree.root, { name: "foo" });
+    tree.newFile(tree.root, { name: "bar" });
+
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
+
+    tree.rename(tree.nodesById.find((n) => n?.basename === "foo")!, "a");
+
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("a");
+  });
+
+  it("should remove a node", async () => {
+    tree.newFile(tree.root, { name: "foo" });
+
+    expect(tree.root.nodes.length).toBe(1);
+
+    tree.remove(tree.nodesById.find((n) => n?.basename === "foo")!);
+    expect(tree.root.nodes.length).toBe(0);
+  });
+
+  it("should produce and sort", async () => {
+    tree.produce(tree.root, (context) => {
+      context.insert(context.createDir({ name: "foo" }));
+      context.insert(context.createDir({ name: "bar" }));
+    });
+
+    expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
+  });
+});
+
 describe("isLeaf()", () => {
   it("should return `true` for leaf nodes, `false` for branch nodes", async () => {
     const tree = createFileTree(getNodesFromMockFs);
@@ -575,7 +654,7 @@ describe("isLeaf()", () => {
     await waitForTree(tree);
     expect(isLeaf(tree.root)).toBe(false);
     expect(
-      isLeaf(tree.root.nodes.find((node) => node.data.name === "/.gitignore"))
+      isLeaf(tree.nodesById.find((node) => node?.data.name === "/.gitignore"))
     ).toBe(true);
   });
 });
@@ -587,7 +666,7 @@ describe("isFile()", () => {
     await waitForTree(tree);
     expect(isFile(tree.root)).toBe(false);
     expect(
-      isFile(tree.root.nodes.find((node) => node.data.name === "/.gitignore"))
+      isFile(tree.nodesById.find((node) => node?.data.name === "/.gitignore"))
     ).toBe(true);
   });
 });
@@ -595,11 +674,6 @@ describe("isFile()", () => {
 function waitForTree(tree: Tree<any>) {
   // @ts-expect-error: private access
   return Promise.all(tree.pendingLoadChildrenRequests.values());
-}
-
-function getFlatViewMap(tree: Tree<any>) {
-  // @ts-expect-error: private access
-  return tree.flatViewMap;
 }
 
 function getNodesFromMockFs(parent: any, { createFile, createDir }: any) {
@@ -636,10 +710,10 @@ const mockFs = {
   "/.husky": [{ name: "/.husky/hooks", type: "dir" }],
   "/.husky/hooks": [{ name: "/.husky/hooks/pre-commit", type: "file" }],
   "/src": [
+    { name: "/src/tree", type: "dir" },
     { name: "/src/index.ts", type: "file" },
     { name: "/src/file-tree.ts", type: "file" },
     { name: "/src/path-fx.ts", type: "file" },
-    { name: "/src/tree", type: "dir" },
   ],
   "/src/tree": [
     { name: "/src/tree/tree.ts", type: "file" },
