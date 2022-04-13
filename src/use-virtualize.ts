@@ -2,12 +2,12 @@ import {
   clearRequestTimeout,
   requestTimeout,
 } from "@essentials/request-timeout";
-import useResizeObserver from "@react-hook/resize-observer";
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSubscription } from "use-subscription";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import type { WindowRef } from "./types";
+import { useResizeObserver } from "./use-resize-observer";
 import { useTransition } from "./use-transition";
 import { useVisibleNodes } from "./use-visible-nodes";
 import { throttle } from "./utils";
@@ -20,12 +20,13 @@ export function useVirtualize<Meta>(
     nodeHeight,
     nodeGap = 0,
     overscanBy = 2,
+    ResizeObserver,
   }: UseVirtualizeOptions
 ) {
   const _visibleNodes = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? _visibleNodes;
   const scrollPosition = useScrollPosition(windowRef);
-  const height = useHeight(windowRef);
+  const height = useHeight(windowRef, ResizeObserver);
   const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
 
   function scrollToNode(nodeId: number, config: ScrollToNodeConfig = {}) {
@@ -154,7 +155,7 @@ const createStyle = trieMemoize(
   })
 );
 
-export function useHeight(windowRef: WindowRef) {
+export function useHeight(windowRef: WindowRef, ResizeObserver: any) {
   const [, startTransition] = useTransition();
   const getWindowHeight = () => {
     const windowEl =
@@ -182,7 +183,8 @@ export function useHeight(windowRef: WindowRef) {
       startTransition(() => {
         setHeight(getWindowHeight());
       });
-    }
+    },
+    { ResizeObserver }
   );
 
   return useGlobalWindowHeight(windowRef) ?? height;
@@ -293,6 +295,7 @@ export interface UseVirtualizeOptions {
   nodeGap?: number;
   overscanBy?: number;
   windowRef: WindowRef;
+  ResizeObserver?: any;
 }
 
 export type ScrollToNodeConfig = {

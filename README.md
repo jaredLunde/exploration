@@ -36,13 +36,13 @@ npm i exploration
 - [x] Zero-recursion, expandable tree
 - [x] Virtualization
 - [x] Create/move/rename/delete
-- [ ] Drag and drop
-- [ ] Hotkeys
+- [x] Drag and drop
+- [x] Hotkeys
 - [x] Multiselect
 - [x] Traits
 - [x] Filtering/search
 
---
+---
 
 ## Quick start
 
