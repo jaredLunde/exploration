@@ -67,7 +67,9 @@ export function chain<Args extends any[]>(
   ...callbacks: Args
 ): (...args: Args) => void {
   return (...args: any[]) => {
-    for (const callback of callbacks) {
+    for (let i = 0; i < callbacks.length; i++) {
+      const callback = callbacks[i];
+
       if (typeof callback === "function") {
         callback(...args);
       }

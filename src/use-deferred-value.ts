@@ -15,7 +15,7 @@ export const useDeferredValue: <T>(
     ? (React.useDeferredValue as any)
     : useThrottle;
 
-function useThrottle<T>(
+export function useThrottle<T>(
   value: T,
   options: { timeoutMs: number } = { timeoutMs: 200 }
 ) {

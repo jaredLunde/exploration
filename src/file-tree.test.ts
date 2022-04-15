@@ -578,6 +578,13 @@ describe("createFileTree()", () => {
       expect(tree.root.nodes.length).toBe(mockFs["/"].length);
     });
   });
+
+  it("should dispose", async () => {
+    const tree = createFileTree(getNodesFromMockFs);
+    await waitForTree(tree);
+    tree.dispose();
+    expect(nodesById[tree.root.id]).toBe(undefined);
+  });
 });
 
 describe("file tree actions", () => {

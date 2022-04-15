@@ -10,7 +10,7 @@ export function Node<Meta>({
   tree,
   node,
   index,
-  plugins,
+  plugins = empty,
   style,
   children,
 }: NodeProps<Meta>) {
@@ -27,6 +27,8 @@ export function Node<Meta>({
   return React.createElement("div", props, children);
 }
 
+const empty: [] = [];
+
 const createProps = trieMemoize(
   [WeakMap, WeakMap, WeakMap, Map, Map],
   <Meta,>(
@@ -38,6 +40,7 @@ const createProps = trieMemoize(
   ): React.HTMLAttributes<HTMLDivElement> => ({
     id: `exp-${index}`,
     style,
+    role: "button",
     className: `depth-${depth}`,
     onClick(event) {
       event.currentTarget.focus();
@@ -69,7 +72,7 @@ export interface NodeProps<Meta> {
   node: FileTreeNode<Meta>;
   index: number;
   tree: FileTree<Meta>;
-  plugins: NodePlugin[];
+  plugins?: NodePlugin[];
   style: React.CSSProperties;
   children: React.ReactNode;
 }

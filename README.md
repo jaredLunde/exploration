@@ -18,9 +18,6 @@ npm i exploration
   <a aria-label="Code coverage report" href="https://codecov.io/gh/jaredLunde/exploration">
     <img alt="Code coverage" src="https://img.shields.io/codecov/c/gh/jaredLunde/exploration?style=for-the-badge&labelColor=24292e">
   </a>
-  <a aria-label="Build status" href="https://github.com/jaredLunde/exploration/actions/workflows/release.yml">
-    <img alt="Build status" src="https://img.shields.io/github/workflow/status/jaredLunde/exploration/release/main?style=for-the-badge&labelColor=24292e">
-  </a>
   <a aria-label="NPM version" href="https://www.npmjs.com/package/exploration">
     <img alt="NPM Version" src="https://img.shields.io/npm/v/exploration?style=for-the-badge&labelColor=24292e">
   </a>
