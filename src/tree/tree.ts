@@ -327,6 +327,9 @@ export class Tree<NodeData = {}> {
   );
 
   dispose(): void {
+    // @ts-expect-error
+    nodesById[this.root.id] = undefined;
+
     for (let i = 0; i < this.visibleNodes.length; i++) {
       // @ts-expect-error
       nodesById[this.visibleNodes[i]] = undefined;

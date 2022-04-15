@@ -102,7 +102,7 @@ export function useVirtualize<Meta>(
         height: Math.max(Math.ceil(scrollHeight), height),
         contain: "strict",
         userSelect: "none",
-        pointerEvents: scrollPosition.isScrolling ? "none" : void 0,
+        pointerEvents: scrollPosition.isScrolling ? "none" : undefined,
       } as React.CSSProperties,
     },
     map(render: (config: VirtualizeRenderProps<Meta>) => React.ReactElement) {
@@ -163,7 +163,6 @@ export function useHeight(windowRef: WindowRef, ResizeObserver: any) {
 
     if (typeof window !== "undefined" && windowEl instanceof HTMLElement) {
       const computedStyle = getComputedStyle(windowEl);
-
       return (
         windowEl.clientHeight -
         parseFloat(computedStyle.paddingTop) -
@@ -195,7 +194,7 @@ export function useGlobalWindowHeight(windowRef: WindowRef) {
     React.useMemo(
       () => ({
         getCurrentValue() {
-          if (typeof window !== "undefined" && windowRef instanceof Window) {
+          if (typeof window !== "undefined" && windowRef === window) {
             return window.innerHeight;
           }
 

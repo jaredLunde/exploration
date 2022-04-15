@@ -226,7 +226,7 @@ export function useHotkeys(
         }
 
         const element = document.querySelector(
-          querySelectorPattern.replace("{index}", visibleNodes.length + "")
+          querySelectorPattern.replace("{index}", visibleNodes.length - 1 + "")
         );
 
         if (element instanceof HTMLElement) {
@@ -261,7 +261,12 @@ export function useHotkeys(
 
           if (element instanceof HTMLElement) {
             element.blur();
-            element.parentElement?.focus();
+
+            if (windowRef && "current" in windowRef) {
+              windowRef.current?.focus();
+            } else if (windowRef) {
+              windowRef.focus();
+            }
           }
         }
       },

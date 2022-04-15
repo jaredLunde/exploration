@@ -6,6 +6,11 @@ afterEach(() => {
 });
 
 jest.useFakeTimers();
+
 window.requestAnimationFrame = (callback) => {
   return setTimeout(callback, 0);
+};
+
+window.cancelAnimationFrame = (id) => {
+  clearTimeout(id);
 };
