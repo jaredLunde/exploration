@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react-hooks";
+import { useSelections } from ".";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useSelections } from "./use-selections";
 
 describe("useSelections()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);

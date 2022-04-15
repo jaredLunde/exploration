@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react-hooks";
+import { useVirtualize } from ".";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useVirtualize } from "./use-virtualize";
 
 const scrollEvent = document.createEvent("Event");
 scrollEvent.initEvent("scroll", true, true);

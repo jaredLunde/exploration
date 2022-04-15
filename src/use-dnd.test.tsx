@@ -1,16 +1,10 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import * as React from "react";
+import type { DndEvent } from ".";
+import { useDnd } from ".";
 import type { Dir } from "./file-tree";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import type { DndEvent } from "./use-dnd";
-import { useDnd } from "./use-dnd";
 import { useSubscribe } from "./use-subscribe";
 
 describe("useHotkeys()", () => {

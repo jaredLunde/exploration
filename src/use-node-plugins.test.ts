@@ -1,9 +1,7 @@
 import { act, renderHook } from "@testing-library/react-hooks";
+import { useNodePlugins, useRovingFocus, useTraits } from ".";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useNodePlugins } from "./use-node-plugins";
-import { useRovingFocus } from "./use-roving-focus";
-import { useTraits } from "./use-traits";
 
 describe("useNodePlugins()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);

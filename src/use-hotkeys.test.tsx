@@ -1,13 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as React from "react";
-import type { Dir } from "./file-tree";
+import {
+  useHotkeys,
+  useRovingFocus,
+  useSelections,
+  useSubscribe,
+  useTraits,
+} from ".";
 import { createFileTree } from "./file-tree";
+import type { Dir } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useHotkeys } from "./use-hotkeys";
-import { useRovingFocus } from "./use-roving-focus";
-import { useSelections } from "./use-selections";
-import { useSubscribe } from "./use-subscribe";
-import { useTraits } from "./use-traits";
 
 describe("useHotkeys()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);
