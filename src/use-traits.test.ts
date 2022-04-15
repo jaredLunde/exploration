@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react-hooks";
+import { useTraits } from ".";
 import { createFileTree } from "./file-tree";
-import { useTraits } from "./use-traits";
 
 describe("useTraits()", () => {
   let fileTree = createFileTree(() => []);

@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react-hooks";
+import { useFilter } from ".";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useFilter } from "./use-filter";
 
 describe("useFilter()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);

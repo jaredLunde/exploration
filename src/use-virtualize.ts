@@ -175,7 +175,9 @@ export function useHeight(windowRef: WindowRef, ResizeObserver: any) {
   const [height, setHeight] = React.useState(getWindowHeight);
 
   useResizeObserver(
-    typeof window === "undefined" || windowRef instanceof Window
+    // @ts-expect-error
+    typeof window === "undefined" ||
+      (typeof window !== "undefined" && windowRef === window)
       ? null
       : windowRef,
     () => {

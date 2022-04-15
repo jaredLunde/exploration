@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react-hooks";
+import { useRovingFocus } from ".";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useRovingFocus } from "./use-roving-focus";
 
 describe("useRovingFocus()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);

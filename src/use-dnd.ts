@@ -42,8 +42,8 @@ export function useDnd(
         }
       }, storedOptions.current.dragOverExpandTimeout ?? DEFAULT_DRAG_OVER_EXPAND_TIMEOUT);
     } else if (
-      event.type === "leave" &&
-      storedTimeout.current.id === event.dir.id
+      event.type === "end" ||
+      (event.type === "leave" && storedTimeout.current.id === event.dir.id)
     ) {
       storedDir.current = null;
       storedTimeout.current.timeout &&

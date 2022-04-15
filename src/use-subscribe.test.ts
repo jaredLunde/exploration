@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react-hooks";
+import { useSubscribe } from ".";
 import { observable } from "./tree/observable";
-import { useSubscribe } from "./use-subscribe";
 
 describe("useSubscribe()", () => {
   it("should fire a callback when the subscription invokes it", async () => {

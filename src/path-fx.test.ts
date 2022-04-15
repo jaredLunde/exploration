@@ -1,4 +1,4 @@
-import * as pathFx from "./path-fx";
+import { pathFx } from ".";
 
 describe("join()", () => {
   it("should join paths", () => {

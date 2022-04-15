@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
-import type { Dir } from "./file-tree";
-import { createFileTree } from "./file-tree";
-import { Node } from "./node";
+import type { Dir } from ".";
+import { createFileTree, Node } from ".";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
 import { useRovingFocus } from "./use-roving-focus";
 
