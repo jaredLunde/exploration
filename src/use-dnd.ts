@@ -4,7 +4,7 @@ import type { Dir, FileTree, FileTreeNode } from "./file-tree";
 import { isDir } from "./file-tree";
 import type { Observable } from "./tree/observable";
 import { pureObservable } from "./tree/observable";
-import { useSubscribe } from "./use-subscribe";
+import { useObservable } from "./use-observable";
 import { shallowEqual } from "./utils";
 
 export function useDnd(
@@ -23,7 +23,7 @@ export function useDnd(
     storedOptions.current = options;
   });
 
-  useSubscribe(dnd, (event) => {
+  useObservable(dnd, (event) => {
     if (!event) return;
 
     if (event.type === "enter") {

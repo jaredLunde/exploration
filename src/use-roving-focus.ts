@@ -4,6 +4,11 @@ import type { FileTree } from "./file-tree";
 import type { Observable } from "./tree/observable";
 import { observable } from "./tree/observable";
 
+/**
+ * A plugin hook for adding roving focus to file tree nodes.
+ *
+ * @param fileTree - A file tree
+ */
 export function useRovingFocus<Meta>(fileTree: FileTree<Meta>) {
   const focusedNodeId = React.useMemo(
     () => getFocusedNodeId(fileTree),

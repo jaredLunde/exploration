@@ -16,7 +16,7 @@ export interface NodeProps<Meta> {
   node: FileTreeNode<Meta>;
   index: number;
   tree: FileTree<Meta>;
-  plugins: NodePlugin[];
+  plugins?: NodePlugin[];
   style: React.CSSProperties;
   children: React.ReactNode;
 }

@@ -1,11 +1,10 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import * as React from "react";
 import type { DndEvent } from ".";
-import { useDnd } from ".";
+import { useDnd, useObservable } from ".";
 import type { Dir } from "./file-tree";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
-import { useSubscribe } from "./use-subscribe";
 
 describe("useHotkeys()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);
@@ -50,7 +49,7 @@ describe("useHotkeys()", () => {
         const [, forceUpdate] = React.useState({});
         const dnd = useDnd(fileTree, props.options);
 
-        useSubscribe(dnd.didChange, (value) => {
+        useObservable(dnd.didChange, (value) => {
           forceUpdate({});
           props.onChange?.(value);
         });

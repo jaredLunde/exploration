@@ -2,9 +2,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as React from "react";
 import {
   useHotkeys,
+  useObservable,
   useRovingFocus,
   useSelections,
-  useSubscribe,
   useTraits,
 } from ".";
 import { createFileTree } from "./file-tree";
@@ -56,11 +56,11 @@ describe("useHotkeys()", () => {
           selections,
         });
 
-        useSubscribe(rovingFocus.didChange, () => {
+        useObservable(rovingFocus.didChange, () => {
           forceUpdate({});
         });
 
-        useSubscribe(selections.didChange, (nodeIds) => {
+        useObservable(selections.didChange, (nodeIds) => {
           traits.set("selected", [...nodeIds]);
           forceUpdate({});
         });

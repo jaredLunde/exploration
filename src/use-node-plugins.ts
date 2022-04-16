@@ -4,7 +4,24 @@ import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Observable } from "./tree/observable";
 import { mergeProps as mergeProps_, throttle } from "./utils";
 
-export function useNodePlugins(nodeId: number, plugins: NodePlugin[] = []) {
+/**
+ * A hook that subscribes to plugins and retrieves props that should be applied
+ * to a given node. An example of a plugin wouuld be the `useTraits()` hook.
+ *
+ * @param nodeId - The node ID used to retrieve props from a plugin
+ * @param plugins - A list of file tree plugins
+ * @returns A memoized set of props returned by the plugins
+ * @example
+ * ```ts
+ * const traits = useTraits(fileTree)
+ * const props = useNodePlugins(fileTree.visibleNodes[0], [traits])
+ * return <div {...props}>...</div>
+ * ```
+ */
+export function useNodePlugins(
+  nodeId: number,
+  plugins: NodePlugin[] = []
+): React.HTMLAttributes<HTMLElement> {
   const numPlugins = plugins.length;
   const mergeProps = React.useMemo(() => {
     const caches: WeakMapConstructor[] = [];
@@ -47,6 +64,14 @@ export function useNodePlugins(nodeId: number, plugins: NodePlugin[] = []) {
 }
 
 export type NodePlugin<T = unknown> = {
+  /**
+   * An observable that the `useNodePlugins()` hook will subscribe to.
+   */
   didChange: Observable<T>;
-  getProps: (nodeId: number) => React.HTMLAttributes<HTMLElement>;
+  /**
+   * A function that returns React props based on a node ID.
+   *
+   * @param nodeId - The ID of a node in the file tree.
+   */
+  getProps(nodeId: number): React.HTMLAttributes<HTMLElement>;
 };

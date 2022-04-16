@@ -4,8 +4,8 @@ import clsx from "clsx";
 
 /**
  * Merges multiple props objects together. Event handlers are chained,
- * classNames are combined, and ids are deduplicated - different ids
- * will trigger a side-effect and re-render components hooked up with `useId`.
+ * classNames are combined, and styles are combined.
+ *
  * For all other props, the last prop object overrides all previous ones.
  *
  * @param args - Multiple sets of props to merge together.
@@ -61,7 +61,7 @@ export function mergeProps<T extends Props[]>(
 /**
  * Calls all functions in the order they were chained with the same arguments.
  *
- * @param {...any} callbacks
+ * @param  callbacks - Callbacks to chain together
  */
 export function chain<Args extends any[]>(
   ...callbacks: Args
