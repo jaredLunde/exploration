@@ -65,7 +65,7 @@ export function useDnd(
   return {
     didChange: dnd,
 
-    getProps(nodeId: number) {
+    getProps(nodeId) {
       const node = fileTree.getById(nodeId);
       if (!node) return empty;
       return createProps(dnd, node);
@@ -138,30 +138,60 @@ const createDnd = trieMemoize([WeakMap], <Meta>(fileTree: FileTree<Meta>) => {
 export type DndEvent<Meta> =
   | {
       type: "start";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
     }
   | {
       type: "end";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
     }
   | {
       type: "enter";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "expanded";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "leave";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node was being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "drop";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     };
 
@@ -190,5 +220,5 @@ export interface UseDndPlugin {
   /**
    * Get the drag 'n drop props for a given node ID.
    */
-  getProps: (nodeId: number) => DndProps;
+  getProps: (nodeId: number) => DndProps | React.HTMLAttributes<HTMLElement>;
 }

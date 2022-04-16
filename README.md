@@ -437,7 +437,7 @@ interface UseDndPlugin {
   /**
    * Get the drag 'n drop props for a given node ID.
    */
-  getProps: (nodeId: number) => DndProps;
+  getProps: (nodeId: number) => DndProps | React.HTMLAttributes<HTMLElement>;
 }
 ```
 
@@ -482,9 +482,41 @@ A hook for adding standard hotkeys to the file tree.
 
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name     | Type                                    | Required? | Description                                   |
+| -------- | --------------------------------------- | --------- | --------------------------------------------- |
+| fileTree | `FileTree<Meta>`                        | Yes       | A file tree                                   |
+| config   | [`UseHotkeysConfig`](#usehotkeysconfig) | No        | A configuration object for the hotkeys plugin |
+
+#### UseHotkeysConfig
+
+```ts
+interface UseHotkeysConfig {
+  /**
+   * When using a hook like `useFilter` you can supply the filtered list of
+   * nodes to this option. By default, `useVirtualize()` uses the nodes returned
+   * by `useVisibleNodes()`
+   */
+  nodes?: number[];
+  /**
+   * A React ref created by useRef() or an HTML element for the container viewport
+   * you're rendering the list inside of.
+   */
+  windowRef: WindowRef;
+  /**
+   * The returned value of the `useRovingFocus()` plugin
+   */
+  rovingFocus: ReturnType<typeof useRovingFocus>;
+  /**
+   * The returned value of the `useSelections()` plugin
+   */
+  selections: ReturnType<typeof useSelections>;
+  /**
+   * A pattern to use for selecting the elements in the list. Must contain an
+   * `{index}` placeholder for the index of the element to select.
+   */
+  querySelectorPattern?: string;
+}
+```
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -492,13 +524,14 @@ A hook for adding standard hotkeys to the file tree.
 
 ### useObservable()
 
-A hook for subscribing to the value of an observable.
+A hook for subscribing to changes to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name       | Type                                 | Required? | Description                                            |
+| ---------- | ------------------------------------ | --------- | ------------------------------------------------------ |
+| observable | `Observable`                         | Yes       | An [observable](#observable)                           |
+| onChange   | `(value: T) => void \| (() => void)` | Yes       | A callback that is invoked when the observable changes |
 
 #### [⇗ Back to top](#table-of-contents)
 

@@ -6,23 +6,20 @@ import type { useRovingFocus } from "./use-roving-focus";
 import type { useSelections } from "./use-selections";
 import { useVisibleNodes } from "./use-visible-nodes";
 
-export function useHotkeys(
-  fileTree: FileTree,
-  options: {
-    nodes?: number[];
-    windowRef: WindowRef;
-    rovingFocus: ReturnType<typeof useRovingFocus>;
-    selections: ReturnType<typeof useSelections>;
-    querySelectorPattern?: string;
-  }
-) {
+/**
+ * A hook for adding standard hotkeys to the file tree.
+ *
+ * @param fileTree - A file tree
+ * @param config - Configuration options
+ */
+export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
   const {
     nodes,
     windowRef,
     rovingFocus,
     selections,
     querySelectorPattern = `#exp-{index}`,
-  } = options;
+  } = config;
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
 
@@ -272,4 +269,31 @@ export function useHotkeys(
       },
     ],
   ]);
+}
+
+export interface UseHotkeysConfig {
+  /**
+   * When using a hook like `useFilter` you can supply the filtered list of
+   * nodes to this option. By default, `useVirtualize()` uses the nodes returned
+   * by `useVisibleNodes()`
+   */
+  nodes?: number[];
+  /**
+   * A React ref created by useRef() or an HTML element for the container viewport
+   * you're rendering the list inside of.
+   */
+  windowRef: WindowRef;
+  /**
+   * The returned value of the `useRovingFocus()` plugin
+   */
+  rovingFocus: ReturnType<typeof useRovingFocus>;
+  /**
+   * The returned value of the `useSelections()` plugin
+   */
+  selections: ReturnType<typeof useSelections>;
+  /**
+   * A pattern to use for selecting the elements in the list. Must contain an
+   * `{index}` placeholder for the index of the element to select.
+   */
+  querySelectorPattern?: string;
 }
