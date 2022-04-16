@@ -7,7 +7,8 @@ import type { NodePlugin } from "./use-node-plugins";
 import { useNodePlugins } from "./use-node-plugins";
 
 /**
- * A React component that renders a node in a file tree with plugins.
+ * A React component that renders a node in a file tree with plugins. The
+ * `<Node>` component uses this under the hood.
  *
  * @param props - Node props
  */

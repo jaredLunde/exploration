@@ -36,7 +36,7 @@ npm i exploration
 - [x] Drag and drop
 - [x] Hotkeys
 - [x] Multiselect
-- [x] Traits (i.e. add class names to selections, focused elements, etc.)
+- [x] Traits (e.g. add class names to selections, focused elements, etc.)
 - [x] Filtering/search
 - [x] Ready for React 18 concurrent mode
 
@@ -240,7 +240,8 @@ are currently visible in the file tree.
 ### useNodePlugins()
 
 A hook that subscribes to plugins and retrieves props that should be applied
-to a given node. An example of a plugin wouuld be the `useTraits()` hook.
+to a given node. An example of a plugin wouuld be the `useTraits()` hook. The
+`<Node>` component uses this under the hood.
 
 #### Arguments
 
@@ -272,7 +273,7 @@ type NodePlugin<T = unknown> = {
 
 ### useFilter()
 
-A hook that returns a new visible nodes based on a filter function.
+A hook that returns filtered visible nodes based on a filter function.
 
 #### Arguments
 
@@ -299,10 +300,10 @@ be the `M` modified decorations in VSCode.
 | fileTree | `FileTree<Meta>` | Yes       | A file tree                                               |
 | traits   | `string[]`       | Yes       | The list of available traits that can be applied to nodes |
 
-#### Returns `UseTraitsResult`
+#### Returns `UseTraitsPlugin`
 
 ```ts
-export interface UseTraitsResult<Trait> {
+export interface UseTraitsPlugin<Trait> {
   /**
    * An observable that you can use to subscribe to changes to traits.
    */
@@ -369,10 +370,10 @@ A plugin hook for adding select and multi-select to the file tree.
 | fileTree | `FileTree<Meta>` | Yes       | A file tree                                                                                                                                                               |
 | nodes    | `number[]`       | No        | When using a hook like `useFilter` you can supply the filtered list of nodes to this option. By default, `useVirtualize()` uses the nodes returned by `useVisibleNodes()` |
 
-#### Returns `UseSelectionsResult`
+#### Returns `UseSelectionsPlugin`
 
 ```ts
-export interface UseSelectionsResult {
+export interface UseSelectionsPlugin {
   /**
    * An observable that you can use to subscribe to changes to selections.
    */
@@ -420,9 +421,25 @@ A plugin hook for adding drag and drop to the file tree.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name     | Type             | Required? | Description                                         |
+| -------- | ---------------- | --------- | --------------------------------------------------- |
+| fileTree | `FileTree<Meta>` | Yes       | A file tree                                         |
+| config   | `UseDndConfig`   | No        | A configuration object for the drag and drop plugin |
+
+#### Returns `UseDndPlugin`
+
+```ts
+interface UseDndPlugin {
+  /**
+   * An observable that emits drag 'n drop events.
+   */
+  didChange: Observable<DndEvent<any> | null>;
+  /**
+   * Get the drag 'n drop props for a given node ID.
+   */
+  getProps: (nodeId: number) => DndProps;
+}
+```
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -434,9 +451,26 @@ A plugin hook for adding roving focus to file tree nodes.
 
 #### Arguments
 
-| Name     | Type             | Default | Required?   | Description |
-| -------- | ---------------- | ------- | ----------- | ----------- |
-| fileTree | `FileTree<Meta>` | Yes     | A file tree |
+| Name     | Type             | Required? | Description |
+| -------- | ---------------- | --------- | ----------- |
+| fileTree | `FileTree<Meta>` | Yes       | A file tree |
+
+#### Returns `UseRovingFocusPlugin`
+
+```ts
+interface UseRovingFocusPlugin {
+  /**
+   * An observable that you can use to subscribe to changes to the focused node.
+   */
+  didChange: Observable<number>;
+  /**
+   * Get the React props for a given node ID.
+   *
+   * @param nodeId - A node ID
+   */
+  getProps: (nodeId: number) => RovingFocusProps;
+}
+```
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -448,9 +482,9 @@ A hook for adding standard hotkeys to the file tree.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -462,9 +496,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -476,9 +510,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -488,9 +522,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -500,9 +534,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -512,9 +546,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -524,9 +558,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -536,9 +570,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -548,9 +582,9 @@ A hook for subscribing to the value of an observable.
 
 #### Arguments
 
-| Name | Type | Default | Required? | Description |
-| ---- | ---- | ------- | --------- | ----------- |
-|      |      |         |           |             |
+| Name | Type | Required? | Description |
+| ---- | ---- | --------- | ----------- |
+|      |      |           |             |
 
 #### [⇗ Back to top](#table-of-contents)
 

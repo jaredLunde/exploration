@@ -16,7 +16,7 @@ import { useVisibleNodes } from "./use-visible-nodes";
 export function useSelections<Meta>(
   fileTree: FileTree<Meta>,
   nodes?: number[]
-): UseSelectionsResult {
+): UseSelectionsPlugin {
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
   const prevSelectionsSet = React.useRef<ObservableRange<number> | null>(null);
@@ -187,7 +187,7 @@ export interface SelectionsProps {
   onClick: React.MouseEventHandler<HTMLElement>;
 }
 
-export interface UseSelectionsResult {
+export interface UseSelectionsPlugin {
   /**
    * An observable that you can use to subscribe to changes to selections.
    */

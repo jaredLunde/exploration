@@ -16,7 +16,7 @@ import type { Observable } from "./tree/observable";
 export function useTraits<Trait extends string>(
   fileTree: FileTree,
   traits: Trait[]
-): UseTraitsResult<Trait> {
+): UseTraitsPlugin<Trait> {
   const storedTraits = React.useRef(traits);
   const traitsMap = React.useMemo(() => getTraitsMap(fileTree), [fileTree]);
 
@@ -121,7 +121,7 @@ export interface TraitsProps {
   className?: string;
 }
 
-export interface UseTraitsResult<Trait> {
+export interface UseTraitsPlugin<Trait> {
   /**
    * An observable that you can use to subscribe to changes to traits.
    */

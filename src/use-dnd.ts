@@ -7,11 +7,18 @@ import { pureObservable } from "./tree/observable";
 import { useObservable } from "./use-observable";
 import { shallowEqual } from "./utils";
 
+/**
+ * A plugin hook for adding drag and drop to the file tree.
+ *
+ * @param fileTree - A file tree
+ * @param config - Configuration options
+ * @param config.dragOverExpandTimeout
+ */
 export function useDnd(
   fileTree: FileTree,
-  options: { dragOverExpandTimeout?: number } = {}
-) {
-  const storedOptions = React.useRef(options);
+  config: UseDndConfig = {}
+): UseDndPlugin {
+  const storedOptions = React.useRef(config);
   const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
   const storedTimeout = React.useRef<{
     id: number;
@@ -20,7 +27,7 @@ export function useDnd(
   const storedDir = React.useRef<Dir | null>(null);
 
   React.useEffect(() => {
-    storedOptions.current = options;
+    storedOptions.current = config;
   });
 
   useObservable(dnd, (event) => {
@@ -166,4 +173,22 @@ export interface DndProps {
   onDragEnter: React.MouseEventHandler<HTMLElement>;
   onDragLeave: React.MouseEventHandler<HTMLElement>;
   onDrop: React.MouseEventHandler<HTMLElement>;
+}
+
+export interface UseDndConfig {
+  /**
+   * Timeout for expanding a directory when a draggable element enters it.
+   */
+  dragOverExpandTimeout?: number;
+}
+
+export interface UseDndPlugin {
+  /**
+   * An observable that emits drag 'n drop events.
+   */
+  didChange: Observable<DndEvent<any> | null>;
+  /**
+   * Get the drag 'n drop props for a given node ID.
+   */
+  getProps: (nodeId: number) => DndProps;
 }
