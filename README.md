@@ -601,11 +601,36 @@ A hook for subscribing to changes to the value of an observable.
 
 ### observable()
 
+A utility for emitting abd subscribing to changes to a value.
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name         | Type | Required? | Description                          |
+| ------------ | ---- | --------- | ------------------------------------ |
+| initialValue | `T`  | Yes       | The initial value of the observable. |
+
+#### Returns `Observable`
+
+```ts
+type Observable<T> = {
+  /**
+   * Emit a new value.
+   *
+   * @param value - The new value
+   */
+  next(value: T): void;
+  /**
+   * Get the current value.
+   */
+  getSnapshot(): T;
+  /**
+   * Subscribe to changes to the value.
+   *
+   * @param callback - A callback that is invoked when the value changes
+   */
+  subscribe(callback: (value: T) => void): () => void;
+};
+```
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -613,11 +638,16 @@ A hook for subscribing to changes to the value of an observable.
 
 ### mergeProps()
 
+Merges multiple props objects together. Event handlers are chained, classNames are
+combined, and styles are combined.
+
+For all other props, the last prop object overrides all previous ones.
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name | Type                      | Required? | Description                               |
+| ---- | ------------------------- | --------- | ----------------------------------------- |
+| args | `{[key: string]: any;}[]` | Yes       | Multiple sets of props to merge together. |
 
 #### [⇗ Back to top](#table-of-contents)
 
