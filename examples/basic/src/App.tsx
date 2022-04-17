@@ -1,4 +1,5 @@
 import { createStyles } from "@dash-ui/styles";
+import reset from "@dash-ui/reset";
 import {
   createFileTree,
   isDir,
@@ -105,7 +106,7 @@ export default function App() {
       <main
         ref={windowRef}
         className={explorerStyles()}
-        style={{ height: "100vh", padding: 8, width: "100%", overflow: "auto" }}
+        style={{ height: "100vh", width: "100%", overflow: "auto" }}
       >
         <div {...virtualize.props}>
           {virtualize.map((props) => {
@@ -147,6 +148,13 @@ const explorerStyles = styles.one({
 
   ".drop-target": {
     backgroundColor: "rgba(0, 147, 184, 0.2)",
+  },
+});
+
+styles.insertGlobal(reset);
+styles.insertGlobal({
+  html: {
+    fontFamily: "system-ui, sans-serif",
   },
 });
 
