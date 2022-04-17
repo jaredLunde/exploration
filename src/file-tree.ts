@@ -2,18 +2,20 @@ import * as pathFx from "./path-fx";
 import { Branch } from "./tree/branch";
 import { Leaf } from "./tree/leaf";
 import { nodesById } from "./tree/nodes-by-id";
-import type { GetNodes } from "./tree/tree";
+import type { GetNodes as GetNodesBase } from "./tree/tree";
 import { Tree } from "./tree/tree";
 
+/**
+ * Create a file tree that can be used with the React API.
+ *
+ * @param getNodes - A function that returns the nodes of the file tree.
+ * @param config - Configuration options for the file tree.
+ * @param config.comparator - A function that compares two nodes for sorting.
+ * @param config.root - The root node data of the file tree.
+ */
 export function createFileTree<Meta = {}>(
-  getNodes: (
-    parent: Dir<Meta>,
-    factory: FileTreeFactory<Meta>
-  ) => Promise<FileTreeNode<Meta>[]> | FileTreeNode<Meta>[],
-  config: {
-    comparator?: FileTree["comparator"];
-    root?: Omit<FileTreeData<Meta>, "type">;
-  } = {}
+  getNodes: GetNodes<Meta>,
+  config: FileTreeConfig<Meta> = {}
 ) {
   const { comparator = defaultComparator, root } = config;
 
@@ -90,7 +92,7 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     comparator,
     root,
   }: {
-    getNodes: GetNodes<FileTreeData<Meta>>;
+    getNodes: GetNodesBase<FileTreeData<Meta>>;
     comparator: (a: FileTreeNode<Meta>, b: FileTreeNode<Meta>) => number;
     root: Dir<Meta>;
   }) {
@@ -321,4 +323,27 @@ export type FileTreeFactory<Meta = {}> = {
    * @param expanded - Should the directory be expanded by default?
    */
   createDir(data: FileTreeData<Meta>, expanded?: boolean): Dir<Meta>;
+};
+
+export type GetNodes<Meta> = {
+  /**
+   * Get the nodes for a given directory
+   *
+   * @param parent - The parent directory to get the nodes for
+   * @param factory - A factory to create nodes (file/dir) with
+   */
+  (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
+    | Promise<FileTreeNode<Meta>[]>
+    | FileTreeNode<Meta>[];
+};
+
+export type FileTreeConfig<Meta> = {
+  /**
+   * A function that compares two nodes for sorting.
+   */
+  comparator?: FileTree["comparator"];
+  /**
+   * The root node data
+   */
+  root?: Omit<FileTreeData<Meta>, "type">;
 };

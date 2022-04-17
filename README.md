@@ -81,12 +81,35 @@ npm i exploration
 
 ### createFileTree()
 
+Create a file tree that can be used with the React API.
+
 #### Arguments
 
-| Name     | Type | Required? | Description |
-| -------- | ---- | --------- | ----------- |
-| getNodes |      | Yes       |             |
-| config   |      | No        |             |
+| Name     | Type                          | Required? | Description                                         |
+| -------- | ----------------------------- | --------- | --------------------------------------------------- |
+| getNodes | [`GetNodes<Meta>`](#getnodes) | Yes       | A function that returns the nodes of the file tree. |
+| config   | `FileTreeConfig<Meta>`        | No        | Configuration options for the file tree.            |
+
+#### GetNodes
+
+```ts
+type GetNodes<Meta> = {
+  (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
+    | Promise<FileTreeNode<Meta>[]>
+    | FileTreeNode<Meta>[];
+};
+```
+
+#### FileTreeConfig
+
+```ts
+type FileTreeConfig<Meta> = {
+  comparator?: FileTree["comparator"];
+  root?: Omit<FileTreeData<Meta>, "type">;
+};
+```
+
+#### Returns [`FileTree`](#filetree)
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -119,7 +142,7 @@ some important performance bottlenecks when rendering large lists.
 #### Returns `UseVirtualizeResult`
 
 ````ts
-export interface UseVirtualizeResult<Meta> {
+interface UseVirtualizeResult<Meta> {
   /**
    * The current scroll position of the viewport
    */
@@ -175,7 +198,7 @@ export interface UseVirtualizeResult<Meta> {
   ): React.ReactElement[];
 }
 
-export interface VirtualizeRenderProps<Meta> {
+interface VirtualizeRenderProps<Meta> {
   /**
    * A stable key as required by React elements that are included in arrays
    */
@@ -303,7 +326,7 @@ be the `M` modified decorations in VSCode.
 #### Returns `UseTraitsPlugin`
 
 ```ts
-export interface UseTraitsPlugin<Trait> {
+interface UseTraitsPlugin<Trait> {
   /**
    * An observable that you can use to subscribe to changes to traits.
    */
@@ -373,7 +396,7 @@ A plugin hook for adding select and multi-select to the file tree.
 #### Returns `UseSelectionsPlugin`
 
 ```ts
-export interface UseSelectionsPlugin {
+interface UseSelectionsPlugin {
   /**
    * An observable that you can use to subscribe to changes to selections.
    */
@@ -604,9 +627,9 @@ A class for creating a directory node.
 
 #### Methods
 
-| Name     | Type                                | Description                                                   |
-| -------- | ----------------------------------- | ------------------------------------------------------------- |
-| contains | `(node: Node<NodeData>) => boolean` | Returns `true` if the node is a descendant of this directory. |
+| Name     | Description                                                   |
+| -------- | ------------------------------------------------------------- |
+| contains | Returns `true` if the node is a descendant of this directory. |
 
 #### [⇗ Back to top](#table-of-contents)
 
