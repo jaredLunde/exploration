@@ -13,9 +13,8 @@
     "resolveJsonModule": true,
     "jsx": "preserve",
     "incremental": true,
-    "isolatedModules": true,
-    "types": ["react/next", "react-dom/next"]
+    "isolatedModules": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "types"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
