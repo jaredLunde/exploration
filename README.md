@@ -105,7 +105,7 @@ some important performance bottlenecks when rendering large lists.
 | fileTree | `FileTree<Meta>`                              | Yes       | A file tree           |
 | config   | [`UseVirtualizeConfig`](#usevirtualizeconfig) | Yes       | Configuration options |
 
-### UseVirtualizeConfig
+#### UseVirtualizeConfig
 
 | Name           | Type             | Required? | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | -------------- | ---------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -116,7 +116,7 @@ some important performance bottlenecks when rendering large lists.
 | overscanBy     | `number`         | No        | This number is used for determining the number of nodes outside of the visible window to render. The default value is 2 which means "render 2 windows worth (2 \* height) of content before and after the items in the visible window". A value of 3 would be 3 windows worth of grid cells, so it's a linear relationship. Overscanning is important for preventing tearing when scrolling through items in the grid, but setting too high of a value may create too much work for React to handle, so it's best that you tune this value accordingly. |
 | ResizeObserver | `ResizeObserver` | No        | This hook uses a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) for tracking the size of the viewport. If you need to polyfill ResizeObserver you can provide that polyfill here. By default, we use the `ResizeObserver` from the `window` global.                                                                                                                                                                                                                                                                |
 
-### Returns `UseVirtualizeResult`
+#### Returns `UseVirtualizeResult`
 
 ````ts
 export interface UseVirtualizeResult<Meta> {
@@ -250,7 +250,7 @@ to a given node. An example of a plugin wouuld be the `useTraits()` hook. The
 | nodeId  | `number`                      | Yes       | The node ID used to retrieve props from a plugin |
 | plugins | [`NodePlugin[]`](#nodeplugin) | Yes       | A list of file tree plugins                      |
 
-### NodePlugin
+#### NodePlugin
 
 ```ts
 type NodePlugin<T = unknown> = {
@@ -547,17 +547,47 @@ A hook for subscribing to changes to the value of an observable.
 | ---- | ---- | --------- | ----------- |
 |      |      |           |             |
 
+#### FileTreeData<Meta>
+
+```ts
+type FileTreeData<Meta = {}> = {
+  name: string;
+  meta?: Meta;
+};
+```
+
 #### [⇗ Back to top](#table-of-contents)
 
 ---
 
 ### Dir()
 
+A class for creating a directory node.
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name     | Type                                      | Required? | Description                                               |
+| -------- | ----------------------------------------- | --------- | --------------------------------------------------------- |
+| parent   | `Dir<Meta>`                               | Yes       | The parent node                                           |
+| data     | [`FileTreeData<Meta>`](#filetreedatameta) | Yes       | The node data                                             |
+| expanded | `boolean`                                 | No        | Whether the node is expanded or not, defaults to `false`. |
+
+#### Properties
+
+| Name     | Type                                      | Description                          |
+| -------- | ----------------------------------------- | ------------------------------------ |
+| parentId | `number`                                  | The ID of the parent node.           |
+| parent   | `Dir<Meta>`                               | The parent node.                     |
+| basename | `string`                                  | The basename of the directory.       |
+| path     | `string`                                  | The full path of the directory.      |
+| expanded | `boolean`                                 | `true` if the directory is expanded. |
+| data     | [`FileTreeData<Meta>`](#filetreedatameta) | The node data                        |
+
+#### Methods
+
+| Name     | Type                                | Description                                                   |
+| -------- | ----------------------------------- | ------------------------------------------------------------- |
+| contains | `(node: Node<NodeData>) => boolean` | Returns `true` if the node is a descendant of this directory. |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -565,11 +595,24 @@ A hook for subscribing to changes to the value of an observable.
 
 ### File()
 
+A class for creating a file node.
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name   | Type                 | Required? | Description     |
+| ------ | -------------------- | --------- | --------------- |
+| parent | `Dir<NodeData>`      | Yes       | The parent node |
+| data   | `FileTreeData<Meta>` | Yes       | The node data   |
+
+#### Properties
+
+| Name     | Type                 | Description                     |
+| -------- | -------------------- | ------------------------------- |
+| parentId | `number`             | The ID of the parent node.      |
+| parent   | `Dir<Meta>`          | The parent node.                |
+| basename | `string`             | The basename of the directory.  |
+| path     | `string`             | The full path of the directory. |
+| data     | `FileTreeData<Meta>` | The node data                   |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -577,11 +620,13 @@ A hook for subscribing to changes to the value of an observable.
 
 ### isDir()
 
+Returns `true` if the given node is a directory
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name     | Type              | Required? | Description      |
+| -------- | ----------------- | --------- | ---------------- |
+| treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
 #### [⇗ Back to top](#table-of-contents)
 
@@ -589,11 +634,13 @@ A hook for subscribing to changes to the value of an observable.
 
 ### isFile()
 
+Returns `true` if the given node is a file
+
 #### Arguments
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name     | Type              | Required? | Description      |
+| -------- | ----------------- | --------- | ---------------- |
+| treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
 #### [⇗ Back to top](#table-of-contents)
 

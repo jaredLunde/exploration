@@ -136,16 +136,25 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
 }
 
 export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+  /**
+   * The parent directory of the file
+   */
   get parent(): Dir<Meta> | null {
     return this.parentId === -1
       ? null
       : (nodesById[this.parentId] as Dir<Meta>);
   }
 
+  /**
+   * The basename of the file
+   */
   get basename() {
     return pathFx.basename(this.data.name);
   }
 
+  /**
+   * The full path of the file
+   */
   get path() {
     if (this.parentId > -1) {
       return pathFx.join(this.parent!.data.name, this.basename);
@@ -156,16 +165,25 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 }
 
 export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
+  /**
+   * The parent directory of this directory
+   */
   get parent(): Dir<Meta> | null {
     return this.parentId === -1
       ? null
       : (nodesById[this.parentId] as Dir<Meta>);
   }
 
+  /**
+   * The basename of the directory
+   */
   get basename() {
     return pathFx.basename(this.data.name);
   }
 
+  /**
+   * The full path of the directory
+   */
   get path() {
     if (this.parentId > -1) {
       return pathFx.join(this.parent!.data.name, this.basename);
@@ -189,11 +207,21 @@ export function defaultComparator(a: FileTreeNode, b: FileTreeNode) {
   return isDir(a) ? -1 : isDir(b) ? 1 : 0;
 }
 
-export function isFile<T>(treeNode: FileTreeNode): treeNode is File<T> {
+/**
+ * Returns `true` if the given node is a file
+ *
+ * @param treeNode - A tree node
+ */
+export function isFile<T>(treeNode: FileTreeNode<T>): treeNode is File<T> {
   return treeNode.constructor === File;
 }
 
-export function isDir<T>(treeNode: FileTreeNode): treeNode is Dir<T> {
+/**
+ * Returns `true` if the given node is a directory
+ *
+ * @param treeNode - A tree node
+ */
+export function isDir<T>(treeNode: FileTreeNode<T>): treeNode is Dir<T> {
   return treeNode.constructor === Dir;
 }
 
