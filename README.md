@@ -1,6 +1,6 @@
 <hr/>
 
-# exploration
+# Exploration
 
 > Primitives for creating high performance file explorers with React
 
@@ -38,7 +38,30 @@ npm i exploration
 - [x] Multiselect
 - [x] Traits (e.g. add class names to selections, focused elements, etc.)
 - [x] Filtering/search
+- [x] Strongly typed so you can engineer with confidence
 - [x] Ready for React 18 concurrent mode
+
+---
+
+## The problem
+
+File explorers in React tend to be both large, slow, and opinionated. They peter out at a
+hundred nodes and aren't suitable for building a complex file explorer in the browser. Other
+solutions like [Aspen](https://github.com/zikaari/aspen) aimed to solve this problem by
+using typed arrays (which AFAICT don't offer much benefit) and event-driven models. They
+did a pretty job, however, the documentation was sparse and the code was verbose as a result
+of a well-designed API. Additionally, I found the library to be quite buggy. All that said,
+Aspen and Monaco's tree were huge inspirations.
+
+## The solution
+
+With this library I tried to solve all of those problems. It's built on plain JavaScript arrays,
+well-designed data structures, an event-driven model, and concurrent mode-safe React hooks. It
+does just enough to be extermely powerful without being opinionated about styles, hotkeys, or
+traits. It's also performant enough to be used in browser integrated development environments.
+It makes sure React only renders what changes without render thrashing.
+
+Most importantly - it's easy to use. So check out the recipes below and give it a try!
 
 ---
 
@@ -58,26 +81,7 @@ npm i exploration
 
 ---
 
-## Table of contents
-
-### React API
-
-| Name | Description |
-| ---- | ----------- |
-
-### Low-level API
-
-| Name | Description |
-| ---- | ----------- |
-
-### Path utilities
-
-| Name | Description |
-| ---- | ----------- |
-
----
-
-## API
+## React API
 
 ### createFileTree()
 
@@ -94,6 +98,12 @@ Create a file tree that can be used with the React API.
 
 ```ts
 type GetNodes<Meta> = {
+  /**
+   * Get the nodes for a given directory
+   *
+   * @param parent - The parent directory to get the nodes for
+   * @param factory - A factory to create nodes (file/dir) with
+   */
   (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
     | Promise<FileTreeNode<Meta>[]>
     | FileTreeNode<Meta>[];
@@ -104,20 +114,26 @@ type GetNodes<Meta> = {
 
 ```ts
 type FileTreeConfig<Meta> = {
+  /**
+   * A function that compares two nodes for sorting.
+   */
   comparator?: FileTree["comparator"];
+  /**
+   * The root node data
+   */
   root?: Omit<FileTreeData<Meta>, "type">;
 };
 ```
 
 #### Returns [`FileTree`](#filetree)
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
 ### useVirtualize()
 
-A hook similar to `react-window`'s [`FixesSizeList`](https://react-window.vercel.app/#/examples/list/fixed-size)
+A hook similar to `react-window`'s [`FixedSizeList`](https://react-window.vercel.app/#/examples/list/fixed-size)
 component. It allows you to render only enough components to fill a viewport, solving
 some important performance bottlenecks when rendering large lists.
 
@@ -141,7 +157,7 @@ some important performance bottlenecks when rendering large lists.
 
 #### Returns `UseVirtualizeResult`
 
-````ts
+```ts
 interface UseVirtualizeResult<Meta> {
   /**
    * The current scroll position of the viewport
@@ -160,19 +176,6 @@ interface UseVirtualizeResult<Meta> {
   /**
    * Props that should be applied to the container you're mapping your virtualized
    * nodes into.
-   *
-   * @example
-   * ```tsx
-   * const windowRef = React.useRef(null)
-   * const virtualize = useVirtualize(fileTree, {windowRef, nodeHeight: 24})
-   * return (
-   *   <div ref={windowRef} className='file-tree'>
-   *     <div className='file-tree-container' {...virtualize.props}>
-   *      {virtualize.map(props => <Node {...props}/>)}
-   *     </div>
-   *   </div>
-   * )
-   * ```
    */
   props: VirtualizeContainerProps;
   /**
@@ -180,18 +183,6 @@ interface UseVirtualizeResult<Meta> {
    * contains the resulting React elements.
    *
    * @param render - A callback that renders a node.
-   * @example
-   * ```tsx
-   * const windowRef = React.useRef(null)
-   * const virtualize = useVirtualize(fileTree, {windowRef, nodeHeight: 24})
-   * return (
-   *   <div ref={windowRef} className='file-tree'>
-   *     <div className='file-tree-container' {...virtualize.props}>
-   *      {virtualize.map(props => <Node {...props}/>)}
-   *     </div>
-   *   </div>
-   * )
-   * ```
    */
   map(
     render: (config: VirtualizeRenderProps<Meta>) => React.ReactElement
@@ -220,9 +211,9 @@ interface VirtualizeRenderProps<Meta> {
    */
   style: React.CSSProperties;
 }
-````
+```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -241,7 +232,7 @@ paired with the [`useVirtualize()`](#usevirtualize) hook.
 | style    | `React.CSSProperties` | Yes       | Styles to apply to the `<div>` element                           |
 | children | `React.ReactNode`     | Yes       | Children to render within the node                               |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -256,7 +247,7 @@ are currently visible in the file tree.
 | -------- | ---------------- | --------- | ----------- |
 | fileTree | `FileTree<Meta>` | Yes       | A file tree |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -290,7 +281,7 @@ type NodePlugin<T = unknown> = {
 };
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -305,7 +296,7 @@ A hook that returns filtered visible nodes based on a filter function.
 | fileTree | `FileTree<Meta>`                                             | Yes       | A file tree                                                                                                                                                                                                                                                                         |
 | filter   | `((node: FileTreeNode<Meta>, i: number) => boolean) \| null` | Yes       | A _stable_ callback (e.g. `useCallback(() => {}, []))` that returns `true` if the node should be visible. This needs to be memoized or hoisted to the top level to ensure the filtered nodes only get re-generated when the filter changes or the file tree's visible nodes change. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -378,7 +369,7 @@ interface UseTraitsPlugin<Trait> {
 }
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -434,7 +425,7 @@ interface UseSelectionsPlugin {
 }
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -464,7 +455,7 @@ interface UseDndPlugin {
 }
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -495,7 +486,7 @@ interface UseRovingFocusPlugin {
 }
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -541,7 +532,7 @@ interface UseHotkeysConfig {
 }
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -556,7 +547,7 @@ A hook for subscribing to changes to the value of an observable.
 | observable | `Observable`                         | Yes       | An [observable](#observable)                           |
 | onChange   | `(value: T) => void \| (() => void)` | Yes       | A callback that is invoked when the observable changes |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -598,7 +589,7 @@ type FileTreeData<Meta = {}> = {
 };
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -631,7 +622,7 @@ A class for creating a directory node.
 | -------- | ------------------------------------------------------------- |
 | contains | Returns `true` if the node is a descendant of this directory. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -656,7 +647,7 @@ A class for creating a file node.
 | path     | `string`             | The full path of the directory. |
 | data     | `FileTreeData<Meta>` | The node data                   |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -670,7 +661,7 @@ Returns `true` if the given node is a directory
 | -------- | ----------------- | --------- | ---------------- |
 | treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -684,7 +675,7 @@ Returns `true` if the given node is a file
 | -------- | ----------------- | --------- | ---------------- |
 | treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -721,7 +712,7 @@ type Observable<T> = {
 };
 ```
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -738,7 +729,7 @@ For all other props, the last prop object overrides all previous ones.
 | ---- | ------------------------- | --------- | ----------------------------------------- |
 | args | `{[key: string]: any;}[]` | Yes       | Multiple sets of props to merge together. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -754,7 +745,7 @@ Join all arguments together and normalize the resulting path.
 | ----- | ---------- | --------- | ------------- |
 | paths | `string[]` | Yes       | Paths to join |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -769,7 +760,7 @@ Solve the relative path from `from` to `to`. Paths must be absolute.
 | from | `string` | Yes       | The absolute path to start from |
 | to   | `string` | Yes       | The absolute path to solve to   |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -783,7 +774,7 @@ Splits a path into an array of path segments.
 | ---- | -------- | --------- | ------------------ |
 | path | `string` | Yes       | The path to split. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -798,7 +789,7 @@ Unlike Node's `path`, this removes any trailing slashes.
 | ---- | -------- | --------- | ---------------------- |
 | path | `string` | Yes       | The path to normalize. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -812,7 +803,7 @@ Get the depth of a path.
 | ---- | -------- | --------- | ------------------ |
 | path | `string` | Yest      | The path to split. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -826,7 +817,7 @@ Return the last fragment of a path.
 | ---- | -------- | --------- | -------------------------------- |
 | path | `string` | Yes       | The path to get the basename of. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -840,7 +831,7 @@ Return the directory name of a path.
 | ---- | -------- | --------- | -------------------------------------- |
 | path | `string` | Yes       | The path to get the directory name of. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -855,7 +846,7 @@ If the path has no extension, returns an empty string.
 | ---- | -------- | --------- | --------------------------------- |
 | path | `string` | Yes       | The path to get the extension of. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -869,7 +860,7 @@ Returns `true` if the path is relative.
 | ---- | -------- | --------- | ------------------ |
 | path | `string` | Yes       | The path to check. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -884,7 +875,7 @@ Returns `true` if `path` is inside `dir`.
 | path | `string` | Yes       | The path to check                               |
 | dir  | `string` | Yes       | The directory to check if the path is inside of |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -898,7 +889,7 @@ Remove any trailing slashes from a path.
 | ---- | -------- | --------- | ----------------------------------------- |
 | path | `string` | Yes       | The path to remove trailing slashes from. |
 
-#### [⇗ Back to top](#table-of-contents)
+[**⇗ Back to top**](#exploration)
 
 ---
 
