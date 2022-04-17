@@ -4,7 +4,7 @@ import { useDeferredValue } from "./use-deferred-value";
 import { useVisibleNodes } from "./use-visible-nodes";
 
 /**
- * A hook that returns a new visible nodes based on a filter function.
+ * A hook that returns filtered visible nodes based on a filter function.
  *
  * @param fileTree - The file tree to use.
  * @param filter - A _stable_ callback that returns `true` if the node should be visible.

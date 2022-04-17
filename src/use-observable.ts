@@ -1,8 +1,14 @@
 import * as React from "react";
 import type { Observable } from "./tree/observable";
 
-export function useSubscribe<T>(
-  toObservable: Observable<T>,
+/**
+ * A hook for subscribing to changes to the value of an observable.
+ *
+ * @param observable - An observable
+ * @param onChange - A callback that is invoked when the observable changes
+ */
+export function useObservable<T>(
+  observable: Observable<T>,
   onChange: (value: T) => void | (() => void)
 ) {
   const storedOnChange = React.useRef(onChange);
@@ -15,10 +21,10 @@ export function useSubscribe<T>(
     let didUnmount = false;
     let cleanup: void | (() => void);
 
-    const unsubscribe = toObservable.subscribe(() => {
+    const unsubscribe = observable.subscribe(() => {
       if (didUnmount) return;
       cleanup?.();
-      cleanup = storedOnChange.current(toObservable.getSnapshot());
+      cleanup = storedOnChange.current(observable.getSnapshot());
     });
 
     return () => {
@@ -26,5 +32,5 @@ export function useSubscribe<T>(
       cleanup?.();
       unsubscribe();
     };
-  }, [toObservable]);
+  }, [observable]);
 }

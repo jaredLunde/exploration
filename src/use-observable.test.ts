@@ -1,12 +1,12 @@
 import { renderHook } from "@testing-library/react-hooks";
-import { useSubscribe } from ".";
+import { useObservable } from ".";
 import { observable } from "./tree/observable";
 
-describe("useSubscribe()", () => {
+describe("useObservable()", () => {
   it("should fire a callback when the subscription invokes it", async () => {
     const value = observable(0);
     const handleChange = jest.fn();
-    renderHook(() => useSubscribe(value, handleChange));
+    renderHook(() => useObservable(value, handleChange));
     value.next(1);
     expect(handleChange).toHaveBeenCalledWith(1);
   });
@@ -14,7 +14,7 @@ describe("useSubscribe()", () => {
   it("should not fire a callback when the subscription invokes it after the hook has unmounted", async () => {
     const value = observable(0);
     const handleChange = jest.fn();
-    const { unmount } = renderHook(() => useSubscribe(value, handleChange));
+    const { unmount } = renderHook(() => useObservable(value, handleChange));
     unmount();
     value.next(1);
     expect(handleChange).not.toHaveBeenCalledWith(1);

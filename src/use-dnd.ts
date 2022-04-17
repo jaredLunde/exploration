@@ -4,14 +4,21 @@ import type { Dir, FileTree, FileTreeNode } from "./file-tree";
 import { isDir } from "./file-tree";
 import type { Observable } from "./tree/observable";
 import { pureObservable } from "./tree/observable";
-import { useSubscribe } from "./use-subscribe";
+import { useObservable } from "./use-observable";
 import { shallowEqual } from "./utils";
 
+/**
+ * A plugin hook for adding drag and drop to the file tree.
+ *
+ * @param fileTree - A file tree
+ * @param config - Configuration options
+ * @param config.dragOverExpandTimeout
+ */
 export function useDnd(
   fileTree: FileTree,
-  options: { dragOverExpandTimeout?: number } = {}
-) {
-  const storedOptions = React.useRef(options);
+  config: UseDndConfig = {}
+): UseDndPlugin {
+  const storedOptions = React.useRef(config);
   const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
   const storedTimeout = React.useRef<{
     id: number;
@@ -20,10 +27,10 @@ export function useDnd(
   const storedDir = React.useRef<Dir | null>(null);
 
   React.useEffect(() => {
-    storedOptions.current = options;
+    storedOptions.current = config;
   });
 
-  useSubscribe(dnd, (event) => {
+  useObservable(dnd, (event) => {
     if (!event) return;
 
     if (event.type === "enter") {
@@ -58,7 +65,7 @@ export function useDnd(
   return {
     didChange: dnd,
 
-    getProps(nodeId: number) {
+    getProps(nodeId) {
       const node = fileTree.getById(nodeId);
       if (!node) return empty;
       return createProps(dnd, node);
@@ -131,30 +138,60 @@ const createDnd = trieMemoize([WeakMap], <Meta>(fileTree: FileTree<Meta>) => {
 export type DndEvent<Meta> =
   | {
       type: "start";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
     }
   | {
       type: "end";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
     }
   | {
       type: "enter";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "expanded";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "leave";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node was being dragged over
+       */
       dir: Dir<Meta>;
     }
   | {
       type: "drop";
+      /**
+       * The node that is being dragged
+       */
       node: FileTreeNode<Meta>;
+      /**
+       * The directory that the node is being dragged over
+       */
       dir: Dir<Meta>;
     };
 
@@ -166,4 +203,22 @@ export interface DndProps {
   onDragEnter: React.MouseEventHandler<HTMLElement>;
   onDragLeave: React.MouseEventHandler<HTMLElement>;
   onDrop: React.MouseEventHandler<HTMLElement>;
+}
+
+export interface UseDndConfig {
+  /**
+   * Timeout for expanding a directory when a draggable element enters it.
+   */
+  dragOverExpandTimeout?: number;
+}
+
+export interface UseDndPlugin {
+  /**
+   * An observable that emits drag 'n drop events.
+   */
+  didChange: Observable<DndEvent<any> | null>;
+  /**
+   * Get the drag 'n drop props for a given node ID.
+   */
+  getProps: (nodeId: number) => DndProps | React.HTMLAttributes<HTMLElement>;
 }

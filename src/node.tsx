@@ -6,25 +6,30 @@ import { observable } from "./tree/observable";
 import type { NodePlugin } from "./use-node-plugins";
 import { useNodePlugins } from "./use-node-plugins";
 
-export function Node<Meta>({
-  tree,
-  node,
-  index,
-  plugins = empty,
-  style,
-  children,
-}: NodeProps<Meta>) {
-  const props = useNodePlugins(node.id, [
-    ...plugins,
+/**
+ * A React component that renders a node in a file tree with plugins. The
+ * `<Node>` component uses this under the hood.
+ *
+ * @param props - Node props
+ */
+export function Node<Meta>(props: NodeProps<Meta>) {
+  const elementProps = useNodePlugins(props.node.id, [
+    ...(props.plugins ?? empty),
     {
       didChange: noopObservable,
       getProps() {
-        return createProps(tree, node, style, node.depth, index);
+        return createProps(
+          props.tree,
+          props.node,
+          props.style,
+          props.node.depth,
+          props.index
+        );
       },
     },
   ]);
 
-  return React.createElement("div", props, children);
+  return React.createElement("div", elementProps, props.children);
 }
 
 const empty: [] = [];
@@ -69,10 +74,28 @@ const createProps = trieMemoize(
 const noopObservable = observable(0);
 
 export interface NodeProps<Meta> {
+  /**
+   *  A file tree node
+   */
   node: FileTreeNode<Meta>;
+  /**
+   * The index of the node within the file tree list of visible nodes
+   */
   index: number;
+  /**
+   * The file tree that contains the node
+   */
   tree: FileTree<Meta>;
+  /**
+   * A list of plugins to apply to the node. For example `useTraits()`.
+   */
   plugins?: NodePlugin[];
+  /**
+   * Styles to apply to the `<div>` element
+   */
   style: React.CSSProperties;
+  /**
+   * Children to render within the node
+   */
   children: React.ReactNode;
 }
