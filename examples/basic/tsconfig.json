@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "isolatedModules": true,
+    "types": ["react/next", "react-dom/next"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", "types"],
+  "exclude": ["node_modules"]
+}
