@@ -37,19 +37,53 @@ export function createFileTree<Meta = {}>(
 }
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
+  /**
+   * The root directory of the file tree
+   */
   declare root: Dir<Meta>;
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
   declare nodesById: FileTreeNode<Meta>[];
+  /**
+   * Get a node by its ID.
+   *
+   * @param id - The ID of the node
+   */
   declare getById: (id: number) => FileTreeNode<Meta> | undefined;
+  /**
+   * Expand a directory in the tree.
+   *
+   * @param dir - The directory to expand
+   * @param options - Options for expanding the directory
+   */
   declare expand: (
     dir: Dir<Meta>,
     options?: {
+      /**
+       * Ensure that the directory's parents are visible in the tree, as well.
+       */
       ensureVisible?: boolean;
+      /**
+       * Expand all of the directory's child directories.
+       */
       recursive?: boolean;
     }
   ) => Promise<void>;
+  /**
+   * Collapse a directory in the tree.
+   *
+   * @param dir - The directory to collapse
+   */
   declare collapse: (dir: Dir<Meta>) => void;
+  /**
+   * Remove a node and its descendants from the tree.
+   */
   declare remove: (node: FileTreeNode<Meta>) => void;
+  /**
+   * You can use this method to manually trigger a reload of a directory in the tree.
+   *
+   * @param dir - The branch to load nodes for
+   */
+  declare loadNodes: (dir: Dir<Meta>) => Promise<void>;
 
   constructor({
     getNodes,
@@ -65,15 +99,31 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     this.comparator = comparator;
   }
 
+  /**
+   * Produce a new tree with the given function applied to the given node.
+   * This is similar to `immer`'s produce function as you're working on a draft
+   * and can freely mutate the object.
+   *
+   * @param dir - The directory to produce the tree for
+   * @param produceFn - The function to produce the tree with
+   */
   public produce(
     dir: Dir<Meta>,
     produceFn: (
       context: FileTreeFactory<Meta> & {
+        /**
+         * The draft of the directory.
+         */
         get draft(): FileTreeNode<Meta>[];
-        insert<NodeType extends FileTreeNode<Meta>>(
-          node: NodeType,
-          insertionIndex?: number
-        ): NodeType;
+        /**
+         * Insert a node into the draft.
+         *
+         * @param node - The node to insert
+         */
+        insert<NodeType extends FileTreeNode<Meta>>(node: NodeType): NodeType;
+        /**
+         * Revert the draft back to its original state.
+         */
         revert(): void;
       }
     ) => void | (Dir<Meta> | File<Meta>)[]
@@ -84,8 +134,8 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
           return context.draft as (Dir<Meta> | File<Meta>)[];
         },
 
-        insert(node, insertionIndex) {
-          const insertedNode = context.insert(node, insertionIndex);
+        insert(node) {
+          const insertedNode = context.insert(node, 0);
           return insertedNode;
         },
 
@@ -106,22 +156,47 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     });
   }
 
+  /**
+   * Move a node to a new parent.
+   *
+   * @param node - The node to move
+   * @param to - The new parent
+   */
   move(node: FileTreeNode<Meta>, to: Dir<Meta>) {
     return super.move(node, to);
   }
 
+  /**
+   * Create a new file in a given directory.
+   *
+   * @param inDir - The directory to create the file in
+   * @param withData - The data for the file
+   */
   newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>) {
     this.produce(inDir, ({ createFile, insert }) => {
       insert(createFile(withData));
     });
   }
 
+  /**
+   * Create a new directory in a given directory.
+   *
+   * @param inDir - The directory to create the directory in
+   * @param withData - The data for the directory
+   * @param expanded - Whether the directory should be expanded by default
+   */
   newDir(inDir: Dir<Meta>, withData: FileTreeData<Meta>, expanded?: boolean) {
     this.produce(inDir, ({ createDir, insert }) => {
       insert(createDir(withData, expanded));
     });
   }
 
+  /**
+   * Rename a node.
+   *
+   * @param node - The node to rename
+   * @param newName - The new name for the node
+   */
   rename(node: FileTreeNode<Meta>, newName: string) {
     node.data.name = newName;
     const parent = node.parent;
@@ -233,6 +308,17 @@ export type FileTreeData<Meta = {}> = {
 };
 
 export type FileTreeFactory<Meta = {}> = {
+  /**
+   * Create a file node that can be inserted into the tree.
+   *
+   * @param data - The data to create a file with
+   */
   createFile(data: FileTreeData<Meta>): File<Meta>;
+  /**
+   * Create a directory node that can be inserted into the tree.
+   *
+   * @param data - The data to create a directory with
+   * @param expanded - Should the directory be expanded by default?
+   */
   createDir(data: FileTreeData<Meta>, expanded?: boolean): Dir<Meta>;
 };

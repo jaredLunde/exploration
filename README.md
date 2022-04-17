@@ -541,11 +541,30 @@ A hook for subscribing to changes to the value of an observable.
 
 ### FileTree()
 
-#### Arguments
+#### Properties
 
-| Name | Type | Required? | Description |
-| ---- | ---- | --------- | ----------- |
-|      |      |           |             |
+| Name         | Type                 | Description                                    |
+| ------------ | -------------------- | ---------------------------------------------- |
+| root         | `number`             | The root directory of the file tree.           |
+| comparator   | `Dir<Meta>`          | The comparator used for sorting the file tree. |
+| visibleNodes | `FileTreeNode<Meta>` | The nodes that are currently visible.          |
+
+#### Methods
+
+| Name       | Description                                                                                                                                                                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| getById    | Get a node by its ID.                                                                                                                                                                                                                                                                      |
+| expand     | Expand a directory in the tree.                                                                                                                                                                                                                                                            |
+| collapse   | Collapse a directory in the tree.                                                                                                                                                                                                                                                          |
+| remove     | Remove a node and its descendants from the tree.                                                                                                                                                                                                                                           |
+| produce    | Produce a new tree with the given function applied to the given node. This is similar to `immer`'s produce function as you're working on a draft and can freely mutate the object.                                                                                                         |
+| move       | Move a node to a new parent.                                                                                                                                                                                                                                                               |
+| newFile    | Create a new file in a given directory.                                                                                                                                                                                                                                                    |
+| newDir     | Create a new directory in a given directory.                                                                                                                                                                                                                                               |
+| rename     | Rename a node.                                                                                                                                                                                                                                                                             |
+| isExpanded | A more accurate and real-time representation of whether a branch is expanded. `Dir#expanded` represents the "optimistic" expansion state of the branch in question not the actual status, because the child nodes might still need to be loaded before the change can be seen in the tree. |
+| isVisible  | Returns `true` if the node and its parents are visible in the tree.                                                                                                                                                                                                                        |
+| loadNodes  | You can use this method to manually trigger a reload of a directory in the tree.                                                                                                                                                                                                           |
 
 #### FileTreeData<Meta>
 
@@ -566,11 +585,11 @@ A class for creating a directory node.
 
 #### Arguments
 
-| Name     | Type                                      | Required? | Description                                               |
-| -------- | ----------------------------------------- | --------- | --------------------------------------------------------- |
-| parent   | `Dir<Meta>`                               | Yes       | The parent node                                           |
-| data     | [`FileTreeData<Meta>`](#filetreedatameta) | Yes       | The node data                                             |
-| expanded | `boolean`                                 | No        | Whether the node is expanded or not, defaults to `false`. |
+| Name     | Type                                      | Required? | Description                                                                                                                                                                                                                     |
+| -------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| parent   | `Dir<Meta>`                               | Yes       | The parent node                                                                                                                                                                                                                 |
+| data     | [`FileTreeData<Meta>`](#filetreedatameta) | Yes       | The node data                                                                                                                                                                                                                   |
+| expanded | `boolean`                                 | No        | Whether the node is expanded or not, defaults to `false`. This is an optimistic property, so when it is `true` its descendants may not be fully loaded yet. To get the more accurate representation, use `FileTree#isExpanded`. |
 
 #### Properties
 

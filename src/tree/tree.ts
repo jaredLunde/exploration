@@ -234,6 +234,11 @@ export class Tree<NodeData = {}> {
     return !!(branch.nodes && branch.expanded);
   }
 
+  /**
+   * Returns `true` if the node and its parents are visible in the tree.
+   *
+   * @param node - The node to check
+   */
   isVisible(node: Node<NodeData>): boolean {
     let p = node.parent;
 
@@ -245,6 +250,11 @@ export class Tree<NodeData = {}> {
     return true;
   }
 
+  /**
+   * You can use this method to manually trigger a reload of a branch in the tree.
+   *
+   * @param branch - The branch to load nodes for
+   */
   async loadNodes(branch: Branch<NodeData>): Promise<void> {
     const promise = this.pendingLoadChildrenRequests.get(branch);
 
