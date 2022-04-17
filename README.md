@@ -38,6 +38,7 @@ npm i exploration
 - [x] Multiselect
 - [x] Traits (e.g. add class names to selections, focused elements, etc.)
 - [x] Filtering/search
+- [x] Strongly typed so you can engineer with confidence
 - [x] Ready for React 18 concurrent mode
 
 ---
@@ -49,7 +50,8 @@ hundred nodes and aren't suitable for building a complex file explorer in the br
 solutions like [Aspen](https://github.com/zikaari/aspen) aimed to solve this problem by
 using typed arrays (which AFAICT don't offer much benefit) and event-driven models. They
 did a pretty job, however, the documentation was sparse and the code was verbose as a result
-of a well-designed API.
+of a well-designed API. Additionally, I found the library to be quite buggy. All that said,
+Aspen and Monaco's tree were huge inspirations.
 
 ## The solution
 
