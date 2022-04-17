@@ -19,7 +19,6 @@
     "check-types": "lundle check-types",
     "dev": "lundle build -f module,cjs -w",
     "format": "prettier --write \"{,!(node_modules|dist|coverage)/**/}*.{ts,tsx,js,jsx,md,yml,json}\"",
-    "install": "pnpm install",
     "lint": "eslint . --ext .ts,.tsx",
     "prepare": "husky install",
     "test": "jest",
