@@ -168,6 +168,15 @@ interface UseVirtualizeResult<Meta> {
    */
   isScrolling: boolean;
   /**
+   * Scroll to the viewport a given position
+   * @param scrollTop - The new scroll position
+   * @param config - Configuration options
+   */
+  scrollTo(
+    scrollTop: number,
+    config: Pick<ScrollToNodeConfig, "behavior">
+  ): void;
+  /**
    * Scroll to a given node by its ID
    * @param nodeId - The node ID to scroll to
    * @param config - Configuration options

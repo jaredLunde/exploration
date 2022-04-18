@@ -20,6 +20,8 @@ export { useHotkeys } from "./use-hotkeys";
 export { useNodePlugins } from "./use-node-plugins";
 export type { NodePlugin } from "./use-node-plugins";
 export { useObservable } from "./use-observable";
+export { useFileTreeSnapshot } from "./use-file-tree-snapshot";
+export type { FileTreeSnapshot } from "./use-file-tree-snapshot";
 export { useTraits } from "./use-traits";
 export type { TraitsProps, UseTraitsPlugin } from "./use-traits";
 export { useRovingFocus } from "./use-roving-focus";

@@ -356,8 +356,7 @@ describe("createFileTree()", () => {
         insert(
           createDir({
             name: "/.github/issue-templates",
-          }),
-          1
+          })
         );
       });
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
@@ -397,8 +396,7 @@ describe("createFileTree()", () => {
         insert(
           createFile({
             name: "/.github/issue-templates",
-          }),
-          1
+          })
         );
       });
 
@@ -680,7 +678,7 @@ describe("isFile()", () => {
 
 function waitForTree(tree: Tree<any>) {
   // @ts-expect-error: private access
-  return Promise.all(tree.pendingLoadChildrenRequests.values());
+  return Promise.all(tree.loadingBranches.values());
 }
 
 function getNodesFromMockFs(parent: any, { createFile, createDir }: any) {

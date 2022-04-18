@@ -45,6 +45,8 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   declare root: Dir<Meta>;
   protected declare treeNodeMap: Map<number, File<Meta> | Dir<Meta>>;
   declare nodesById: FileTreeNode<Meta>[];
+  protected declare loadingBranches: Map<Dir<Meta>, Promise<void>>;
+
   /**
    * Get a node by its ID.
    *

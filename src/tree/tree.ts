@@ -6,10 +6,7 @@ import { nodesById } from "./nodes-by-id";
 import { observable } from "./observable";
 
 export class Tree<NodeData = {}> {
-  private pendingLoadChildrenRequests = new Map<
-    Branch<NodeData>,
-    Promise<void>
-  >();
+  protected loadingBranches = new Map<Branch<NodeData>, Promise<void>>();
   private getNodes: GetNodes<NodeData>;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
   flatView = observable<number>(0);
@@ -256,7 +253,7 @@ export class Tree<NodeData = {}> {
    * @param branch - The branch to load nodes for
    */
   async loadNodes(branch: Branch<NodeData>): Promise<void> {
-    const promise = this.pendingLoadChildrenRequests.get(branch);
+    const promise = this.loadingBranches.get(branch);
 
     if (!promise) {
       const promise = (async (): Promise<void> => {
@@ -272,8 +269,8 @@ export class Tree<NodeData = {}> {
         }
       })();
 
-      promise.finally(() => this.pendingLoadChildrenRequests.delete(branch));
-      this.pendingLoadChildrenRequests.set(branch, promise);
+      promise.finally(() => this.loadingBranches.delete(branch));
+      this.loadingBranches.set(branch, promise);
       return promise;
     }
 

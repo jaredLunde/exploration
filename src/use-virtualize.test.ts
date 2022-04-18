@@ -94,6 +94,20 @@ describe("useVirtualize()", () => {
     expect(result.current.scrollTop).toBe(24 * 5);
   });
 
+  it("should scroll to a given position", () => {
+    window.innerHeight = 48;
+
+    const { result } = renderHook(() =>
+      useVirtualize(fileTree, { windowRef: window, nodeHeight: 24 })
+    );
+
+    act(() => {
+      result.current.scrollTo(48);
+    });
+
+    expect(result.current.scrollTop).toBe(48);
+  });
+
   it("should scroll to a node and center it", () => {
     window.innerHeight = 24 * 3;
 
