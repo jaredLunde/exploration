@@ -105,17 +105,16 @@
     "*.config.js"
   ],
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "browser": "./dist/module/index.js",
+      "module": "./dist/module/index.js",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/main/index.js",
       "umd": "./dist/umd/exploration.js",
       "source": "./src/index.ts",
       "types": "./types/index.d.ts",
       "default": "./dist/main/index.js"
-    },
-    "./package.json": "./package.json",
-    "./*": "./"
+    }
   },
   "jest": {
     "collectCoverageFrom": [
