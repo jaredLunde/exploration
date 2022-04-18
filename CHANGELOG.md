@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/jaredLunde/exploration/compare/v1.1.2...v1.1.3) (2022-04-18)
+
+
+### Bug Fixes
+
+* remove subpath from package.json ([#11](https://github.com/jaredLunde/exploration/issues/11)) ([dd87773](https://github.com/jaredLunde/exploration/commit/dd87773b3c0f7c85cb732f8a91bbbd7fc96d0366))
+
 ## [1.1.2](https://github.com/jaredLunde/exploration/compare/v1.1.1...v1.1.2) (2022-04-13)
 
 ### Bug Fixes
