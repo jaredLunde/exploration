@@ -32,7 +32,7 @@ npm i exploration
 
 - [x] Zero-recursion, expandable tree
 - [x] Virtualization
-- [x] Create/move/rename/delete
+- [x] Create/delete/move/rename
 - [x] Drag and drop
 - [x] Hotkeys
 - [x] Multiselect
@@ -48,9 +48,8 @@ npm i exploration
 File explorers in React tend to be both large, slow, and opinionated. They peter out at a
 hundred nodes and aren't suitable for building a complex file explorer in the browser. Other
 solutions like [Aspen](https://github.com/zikaari/aspen) aimed to solve this problem by
-using typed arrays (which AFAICT don't offer much benefit) and event-driven models. They
-did a pretty job, however, the documentation was sparse and the code was verbose as a result
-of a poorly-designed API. Additionally, I found the library to be quite buggy. All that said,
+using typed arrays (which don't seem to offer much benefit in performance) and event-driven models.
+They did a pretty job, however, the documentation was sparse and the code was verbose. All that said,
 Aspen and Monaco's tree were huge inspirations.
 
 ## The solution
@@ -78,6 +77,7 @@ Most importantly - it's easy to use. So check out the recipes below and give it 
 1. [**How to do perfom an action when a file is selected (opened)**](#)
 1. [**How to filter the list of visible files/directories**](#)
 1. [**How to write your own file tree plugin**](#)
+1. [**How to restore the state of the file tree from local storage**](#)
 
 ---
 
@@ -625,22 +625,22 @@ A class for creating a directory node.
 
 #### Arguments
 
-| Name     | Type                                      | Required? | Description                                                                                                                                                                                                                     |
-| -------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| parent   | `Dir<Meta>`                               | Yes       | The parent node                                                                                                                                                                                                                 |
-| data     | [`FileTreeData<Meta>`](#filetreedatameta) | Yes       | The node data                                                                                                                                                                                                                   |
-| expanded | `boolean`                                 | No        | Whether the node is expanded or not, defaults to `false`. This is an optimistic property, so when it is `true` its descendants may not be fully loaded yet. To get the more accurate representation, use `FileTree#isExpanded`. |
+| Name     | Type                                  | Required? | Description                                                                                                                                                                                                                     |
+| -------- | ------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| parent   | `Dir<Meta>`                           | Yes       | The parent node                                                                                                                                                                                                                 |
+| data     | [`FileTreeData<Meta>`](#filetreedata) | Yes       | The node data                                                                                                                                                                                                                   |
+| expanded | `boolean`                             | No        | Whether the node is expanded or not, defaults to `false`. This is an optimistic property, so when it is `true` its descendants may not be fully loaded yet. To get the more accurate representation, use `FileTree#isExpanded`. |
 
 #### Properties
 
-| Name     | Type                                      | Description                          |
-| -------- | ----------------------------------------- | ------------------------------------ |
-| parentId | `number`                                  | The ID of the parent node.           |
-| parent   | `Dir<Meta>`                               | The parent node.                     |
-| basename | `string`                                  | The basename of the directory.       |
-| path     | `string`                                  | The full path of the directory.      |
-| expanded | `boolean`                                 | `true` if the directory is expanded. |
-| data     | [`FileTreeData<Meta>`](#filetreedatameta) | The node data                        |
+| Name     | Type                                  | Description                          |
+| -------- | ------------------------------------- | ------------------------------------ |
+| parentId | `number`                              | The ID of the parent node.           |
+| parent   | `Dir<Meta>`                           | The parent node.                     |
+| basename | `string`                              | The basename of the directory.       |
+| path     | `string`                              | The full path of the directory.      |
+| expanded | `boolean`                             | `true` if the directory is expanded. |
+| data     | [`FileTreeData<Meta>`](#filetreedata) | The node data                        |
 
 #### Methods
 
