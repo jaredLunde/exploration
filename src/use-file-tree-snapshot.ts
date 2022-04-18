@@ -8,7 +8,7 @@ import { isDir } from "./file-tree";
  * file tree when you initially load it.
  *
  * @param fileTree - A file tree
- * @param callback - A function that handles the file tree snapshot
+ * @param callback - A callback that handles the file tree snapshot
  */
 export function useFileTreeSnapshot<Meta>(
   fileTree: FileTree<Meta>,

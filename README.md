@@ -560,6 +560,23 @@ A hook for subscribing to changes to the value of an observable.
 
 ---
 
+### useFileTreeSnapshot()
+
+Take a snapshot of the expanded and buried directories of a file tree.
+This snapshot can be used to restore the expanded/collapsed state of the
+file tree when you initially load it.
+
+#### Arguments
+
+| Name     | Type                                                 | Required? | Description                                    |
+| -------- | ---------------------------------------------------- | --------- | ---------------------------------------------- |
+| fileTree | `FileTree<Meta>`                                     | Yes       | A file tree                                    |
+| callback | `(state: FileTreeSnapshot) => Promise<void> \| void` | Yes       | A callback that handles the file tree snapshot |
+
+## [**⇗ Back to top**](#exploration)
+
+---
+
 ## Low-level API
 
 ### FileTree()
