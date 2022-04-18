@@ -9,7 +9,7 @@ const UNIX_SEP_NEGATE_RE = /[^/]+/g;
  * @param path - The path to check
  */
 export function isRelative(path: string): boolean {
-  return path.charAt(0) === "/";
+  return path.charAt(0) !== "/";
 }
 
 /**
