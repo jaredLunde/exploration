@@ -38,6 +38,7 @@ npm i exploration
 - [x] **Multiselect**
 - [x] **Traits**, add class names to selections, focused elements, anything
 - [x] **Filtering/search**
+- [x] **Tree snapshot restoration** for persisting the expanded state of the tree between refreshes
 - [x] **Strongly typed** so you can engineer with confidence
 - [x] **Concurrent mode** safe, ready for React 18
 
