@@ -1,4 +1,9 @@
-export { default as isRelative } from "is-relative";
+/**
+ * Returns `true` if the path is relative.
+ *
+ * @param path - The path to check
+ */
+export declare function isRelative(path: string): boolean;
 /**
  * Join all arguments together and normalize the resulting path.
  *
