@@ -1,11 +1,16 @@
-import isRelative from "is-relative";
-
 const ANY_LEADING_SEP_RE = /^[\\/]+/;
 const ANY_TRAILING_SEP_RE = /[\\/]+$/;
 const UNIX_JOIN_CHARACTER = "/";
 const UNIX_SEP_NEGATE_RE = /[^/]+/g;
 
-export { default as isRelative } from "is-relative";
+/**
+ * Returns `true` if the path is relative.
+ *
+ * @param path - The path to check
+ */
+export function isRelative(path: string): boolean {
+  return path.charAt(0) !== "/";
+}
 
 /**
  * Join all arguments together and normalize the resulting path.

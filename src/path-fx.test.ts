@@ -125,3 +125,12 @@ describe("normalize()", () => {
     expect(pathFx.normalize("/foo/bar/baz/qux/../../../")).toBe("/foo");
   });
 });
+
+describe("isRelative()", () => {
+  it("should return true if the path is relative", () => {
+    expect(pathFx.isRelative("foo/bar")).toBe(true);
+    expect(pathFx.isRelative("foo")).toBe(true);
+    expect(pathFx.isRelative("/foo")).toBe(false);
+    expect(pathFx.isRelative("/foo/bar")).toBe(false);
+  });
+});

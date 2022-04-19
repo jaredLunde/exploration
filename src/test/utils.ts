@@ -48,7 +48,7 @@ export const mockFs = {
 
 export function waitForTree(tree: FileTree<any>) {
   // @ts-expect-error: private access
-  return Promise.all(tree.pendingLoadChildrenRequests.values());
+  return Promise.all(tree.loadingBranches.values());
 }
 
 export function getNodesFromMockFs(

@@ -356,8 +356,7 @@ describe("createFileTree()", () => {
         insert(
           createDir({
             name: "/.github/issue-templates",
-          }),
-          1
+          })
         );
       });
       expect(node.nodes.length).toBe(mockFs["/.github"].length + 2);
@@ -397,8 +396,7 @@ describe("createFileTree()", () => {
         insert(
           createFile({
             name: "/.github/issue-templates",
-          }),
-          1
+          })
         );
       });
 
@@ -585,6 +583,27 @@ describe("createFileTree()", () => {
     tree.dispose();
     expect(nodesById[tree.root.id]).toBe(undefined);
   });
+
+  it("should restore from a snapshot", async () => {
+    const tree = createFileTree(getNodesFromMockFs, {
+      restoreFromSnapshot: {
+        expandedPaths: ["/.github"],
+        buriedPaths: ["/.husky/hooks"],
+        version: 1,
+      },
+    });
+    await waitForTree(tree);
+    const dir = tree.getById(tree.visibleNodes[0]) as Dir;
+    expect(dir.expanded).toBe(true);
+    expect(dir.nodes).not.toBeUndefined();
+
+    const husky = tree.getById(tree.root.nodes[1]) as Dir;
+    await tree.expand(husky);
+
+    const huskyHooks = tree.getById(husky.nodes[0]) as Dir;
+    expect(huskyHooks.expanded).toBe(true);
+    expect(huskyHooks.nodes).not.toBeUndefined();
+  });
 });
 
 describe("file tree actions", () => {
@@ -680,7 +699,7 @@ describe("isFile()", () => {
 
 function waitForTree(tree: Tree<any>) {
   // @ts-expect-error: private access
-  return Promise.all(tree.pendingLoadChildrenRequests.values());
+  return Promise.all(tree.loadingBranches.values());
 }
 
 function getNodesFromMockFs(parent: any, { createFile, createDir }: any) {

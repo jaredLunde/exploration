@@ -42,6 +42,15 @@ export function useVirtualize<Meta>(
     scrollTop: scrollPosition.scrollTop,
     isScrolling: scrollPosition.isScrolling,
 
+    scrollTo(scrollTop, config = {}) {
+      const windowEl =
+        windowRef && "current" in windowRef ? windowRef.current : windowRef;
+
+      if (windowEl) {
+        windowEl.scrollTo({ top: scrollTop, behavior: config.behavior });
+      }
+    },
+
     scrollToNode(nodeId, config = {}) {
       const index = visibleNodes.indexOf(nodeId) ?? -1;
 
@@ -374,6 +383,16 @@ export interface UseVirtualizeResult<Meta> {
    * `true` if the viewport is currently scrolling
    */
   isScrolling: boolean;
+  /**
+   * Scroll to the viewport a given position
+   *
+   * @param scrollTop - The new scroll position
+   * @param config - Configuration options
+   */
+  scrollTo(
+    scrollTop: number,
+    config?: Pick<ScrollToNodeConfig, "behavior">
+  ): void;
   /**
    * Scroll to a given node by its ID
    *
