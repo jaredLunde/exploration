@@ -30,16 +30,16 @@ npm i exploration
 
 ## Features
 
-- [x] Zero-recursion, expandable tree
-- [x] Virtualization
-- [x] Create/delete/move/rename
-- [x] Drag and drop
-- [x] Hotkeys
-- [x] Multiselect
-- [x] Traits (e.g. add class names to selections, focused elements, etc.)
-- [x] Filtering/search
-- [x] Strongly typed so you can engineer with confidence
-- [x] Ready for React 18 concurrent mode
+- [x] **Zero-recursion**, expandable tree
+- [x] **Virtualization**, only render what is visible
+- [x] **Create/delete/move/rename** actions
+- [x] **Drag and drop**
+- [x] **Hotkeys**
+- [x] **Multiselect**
+- [x] **Traits**, add class names to selections, focused elements, anything
+- [x] **Filtering/search**
+- [x] **Strongly typed** so you can engineer with confidence
+- [x] **Concurrent mode** safe, ready for React 18
 
 ---
 
@@ -122,6 +122,10 @@ type FileTreeConfig<Meta> = {
    * The root node data
    */
   root?: Omit<FileTreeData<Meta>, "type">;
+  /**
+   * Restore the tree from a snapshot
+   */
+  restoreFromSnapshot?: FileTreeSnapshot;
 };
 ```
 

@@ -22,6 +22,7 @@ describe("useFileTreeSnapshot()", () => {
     expect(handleSnapshot).lastCalledWith({
       expandedPaths: [dir.path],
       buriedPaths: [],
+      version: 1,
     });
   });
 
@@ -37,6 +38,7 @@ describe("useFileTreeSnapshot()", () => {
     expect(handleSnapshot).lastCalledWith({
       expandedPaths: ["/types/tree", "/types"],
       buriedPaths: [],
+      version: 1,
     });
 
     fileTree.collapse(fileTree.getById(fileTree.visibleNodes[4]) as Dir);
@@ -44,6 +46,7 @@ describe("useFileTreeSnapshot()", () => {
     expect(handleSnapshot).lastCalledWith({
       expandedPaths: [],
       buriedPaths: ["/types/tree"],
+      version: 1,
     });
   });
 });

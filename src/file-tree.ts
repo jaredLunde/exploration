@@ -4,6 +4,7 @@ import { Leaf } from "./tree/leaf";
 import { nodesById } from "./tree/nodes-by-id";
 import type { GetNodes as GetNodesBase } from "./tree/tree";
 import { Tree } from "./tree/tree";
+import type { FileTreeSnapshot } from "./types";
 
 /**
  * Create a file tree that can be used with the React API.
@@ -17,9 +18,9 @@ export function createFileTree<Meta = {}>(
   getNodes: GetNodes<Meta>,
   config: FileTreeConfig<Meta> = {}
 ) {
-  const { comparator = defaultComparator, root } = config;
+  const { comparator = defaultComparator, root, restoreFromSnapshot } = config;
 
-  return new FileTree<Meta>({
+  const tree = new FileTree<Meta>({
     async getNodes(parent) {
       const factory: FileTreeFactory<Meta> = {
         createFile(data) {
@@ -27,7 +28,25 @@ export function createFileTree<Meta = {}>(
         },
 
         createDir(data, expanded?: boolean) {
-          return new Dir(parent, data, expanded);
+          const path =
+            parent.id === -1
+              ? data.name
+              : pathFx.join(
+                  // @ts-expect-error: branch type but is dir
+                  parent.path,
+                  pathFx.basename(data.name)
+                );
+
+          return new Dir(
+            parent,
+            data,
+            expanded ??
+              !!(
+                restoreFromSnapshot &&
+                (restoreFromSnapshot.expandedPaths.includes(path) ||
+                  restoreFromSnapshot.buriedPaths.includes(path))
+              )
+          );
         },
       };
 
@@ -36,6 +55,8 @@ export function createFileTree<Meta = {}>(
     comparator,
     root: new Dir(null, root ? { ...root } : { name: "/" }),
   });
+
+  return tree;
 }
 
 export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
@@ -234,9 +255,9 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
   /**
    * The full path of the file
    */
-  get path() {
+  get path(): string {
     if (this.parentId > -1) {
-      return pathFx.join(this.parent!.data.name, this.basename);
+      return pathFx.join(this.parent!.path, this.basename);
     }
 
     return this.data.name;
@@ -263,9 +284,9 @@ export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
   /**
    * The full path of the directory
    */
-  get path() {
+  get path(): string {
     if (this.parentId > -1) {
-      return pathFx.join(this.parent!.data.name, this.basename);
+      return pathFx.join(this.parent!.path, this.basename);
     }
 
     return this.data.name;
@@ -348,4 +369,8 @@ export type FileTreeConfig<Meta> = {
    * The root node data
    */
   root?: Omit<FileTreeData<Meta>, "type">;
+  /**
+   * Restore the tree from a snapshot
+   */
+  restoreFromSnapshot?: FileTreeSnapshot;
 };

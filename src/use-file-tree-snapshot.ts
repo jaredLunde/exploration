@@ -1,6 +1,7 @@
 import { useObservable } from ".";
 import type { FileTree } from "./file-tree";
 import { isDir } from "./file-tree";
+import type { FileTreeSnapshot } from "./types";
 
 /**
  * Take a snapshot of the expanded and buried directories of a file tree.
@@ -50,18 +51,8 @@ export function useFileTreeSnapshot<Meta>(
       }
     }
 
-    callback({ expandedPaths, buriedPaths });
+    callback({ expandedPaths, buriedPaths, version: SNAPSHOT_VERSION });
   });
 }
 
-export type FileTreeSnapshot = {
-  /**
-   * The expanded paths of the file tree.
-   */
-  expandedPaths: string[];
-  /**
-   * The buried paths of the file tree. That is, directories that are expanded
-   * but not visible.
-   */
-  buriedPaths: string[];
-};
+const SNAPSHOT_VERSION = 1;
