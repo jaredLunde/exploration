@@ -22,7 +22,7 @@ export function createFileTree<Meta = {}>(
 
   const tree = new FileTree<Meta>({
     async getNodes(parent) {
-      const factory: FileTreeFactory<Meta> = {
+      const factory: Omit<FileTreeFactory<Meta>, "createPrompt"> = {
         createFile(data) {
           return new File(parent, data);
         },
@@ -175,6 +175,10 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
         createDir(data, expanded?: boolean) {
           return new Dir(dir, data, expanded);
         },
+
+        createPrompt() {
+          return new Prompt(dir, { name: "" });
+        },
       });
 
       return producer;
@@ -187,7 +191,7 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
    * @param node - The node to move
    * @param to - The new parent
    */
-  move(node: FileTreeNode<Meta>, to: Dir<Meta>) {
+  move(node: File<Meta> | Dir<Meta>, to: Dir<Meta>) {
     return super.move(node, to);
   }
 
@@ -217,20 +221,28 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   }
 
   /**
+   * Create a new directory in a given directory.
+   *
+   * @param inDir - The directory to create the directory in
+   */
+  newPrompt(inDir: Dir<Meta>) {
+    this.produce(inDir, ({ createPrompt, insert }) => {
+      insert(createPrompt());
+    });
+  }
+
+  /**
    * Rename a node.
    *
    * @param node - The node to rename
    * @param newName - The new name for the node
    */
-  rename(node: FileTreeNode<Meta>, newName: string) {
+  rename(node: File<Meta> | Dir<Meta>, newName: string) {
     node.data.name = newName;
     const parent = node.parent;
 
     if (parent && parent.nodes) {
-      this.setNodes(
-        parent,
-        parent.nodes.map((id) => this.getById(id)!)
-      );
+      this.setNodes(parent, [...parent.nodes]);
     }
   }
 }
@@ -254,6 +266,32 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 
   /**
    * The full path of the file
+   */
+  get path(): string {
+    if (this.parentId > -1) {
+      return pathFx.join(this.parent!.path, this.basename);
+    }
+
+    return this.data.name;
+  }
+}
+
+export class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+  /**
+   * The parent directory of this directory
+   */
+  get parent(): Dir<Meta> | null {
+    return this.parentId === -1
+      ? null
+      : (nodesById[this.parentId] as Dir<Meta>);
+  }
+
+  get basename() {
+    return "";
+  }
+
+  /**
+   * The full path of the prompt
    */
   get path(): string {
     if (this.parentId > -1) {
@@ -304,7 +342,28 @@ export function defaultComparator(a: FileTreeNode, b: FileTreeNode) {
     return a.basename.localeCompare(b.basename);
   }
 
-  return isDir(a) ? -1 : isDir(b) ? 1 : 0;
+  if (isPrompt(a)) {
+    return -1;
+  } else if (isPrompt(b)) {
+    return 1;
+  } else if (isDir(a)) {
+    return -1;
+  } else if (isDir(b)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+/**
+ * Returns `true` if the given node is a prompt
+ *
+ * @param treeNode - A tree node
+ */
+export function isPrompt<Meta>(
+  treeNode: FileTreeNode<Meta>
+): treeNode is Prompt<Meta> {
+  return treeNode.constructor === Prompt;
 }
 
 /**
@@ -325,7 +384,7 @@ export function isDir<T>(treeNode: FileTreeNode<T>): treeNode is Dir<T> {
   return treeNode.constructor === Dir;
 }
 
-export type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta>;
+export type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | Prompt<Meta>;
 
 export type FileTreeData<Meta = {}> = {
   name: string;
@@ -346,6 +405,10 @@ export type FileTreeFactory<Meta = {}> = {
    * @param expanded - Should the directory be expanded by default?
    */
   createDir(data: FileTreeData<Meta>, expanded?: boolean): Dir<Meta>;
+  /**
+   * Create a prompt node that can be inserted into the tree.
+   */
+  createPrompt(): Prompt<Meta>;
 };
 
 export type GetNodes<Meta> = {
@@ -355,7 +418,7 @@ export type GetNodes<Meta> = {
    * @param parent - The parent directory to get the nodes for
    * @param factory - A factory to create nodes (file/dir) with
    */
-  (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
+  (parent: Dir<Meta>, factory: Omit<FileTreeFactory<Meta>, "createPrompt">):
     | Promise<FileTreeNode<Meta>[]>
     | FileTreeNode<Meta>[];
 };

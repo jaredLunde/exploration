@@ -253,7 +253,7 @@ describe("useVirtualize()", () => {
     const Component = jest.fn();
     act(() => result.current.map(Component));
 
-    expect(Component).toHaveBeenCalledWith(
+    expect(Component).lastCalledWith(
       expect.objectContaining({
         style: expect.objectContaining({
           top: 0,
@@ -267,7 +267,7 @@ describe("useVirtualize()", () => {
     });
     act(() => result.current.map(Component));
 
-    expect(Component).toHaveBeenCalledWith(
+    expect(Component).lastCalledWith(
       expect.objectContaining({
         style: expect.objectContaining({
           top: 48,

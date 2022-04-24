@@ -1,8 +1,8 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
-import { ObservableSet } from "./observable-data";
-import type { Observable } from "./tree/observable";
+import { SubjectSet } from "./observable-data";
+import type { Subject } from "./tree/subject";
 import { useVisibleNodes } from "./use-visible-nodes";
 
 /**
@@ -19,7 +19,7 @@ export function useSelections<Meta>(
 ): UseSelectionsPlugin {
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
-  const prevSelectionsSet = React.useRef<ObservableRange<number> | null>(null);
+  const prevSelectionsSet = React.useRef<SubjectRange<number> | null>(null);
   const selectionsSet = React.useMemo(() => {
     const next = getSelectionsSet(fileTree, visibleNodes);
 
@@ -72,7 +72,7 @@ export function useSelections<Meta>(
 const createProps = trieMemoize(
   [WeakMap, WeakMap, Map],
   (
-    selectionsSet: ObservableRange<number>,
+    selectionsSet: SubjectRange<number>,
     visibleNodes: number[],
     nodeId: number
   ): SelectionsProps => {
@@ -152,10 +152,10 @@ const createProps = trieMemoize(
 const getSelectionsSet = trieMemoize(
   [WeakMap, WeakMap],
   <Meta>(fileTree: FileTree<Meta>, visibleNodes: number[]) =>
-    new ObservableRange<number>()
+    new SubjectRange<number>()
 );
 
-class ObservableRange<T> extends ObservableSet<T> {
+class SubjectRange<T> extends SubjectSet<T> {
   head: T | null = null;
   tail: T | null = null;
 
@@ -189,9 +189,9 @@ export interface SelectionsProps {
 
 export interface UseSelectionsPlugin {
   /**
-   * An observable that you can use to subscribe to changes to selections.
+   * A subject that you can use to observe to changes to selections.
    */
-  didChange: Observable<Set<number>>;
+  didChange: Subject<Set<number>>;
   /**
    * Get the React props for a given node ID.
    *

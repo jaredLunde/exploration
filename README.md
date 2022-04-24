@@ -46,7 +46,7 @@ npm i exploration
 
 ## The problem
 
-File explorers in React tend to be both large, slow, and opinionated. They peter out at a
+File explorers in React tend to be large, slow, and opinionated. They usually peter out at a
 hundred nodes and aren't suitable for building a complex file explorer in the browser. Other
 solutions like [Aspen](https://github.com/zikaari/aspen) aimed to solve this problem by
 using typed arrays (which don't seem to offer much benefit in performance) and event-driven models.
@@ -57,7 +57,7 @@ Aspen and Monaco's tree were huge inspirations.
 
 With this library I tried to solve all of those problems. It's built on plain JavaScript arrays,
 well-designed data structures, an event-driven model, and concurrent mode-safe React hooks. It
-does just enough to be extermely powerful without being opinionated about styles, hotkeys, or
+does just enough to be extremely powerful without being opinionated about styles, hotkeys, or
 traits. It's also performant enough to be used in browser integrated development environments.
 It makes sure React only renders what changes without render thrashing.
 
@@ -105,7 +105,7 @@ type GetNodes<Meta> = {
    * @param parent - The parent directory to get the nodes for
    * @param factory - A factory to create nodes (file/dir) with
    */
-  (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
+  (parent: Dir<Meta>, factory: Omit<FileTreeFactory<Meta>, "createPrompt">):
     | Promise<FileTreeNode<Meta>[]>
     | FileTreeNode<Meta>[];
 };
@@ -236,23 +236,36 @@ interface VirtualizeRenderProps<Meta> {
 A React component that renders a node in a file tree with plugins. This can be directly
 paired with the [`useVirtualize()`](#usevirtualize) hook.
 
-#### Props
+#### Node Props
 
-| Name     | Type                  | Required? | Description                                                      |
-| -------- | --------------------- | --------- | ---------------------------------------------------------------- |
-| node     | `FileTreeNode<Meta>`  | Yes       | A file tree node                                                 |
-| index    | `number`              | Yes       | The index of the node within the file tree list of visible nodes |
-| tree     | `FileTree<Meta>`      | Yes       | The file tree that contains the node                             |
-| style    | `React.CSSProperties` | Yes       | Styles to apply to the `<div>` element                           |
-| children | `React.ReactNode`     | Yes       | Children to render within the node                               |
+| Name     | Type                                                     | Required? | Description                                                      |
+| -------- | -------------------------------------------------------- | --------- | ---------------------------------------------------------------- |
+| as       | `React.ComponentType<React.HTMLAttributes<HTMLElement>>` | No        | Render the node as this component. Defaults to `"div"`.          |
+| node     | `FileTreeNode<Meta>`                                     | Yes       | A file tree node                                                 |
+| index    | `number`                                                 | Yes       | The index of the node within the file tree list of visible nodes |
+| tree     | `FileTree<Meta>`                                         | Yes       | The file tree that contains the node                             |
+| style    | `React.CSSProperties`                                    | Yes       | Styles to apply to the `<div>` element                           |
+| children | `React.ReactNode`                                        | Yes       | Children to render within the node                               |
 
 [**⇗ Back to top**](#exploration)
 
 ---
 
+### useNodeProps()
+
+A hook that creates and memoizes node-specific props from a set of input props.
+
+#### Arguments
+
+| Name   | Type                       | Required? | Description                                  |
+| ------ | -------------------------- | --------- | -------------------------------------------- |
+| config | [`NodeProps`](#node-props) | Yes       | Options to generate node-specific props from |
+
+---
+
 ### useVisibleNodes()
 
-A hook that subscribes to updates to the file tree and returns the nodes that
+A hook that observes to updates to the file tree and returns the nodes that
 are currently visible in the file tree.
 
 #### Arguments
@@ -267,7 +280,7 @@ are currently visible in the file tree.
 
 ### useNodePlugins()
 
-A hook that subscribes to plugins and retrieves props that should be applied
+A hook that observes to plugins and retrieves props that should be applied
 to a given node. An example of a plugin wouuld be the `useTraits()` hook. The
 `<Node>` component uses this under the hood.
 
@@ -283,9 +296,9 @@ to a given node. An example of a plugin wouuld be the `useTraits()` hook. The
 ```ts
 type NodePlugin<T = unknown> = {
   /**
-   * An observable that the `useNodePlugins()` hook will subscribe to.
+   * A subject that the `useNodePlugins()` hook will observe to.
    */
-  didChange: Observable<T>;
+  didChange: Subject<T>;
   /**
    * A function that returns React props based on a node ID.
    *
@@ -333,9 +346,9 @@ be the `M` modified decorations in VSCode.
 ```ts
 interface UseTraitsPlugin<Trait> {
   /**
-   * An observable that you can use to subscribe to changes to traits.
+   * A subject that you can use to observe to changes to traits.
    */
-  didChange: Observable<Map<string, Set<number>>>;
+  didChange: Subject<Map<string, Set<number>>>;
   /**
    * Get the React props for a given node ID.
    *
@@ -403,9 +416,9 @@ A plugin hook for adding select and multi-select to the file tree.
 ```ts
 interface UseSelectionsPlugin {
   /**
-   * An observable that you can use to subscribe to changes to selections.
+   * A subject that you can use to observe to changes to selections.
    */
-  didChange: Observable<Set<number>>;
+  didChange: Subject<Set<number>>;
   /**
    * Get the React props for a given node ID.
    *
@@ -449,23 +462,39 @@ A plugin hook for adding drag and drop to the file tree.
 
 #### Arguments
 
-| Name     | Type             | Required? | Description                                         |
-| -------- | ---------------- | --------- | --------------------------------------------------- |
-| fileTree | `FileTree<Meta>` | Yes       | A file tree                                         |
-| config   | `UseDndConfig`   | No        | A configuration object for the drag and drop plugin |
+| Name     | Type                            | Required? | Description                                         |
+| -------- | ------------------------------- | --------- | --------------------------------------------------- |
+| fileTree | `FileTree<Meta>`                | Yes       | A file tree                                         |
+| config   | [`UseDndConfig`](#usedndconfig) | Yes       | A configuration object for the drag and drop plugin |
 
 #### Returns `UseDndPlugin`
 
 ```ts
 interface UseDndPlugin {
   /**
-   * An observable that emits drag 'n drop events.
+   * A subject that emits drag 'n drop events.
    */
-  didChange: Observable<DndEvent<any> | null>;
+  didChange: Subject<DndEvent<any> | null>;
   /**
    * Get the drag 'n drop props for a given node ID.
    */
   getProps: (nodeId: number) => DndProps | React.HTMLAttributes<HTMLElement>;
+}
+```
+
+#### UseDndConfig
+
+```ts
+interface UseDndConfig {
+  /**
+   * Timeout for expanding a directory when a draggable element enters it.
+   */
+  dragOverExpandTimeout?: number;
+  /**
+   * A React ref created by useRef() or an HTML element for the container viewport
+   * you're rendering the list inside of.
+   */
+  windowRef: WindowRef;
 }
 ```
 
@@ -488,9 +517,9 @@ A plugin hook for adding roving focus to file tree nodes.
 ```ts
 interface UseRovingFocusPlugin {
   /**
-   * An observable that you can use to subscribe to changes to the focused node.
+   * A subject that you can use to observe to changes to the focused node.
    */
-  didChange: Observable<number>;
+  didChange: Subject<number>;
   /**
    * Get the React props for a given node ID.
    *
@@ -550,16 +579,16 @@ interface UseHotkeysConfig {
 
 ---
 
-### useObservable()
+### useObserver()
 
-A hook for subscribing to changes to the value of an observable.
+A hook for observing changes to the value of a subject.
 
 #### Arguments
 
-| Name       | Type                                 | Required? | Description                                            |
-| ---------- | ------------------------------------ | --------- | ------------------------------------------------------ |
-| observable | `Observable`                         | Yes       | An [observable](#observable)                           |
-| onChange   | `(value: T) => void \| (() => void)` | Yes       | A callback that is invoked when the observable changes |
+| Name     | Type                                 | Required? | Description                                         |
+| -------- | ------------------------------------ | --------- | --------------------------------------------------- |
+| subject  | `Subject`                            | Yes       | A [subject](#subject) to observe                    |
+| observer | `(value: T) => void \| (() => void)` | Yes       | A callback that is invoked when the subject changes |
 
 [**⇗ Back to top**](#exploration)
 
@@ -578,7 +607,7 @@ file tree when you initially load it.
 | fileTree | `FileTree<Meta>`                                     | Yes       | A file tree                                    |
 | callback | `(state: FileTreeSnapshot) => Promise<void> \| void` | Yes       | A callback that handles the file tree snapshot |
 
-## [**⇗ Back to top**](#exploration)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -602,10 +631,12 @@ file tree when you initially load it.
 | expand     | Expand a directory in the tree.                                                                                                                                                                                                                                                            |
 | collapse   | Collapse a directory in the tree.                                                                                                                                                                                                                                                          |
 | remove     | Remove a node and its descendants from the tree.                                                                                                                                                                                                                                           |
+| invalidate | Invalidate the list of visible nodes. This is useful for re-rendering your tree when node data changes.                                                                                                                                                                                    |
 | produce    | Produce a new tree with the given function applied to the given node. This is similar to `immer`'s produce function as you're working on a draft and can freely mutate the object.                                                                                                         |
 | move       | Move a node to a new parent.                                                                                                                                                                                                                                                               |
 | newFile    | Create a new file in a given directory.                                                                                                                                                                                                                                                    |
 | newDir     | Create a new directory in a given directory.                                                                                                                                                                                                                                               |
+| newPrompt  | Create a new prompt in a given directory.                                                                                                                                                                                                                                                  |
 | rename     | Rename a node.                                                                                                                                                                                                                                                                             |
 | isExpanded | A more accurate and real-time representation of whether a branch is expanded. `Dir#expanded` represents the "optimistic" expansion state of the branch in question not the actual status, because the child nodes might still need to be loaded before the change can be seen in the tree. |
 | isVisible  | Returns `true` if the node and its parents are visible in the tree.                                                                                                                                                                                                                        |
@@ -682,6 +713,29 @@ A class for creating a file node.
 
 ---
 
+### Prompt()
+
+A class for creating a prompt node.
+
+#### Arguments
+
+| Name   | Type            | Required? | Description     |
+| ------ | --------------- | --------- | --------------- |
+| parent | `Dir<NodeData>` | Yes       | The parent node |
+
+#### Properties
+
+| Name     | Type        | Description                                         |
+| -------- | ----------- | --------------------------------------------------- |
+| parentId | `number`    | The ID of the parent node.                          |
+| parent   | `Dir<Meta>` | The parent node.                                    |
+| path     | `string`    | The full path of the prompt.                        |
+| basename | `string`    | The base name of prompts is always an empty string. |
+
+[**⇗ Back to top**](#exploration)
+
+---
+
 ### isDir()
 
 Returns `true` if the given node is a directory
@@ -710,36 +764,60 @@ Returns `true` if the given node is a file
 
 ---
 
-### observable()
+### isPrompt()
 
-A utility for emitting abd subscribing to changes to a value.
+Returns `true` if the given node is a prompt
 
 #### Arguments
 
-| Name         | Type | Required? | Description                          |
-| ------------ | ---- | --------- | ------------------------------------ |
-| initialValue | `T`  | Yes       | The initial value of the observable. |
+| Name     | Type              | Required? | Description      |
+| -------- | ----------------- | --------- | ---------------- |
+| treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-#### Returns `Observable`
+[**⇗ Back to top**](#exploration)
+
+---
+
+### subject()
+
+A utility for creating a subject as part of the [observer pattern](https://en.wikipedia.org/wiki/Observer_pattern).
+
+#### Arguments
+
+| Name         | Type | Required? | Description                       |
+| ------------ | ---- | --------- | --------------------------------- |
+| initialState | `T`  | Yes       | The initial state of the subject. |
+
+#### Returns `Subject`
 
 ```ts
-type Observable<T> = {
+export type Subject<T> = {
   /**
-   * Emit a new value.
+   * Emit a new state.
    *
-   * @param value - The new value
+   * @param state - The new state
    */
-  next(value: T): void;
+  setState(state: T): void;
   /**
-   * Get the current value.
+   * Get the current state.
    */
-  getSnapshot(): T;
+  getState(): T;
   /**
-   * Subscribe to changes to the value.
+   * Observe changes to the state.
    *
-   * @param callback - A callback that is invoked when the value changes
+   * @param observer - A callback that is invoked when the value changes
    */
-  subscribe(callback: (value: T) => void): () => void;
+  observe(observer: Observer<T>): () => void;
+  /**
+   * Remove a observer from the list of observers
+   *
+   * @param observer - A callback that is invoked when the value changes
+   */
+  unobserve(observer: Observer<T>): void;
+};
+
+type Observer<T> = {
+  (state: T): void;
 };
 ```
 

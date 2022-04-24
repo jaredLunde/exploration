@@ -1,12 +1,13 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import * as React from "react";
 import type { DndEvent } from ".";
-import { useDnd, useObservable } from ".";
+import { useDnd, useObserver } from ".";
 import type { Dir } from "./file-tree";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
+import type { WindowRef } from "./types";
 
-describe("useHotkeys()", () => {
+describe("useDnd()", () => {
   let fileTree = createFileTree(getNodesFromMockFs);
 
   afterEach(() => {
@@ -29,6 +30,7 @@ describe("useHotkeys()", () => {
       onChange?: (event: DndEvent<any>) => void;
       options?: {
         dragOverExpandTimeout?: number;
+        windowRef?: WindowRef;
       };
     } = {}
   ) => {
@@ -47,9 +49,9 @@ describe("useHotkeys()", () => {
       element,
       () => {
         const [, forceUpdate] = React.useState({});
-        const dnd = useDnd(fileTree, props.options);
+        const dnd = useDnd(fileTree, { windowRef: element, ...props.options });
 
-        useObservable(dnd.didChange, (value) => {
+        useObserver(dnd.didChange, (value) => {
           forceUpdate({});
           props.onChange?.(value);
         });
@@ -59,7 +61,7 @@ describe("useHotkeys()", () => {
             {fileTree.visibleNodes.map((nodeId, index) => (
               <div
                 key={nodeId}
-                id={`exp-${index}`}
+                id={`exploration-${index}`}
                 tabIndex={0}
                 {...dnd.getProps(nodeId)}
               />
@@ -77,9 +79,9 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
 
-    expect(handleChange).toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "start",
       node: fileTree.getById(fileTree.visibleNodes[0]),
     });
@@ -92,9 +94,9 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragEnd(document.getElementById("exp-0"));
+    fireEvent.dragEnd(document.getElementById("exploration-0"));
 
-    expect(handleChange).toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "end",
       node: fileTree.getById(fileTree.visibleNodes[0]),
     });
@@ -107,13 +109,30 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
-    expect(handleChange).toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "enter",
       node: fileTree.getById(fileTree.visibleNodes[0]),
       dir: fileTree.getById(fileTree.visibleNodes[1]),
+    });
+  });
+
+  it('should fire a drag "enter" event on the root', async () => {
+    await waitForTree(fileTree);
+
+    const handleChange = jest.fn();
+    const [element, Component] = createComponent({ onChange: handleChange });
+    render(<Component />, { container: element });
+
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(element);
+
+    expect(handleChange).lastCalledWith({
+      type: "enter",
+      node: fileTree.getById(fileTree.visibleNodes[0]),
+      dir: fileTree.root,
     });
   });
 
@@ -124,7 +143,7 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     expect(handleChange).not.toHaveBeenCalledWith(
       expect.objectContaining({
@@ -141,9 +160,9 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
     fireEvent.dragEnter(
-      document.getElementById(`exp-${fileTree.visibleNodes.length - 1}`)
+      document.getElementById(`exploration-${fileTree.visibleNodes.length - 1}`)
     );
 
     expect(handleChange).not.toHaveBeenCalledWith({
@@ -162,33 +181,34 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
-    fireEvent.dragEnter(document.getElementById("exp-2"));
-    fireEvent.dragLeave(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
+    fireEvent.dragLeave(document.getElementById("exploration-1"));
 
-    expect(handleChange).toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "leave",
       node: fileTree.getById(fileTree.visibleNodes[0]),
       dir: fileTree.getById(fileTree.visibleNodes[1]),
     });
   });
 
-  it('should fire a drag "leave" event on a directory if it was the last entered', async () => {
+  it('should fire a drag "leave" event on the root directory', async () => {
     await waitForTree(fileTree);
 
     const handleChange = jest.fn();
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
-    fireEvent.dragLeave(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(element);
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
+    fireEvent.dragLeave(element);
 
-    expect(handleChange).not.toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "leave",
       node: fileTree.getById(fileTree.visibleNodes[0]),
-      dir: fileTree.getById(fileTree.visibleNodes[1]),
+      dir: fileTree.root,
     });
   });
 
@@ -199,10 +219,10 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     fireEvent.dragLeave(
-      document.getElementById(`exp-${fileTree.visibleNodes.length - 1}`)
+      document.getElementById(`exploration-${fileTree.visibleNodes.length - 1}`)
     );
 
     expect(handleChange).not.toHaveBeenCalledWith({
@@ -221,8 +241,8 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -232,7 +252,7 @@ describe("useHotkeys()", () => {
 
     expect(dir.expanded).toBe(true);
     await waitFor(() => {
-      expect(handleChange).toHaveBeenCalledWith({
+      expect(handleChange).lastCalledWith({
         type: "expanded",
         dir,
         node: fileTree.getById(fileTree.visibleNodes[0]),
@@ -250,8 +270,8 @@ describe("useHotkeys()", () => {
     });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -269,8 +289,8 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -278,7 +298,7 @@ describe("useHotkeys()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.dragEnter(document.getElementById("exp-2"));
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
 
     act(() => {
       jest.advanceTimersByTime(200);
@@ -294,8 +314,8 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
@@ -304,7 +324,7 @@ describe("useHotkeys()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.dragEnd(document.getElementById("exp-0"));
+    fireEvent.dragEnd(document.getElementById("exploration-0"));
 
     act(() => {
       jest.advanceTimersByTime(200);
@@ -320,8 +340,8 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
@@ -330,14 +350,14 @@ describe("useHotkeys()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.drop(document.getElementById("exp-2"));
+    fireEvent.drop(document.getElementById("exploration-2"));
 
     act(() => {
       jest.advanceTimersByTime(200);
     });
 
     expect(dir.expanded).toBe(false);
-    expect(handleChange).toHaveBeenCalledWith({
+    expect(handleChange).lastCalledWith({
       type: "drop",
       node: fileTree.getById(fileTree.visibleNodes[0]),
       dir: fileTree.getById(fileTree.visibleNodes[2]),
@@ -351,7 +371,18 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragOver(document.getElementById("exp-1"));
+    fireEvent.dragOver(document.getElementById("exploration-1"));
+    expect(handleChange).not.toHaveBeenCalled();
+  });
+
+  it("should do nothing on root dragover", async () => {
+    await waitForTree(fileTree);
+
+    const handleChange = jest.fn();
+    const [element, Component] = createComponent({ onChange: handleChange });
+    render(<Component />, { container: element });
+
+    fireEvent.dragOver(element);
     expect(handleChange).not.toHaveBeenCalled();
   });
 
@@ -362,12 +393,29 @@ describe("useHotkeys()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.drop(document.getElementById("exp-1"));
+    fireEvent.drop(document.getElementById("exploration-1"));
 
     expect(handleChange).not.toHaveBeenCalledWith(
       expect.objectContaining({
         type: "drop",
         dir: fileTree.getById(fileTree.visibleNodes[1]),
+      })
+    );
+  });
+
+  it('should not fire a drag "drop" event on a root directory if there is no node', async () => {
+    await waitForTree(fileTree);
+
+    const handleChange = jest.fn();
+    const [element, Component] = createComponent({ onChange: handleChange });
+    render(<Component />, { container: element });
+
+    fireEvent.drop(element);
+
+    expect(handleChange).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "drop",
+        dir: element,
       })
     );
   });

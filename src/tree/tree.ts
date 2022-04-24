@@ -3,13 +3,13 @@ import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { Leaf } from "./leaf";
 import { nodesById } from "./nodes-by-id";
-import { observable } from "./observable";
+import { subject } from "./subject";
 
 export class Tree<NodeData = {}> {
   protected loadingBranches = new Map<Branch<NodeData>, Promise<void>>();
   private getNodes: GetNodes<NodeData>;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
-  flatView = observable<number>(0);
+  flatView = subject<number>(0);
   root: Branch<NodeData>;
   nodesById = nodesById as Node<NodeData>[];
 
@@ -29,7 +29,7 @@ export class Tree<NodeData = {}> {
   }
 
   get visibleNodes(): number[] {
-    return this.createVisibleNodes(this.flatView.getSnapshot());
+    return this.createVisibleNodes(this.flatView.getState());
   }
 
   getById(id: number): Node<NodeData> | undefined {
@@ -92,14 +92,14 @@ export class Tree<NodeData = {}> {
         );
       }
 
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
   collapse(branch: Branch<NodeData>): void {
     if (branch.expanded) {
       branch.expanded = false;
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
@@ -136,13 +136,13 @@ export class Tree<NodeData = {}> {
 
     if (draftResult.modified) {
       this.setNodes(branch, draftResult.draft);
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
   remove(nodeToRemove: Node<NodeData>): void {
     if (isBranch(nodeToRemove) && nodeToRemove.nodes) {
-      const nodes = nodeToRemove.nodes.slice();
+      const nodes = [...nodeToRemove.nodes];
       let nodeId: number | undefined;
 
       while ((nodeId = nodes.pop())) {
@@ -152,25 +152,38 @@ export class Tree<NodeData = {}> {
           nodes.push(...node.nodes);
         }
       }
+
+      for (let i = 0; i < nodes.length; i++) {
+        // @ts-expect-error
+        nodesById[nodes[i]] = undefined;
+      }
     }
 
     const nodeToRemoveParent = nodeToRemove.parent ?? this.root;
 
+    // @ts-expect-error
+    nodesById[nodeToRemove.id] = undefined;
+
     if (nodeToRemoveParent?.nodes) {
-      const nextNodes: number[] = [];
+      let found = 0;
+      const nextNodes: number[] = new Array(
+        nodeToRemoveParent.nodes.length - 1
+      );
 
       for (let i = 0; i < nodeToRemoveParent.nodes.length; i++) {
         const nodeId = nodeToRemoveParent.nodes[i];
 
         if (nodeId !== nodeToRemove.id) {
-          nextNodes.push(nodeId);
+          nextNodes[i - found] = nodeId;
+        } else {
+          found = 1;
         }
       }
 
       this.setNodes(nodeToRemoveParent, nextNodes);
     }
 
-    this.invalidateFlatView();
+    this.invalidate();
   }
 
   async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
@@ -192,13 +205,16 @@ export class Tree<NodeData = {}> {
     // Parent may have changed in the meantime
     if (node.parent === initialParent) {
       if (initialParent?.nodes) {
-        const nextNodes: number[] = [];
+        const nextNodes: number[] = new Array(initialParent.nodes.length - 1);
+        let found = 0;
 
         for (let i = 0; i < initialParent.nodes.length; i++) {
           const nodeId = initialParent.nodes[i];
 
           if (nodeId !== node.id) {
-            nextNodes.push(nodeId);
+            nextNodes[i - found] = nodeId;
+          } else {
+            found = 1;
           }
         }
 
@@ -207,15 +223,21 @@ export class Tree<NodeData = {}> {
 
       if (to.nodes) {
         node.parentId = to.id;
-        this.setNodes(to, [...to.nodes, node.id]);
+        const nextNodes = [...to.nodes];
+        nextNodes[nextNodes.length] = node.id;
+        this.setNodes(to, nextNodes);
       }
 
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
-  invalidateFlatView(): void {
-    this.flatView.next(this.flatView.getSnapshot() + 1);
+  /**
+   * Invalidate the list of visible nodes. This is useful for re-rendering your tree
+   * when node data changes.
+   */
+  invalidate(): void {
+    this.flatView.setState(this.flatView.getState() + 1);
   }
 
   /**
@@ -293,12 +315,12 @@ export class Tree<NodeData = {}> {
 
     nodes = comparator ? nodes.sort(comparator) : nodes;
 
-    branch.nodes = [];
+    branch.nodes = new Array(nodes.length);
     this.nodesById[branch.id] = branch;
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
-      branch.nodes.push(node.id);
+      branch.nodes[i] = node.id;
       this.nodesById[node.id] = node;
     }
   }
@@ -306,11 +328,9 @@ export class Tree<NodeData = {}> {
   private createVisibleNodes = memoizeOne(
     (id: number) => {
       const flatView: number[] = [];
-      const nodes: number[] = [];
 
       if (this.root.nodes) {
-        nodes.push(...[...this.root.nodes].reverse());
-
+        const nodes: number[] = [...this.root.nodes].reverse();
         let nodeId: number | undefined;
 
         while ((nodeId = nodes.pop())) {

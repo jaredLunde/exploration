@@ -1,8 +1,8 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
-import { ObservableMap } from "./observable-data";
-import type { Observable } from "./tree/observable";
+import { SubjectMap } from "./observable-data";
+import type { Subject } from "./tree/subject";
 
 /**
  * A hook that allows you to arbitrarily apply traits/decorations to nodes in the file
@@ -103,14 +103,14 @@ const createProps = trieMemoize([Map], (className: string): TraitsProps => {
 
 const fileTreeTraitsMap = new WeakMap<
   FileTree,
-  ObservableMap<string, Set<number>>
+  SubjectMap<string, Set<number>>
 >();
 
 function getTraitsMap(fileTree: FileTree) {
   let traitsMap = fileTreeTraitsMap.get(fileTree);
 
   if (!traitsMap) {
-    traitsMap = new ObservableMap<string, Set<number>>();
+    traitsMap = new SubjectMap<string, Set<number>>();
     fileTreeTraitsMap.set(fileTree, traitsMap);
   }
 
@@ -123,9 +123,9 @@ export interface TraitsProps {
 
 export interface UseTraitsPlugin<Trait> {
   /**
-   * An observable that you can use to subscribe to changes to traits.
+   * A subject that you can use to observe to changes to traits.
    */
-  didChange: Observable<Map<string, Set<number>>>;
+  didChange: Subject<Map<string, Set<number>>>;
   /**
    * Get the React props for a given node ID.
    *

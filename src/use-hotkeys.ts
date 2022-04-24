@@ -18,13 +18,13 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
     windowRef,
     rovingFocus,
     selections,
-    querySelectorPattern = `#exp-{index}`,
+    querySelectorPattern = `[data-exploration-index="{index}"]`,
   } = config;
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
 
   function getSelectedId() {
-    const rovingId = rovingFocus.didChange.getSnapshot();
+    const rovingId = rovingFocus.didChange.getState();
     return rovingId > -1 ? rovingId : selections.tail ?? -1;
   }
 
@@ -242,11 +242,11 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
           return;
         }
 
-        const rovingId = rovingFocus.didChange.getSnapshot();
+        const rovingId = rovingFocus.didChange.getState();
         const selectedIndex = visibleNodes.indexOf(rovingId);
 
         if (rovingId > -1) {
-          rovingFocus.didChange.next(-1);
+          rovingFocus.didChange.setState(-1);
         }
 
         selections.clear();

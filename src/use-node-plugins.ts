@@ -1,11 +1,11 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
-import type { Observable } from "./tree/observable";
+import type { Subject } from "./tree/subject";
 import { mergeProps as mergeProps_, throttle } from "./utils";
 
 /**
- * A hook that subscribes to plugins and retrieves props that should be applied
+ * A hook that observes to plugins and retrieves props that should be applied
  * to a given node. An example of a plugin wouuld be the `useTraits()` hook.
  *
  * @param nodeId - The node ID used to retrieve props from a plugin
@@ -24,8 +24,8 @@ export function useNodePlugins(
 ): React.HTMLAttributes<HTMLElement> {
   const numPlugins = plugins.length;
   const mergeProps = React.useMemo(() => {
-    const caches: WeakMapConstructor[] = [];
-    for (let i = 0; i < numPlugins; i++) caches.push(WeakMap);
+    const caches: WeakMapConstructor[] = new Array(numPlugins);
+    for (let i = 0; i < numPlugins; i++) caches[i] = WeakMap;
 
     return trieMemoize(
       caches,
@@ -36,10 +36,12 @@ export function useNodePlugins(
   }, [numPlugins]);
 
   function getSnapshot() {
-    const props: React.HTMLAttributes<HTMLElement>[] = [];
+    const props: React.HTMLAttributes<HTMLElement>[] = new Array(
+      plugins.length
+    );
 
     for (let i = 0; i < numPlugins; i++) {
-      props.push(plugins[i].getProps(nodeId));
+      props[i] = plugins[i].getProps(nodeId);
     }
 
     return mergeProps(...props);
@@ -48,10 +50,10 @@ export function useNodePlugins(
   return useSyncExternalStore(
     (callback) => {
       callback = throttle(callback, 60);
-      const unsubs: (() => void)[] = [];
+      const unsubs: (() => void)[] = new Array(plugins.length);
 
       for (let i = 0; i < numPlugins; i++) {
-        unsubs.push(plugins[i].didChange.subscribe(callback));
+        unsubs[i] = plugins[i].didChange.observe(callback);
       }
 
       return () => {
@@ -65,9 +67,9 @@ export function useNodePlugins(
 
 export type NodePlugin<T = unknown> = {
   /**
-   * An observable that the `useNodePlugins()` hook will subscribe to.
+   * A subject that the `useNodePlugins()` hook will observe to.
    */
-  didChange: Observable<T>;
+  didChange: Subject<T>;
   /**
    * A function that returns React props based on a node ID.
    *

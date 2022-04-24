@@ -19,7 +19,7 @@ describe("useSelections()", () => {
       result.current.getProps(fileTree.visibleNodes[0]).onClick({});
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
     ]);
   });
@@ -32,7 +32,7 @@ describe("useSelections()", () => {
       result.current.select(fileTree.visibleNodes[0]);
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
     ]);
   });
@@ -46,7 +46,7 @@ describe("useSelections()", () => {
       result.current.deselect(fileTree.visibleNodes[0]);
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([]);
+    expect([...result.current.didChange.getState()]).toEqual([]);
   });
 
   it("should clear selections", async () => {
@@ -58,7 +58,7 @@ describe("useSelections()", () => {
       result.current.clear();
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([]);
+    expect([...result.current.didChange.getState()]).toEqual([]);
   });
 
   it("should select multiple nodes", async () => {
@@ -78,7 +78,7 @@ describe("useSelections()", () => {
         .onClick({ metaKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -100,7 +100,7 @@ describe("useSelections()", () => {
       result.current.getProps(fileTree.visibleNodes[2]).onClick({});
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[2],
     ]);
   });
@@ -118,7 +118,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -131,7 +131,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -153,7 +153,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -168,7 +168,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -188,7 +188,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -208,7 +208,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -230,7 +230,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
@@ -248,7 +248,7 @@ describe("useSelections()", () => {
         .onClick({ shiftKey: true });
     });
 
-    expect([...result.current.didChange.getSnapshot()]).toEqual([
+    expect([...result.current.didChange.getState()]).toEqual([
       fileTree.visibleNodes[0],
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],

@@ -1,8 +1,7 @@
 import * as React from "react";
-import trieMemoize from "trie-memoize";
 import { isDir } from "./file-tree";
 import type { FileTree, FileTreeNode } from "./file-tree";
-import { observable } from "./tree/observable";
+import { subject } from "./tree/subject";
 import type { NodePlugin } from "./use-node-plugins";
 import { useNodePlugins } from "./use-node-plugins";
 
@@ -13,67 +12,73 @@ import { useNodePlugins } from "./use-node-plugins";
  * @param props - Node props
  */
 export function Node<Meta>(props: NodeProps<Meta>) {
+  const nodeProps = useNodeProps(props);
+
   const elementProps = useNodePlugins(props.node.id, [
     ...(props.plugins ?? empty),
     {
-      didChange: noopObservable,
+      didChange: noopSubject,
       getProps() {
-        return createProps(
-          props.tree,
-          props.node,
-          props.style,
-          props.node.depth,
-          props.index
-        );
+        return nodeProps;
       },
     },
   ]);
 
-  return React.createElement("div", elementProps, props.children);
+  return React.createElement(props.as ?? "div", elementProps, props.children);
+}
+
+/**
+ * A hook that creates and memoizes node-specific props from a set of input props.
+ *
+ * @param config - Props to generate exploration node-specific props from
+ */
+export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
+  return React.useMemo<React.HTMLAttributes<HTMLElement>>(() => {
+    const node = config.node;
+    const dir = isDir(node);
+
+    return {
+      role: "button",
+      style: config.style,
+      "data-exploration-id": node.id,
+      "data-exploration-index": config.index,
+      "data-exploration-depth": node.depth,
+      "data-exploration-expanded": dir ? node.expanded : undefined,
+      onClick(event) {
+        event.currentTarget.focus();
+
+        if (
+          event.metaKey ||
+          event.shiftKey ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.button === 2
+        ) {
+          return;
+        }
+
+        if (dir) {
+          if (node.expanded) {
+            config.tree.collapse(node);
+          } else {
+            config.tree.expand(node);
+          }
+        }
+      },
+    };
+  }, [config.index, config.style, config.tree, config.node]);
 }
 
 const empty: [] = [];
-
-const createProps = trieMemoize(
-  [WeakMap, WeakMap, WeakMap, Map, Map],
-  <Meta,>(
-    tree: FileTree<Meta>,
-    node: FileTreeNode<Meta>,
-    style: React.CSSProperties,
-    depth: number,
-    index: number
-  ): React.HTMLAttributes<HTMLDivElement> => ({
-    id: `exp-${index}`,
-    style,
-    role: "button",
-    className: `depth-${depth}`,
-    onClick(event) {
-      event.currentTarget.focus();
-
-      if (
-        event.metaKey ||
-        event.shiftKey ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.button === 2
-      ) {
-        return;
-      }
-
-      if (isDir(node)) {
-        if (node.expanded) {
-          tree.collapse(node);
-        } else {
-          tree.expand(node);
-        }
-      }
-    },
-  })
-);
-
-const noopObservable = observable(0);
+const noopSubject = subject(0);
 
 export interface NodeProps<Meta> {
+  /**
+   * Render the node as this component
+   *
+   * @default "div"
+   */
+  as?: React.ComponentType<React.HTMLAttributes<HTMLElement>>;
   /**
    *  A file tree node
    */

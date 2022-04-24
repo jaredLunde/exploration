@@ -19,7 +19,7 @@ describe("useRovingFocus()", () => {
       result.current.getProps(1).onFocus({});
     });
 
-    expect(result.current.didChange.getSnapshot()).toBe(1);
+    expect(result.current.didChange.getState()).toBe(1);
     expect(result.current.getProps(1).tabIndex).toBe(0);
   });
 
@@ -35,7 +35,7 @@ describe("useRovingFocus()", () => {
       // @ts-expect-error
       result.current.getProps(0).onBlur({});
     });
-    expect(result.current.didChange.getSnapshot()).toBe(-1);
+    expect(result.current.didChange.getState()).toBe(-1);
 
     act(() => {
       // @ts-expect-error
@@ -45,13 +45,13 @@ describe("useRovingFocus()", () => {
       // @ts-expect-error
       result.current.getProps(0).onBlur({});
     });
-    expect(result.current.didChange.getSnapshot()).toBe(1);
+    expect(result.current.didChange.getState()).toBe(1);
 
     act(() => {
       // @ts-expect-error
       result.current.getProps(1).onBlur({});
     });
-    expect(result.current.didChange.getSnapshot()).toBe(-1);
+    expect(result.current.didChange.getState()).toBe(-1);
     expect(result.current.getProps(1).tabIndex).toBe(-1);
   });
 });

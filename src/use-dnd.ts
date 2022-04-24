@@ -2,9 +2,10 @@ import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { Dir, FileTree, FileTreeNode } from "./file-tree";
 import { isDir } from "./file-tree";
-import type { Observable } from "./tree/observable";
-import { pureObservable } from "./tree/observable";
-import { useObservable } from "./use-observable";
+import type { Subject } from "./tree/subject";
+import { pureSubject } from "./tree/subject";
+import type { WindowRef } from "./types";
+import { useObserver } from "./use-observer";
 import { shallowEqual } from "./utils";
 
 /**
@@ -12,13 +13,13 @@ import { shallowEqual } from "./utils";
  *
  * @param fileTree - A file tree
  * @param config - Configuration options
- * @param config.dragOverExpandTimeout
+ * @param config.windowRef - A React ref created by useRef() or an HTML element for the
+ *   container viewport you're rendering the list inside of.
+ * @param config.dragOverExpandTimeout - Timeout for expanding a directory when a draggable
+ *   element enters it.
  */
-export function useDnd(
-  fileTree: FileTree,
-  config: UseDndConfig = {}
-): UseDndPlugin {
-  const storedOptions = React.useRef(config);
+export function useDnd(fileTree: FileTree, config: UseDndConfig): UseDndPlugin {
+  const storedConfig = React.useRef(config);
   const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
   const storedTimeout = React.useRef<{
     id: number;
@@ -27,10 +28,10 @@ export function useDnd(
   const storedDir = React.useRef<Dir | null>(null);
 
   React.useEffect(() => {
-    storedOptions.current = config;
+    storedConfig.current = config;
   });
 
-  useObservable(dnd, (event) => {
+  useObserver(dnd, (event) => {
     if (!event) return;
 
     if (event.type === "enter") {
@@ -43,11 +44,11 @@ export function useDnd(
         if (!event.dir.expanded) {
           fileTree.expand(event.dir).then(() => {
             if (event.dir === storedDir.current) {
-              dnd.next({ ...event, type: "expanded" });
+              dnd.setState({ ...event, type: "expanded" });
             }
           });
         }
-      }, storedOptions.current.dragOverExpandTimeout ?? DEFAULT_DRAG_OVER_EXPAND_TIMEOUT);
+      }, storedConfig.current.dragOverExpandTimeout ?? DEFAULT_DRAG_OVER_EXPAND_TIMEOUT);
     } else if (
       event.type === "end" ||
       (event.type === "leave" && storedTimeout.current.id === event.dir.id)
@@ -61,6 +62,60 @@ export function useDnd(
         clearTimeout(storedTimeout.current.timeout);
     }
   });
+
+  React.useEffect(() => {
+    const { windowRef } = storedConfig.current;
+    const windowEl =
+      windowRef && "current" in windowRef ? windowRef.current : windowRef;
+
+    if (windowEl) {
+      const handlers = createProps(dnd, fileTree.root);
+
+      const isCurrentTarget = (event: Event) => {
+        return (
+          event.currentTarget instanceof HTMLElement &&
+          (event.currentTarget === event.target ||
+            event.currentTarget.firstChild === event.target)
+        );
+      };
+
+      const handleDragEnter = (event: Event) => {
+        if (isCurrentTarget(event)) {
+          // @ts-expect-error: technically incompatible types but that is ok
+          handlers.onDragEnter(event);
+        }
+      };
+      const handleDragOver = (event: Event) => {
+        if (isCurrentTarget(event)) {
+          // @ts-expect-error: technically incompatible types but that is ok
+          handlers.onDragOver(event);
+        }
+      };
+      const handleDragLeave = (event: Event) => {
+        if (isCurrentTarget(event)) {
+          // @ts-expect-error: technically incompatible types but that is ok
+          handlers.onDragLeave(event);
+        }
+      };
+      const handleDrop = (event: Event) => {
+        if (isCurrentTarget(event)) {
+          // @ts-expect-error: technically incompatible types but that is ok
+          handlers.onDrop(event);
+        }
+      };
+      windowEl.addEventListener("dragenter", handleDragEnter);
+      windowEl.addEventListener("dragover", handleDragOver);
+      windowEl.addEventListener("dragleave", handleDragLeave);
+      windowEl.addEventListener("drop", handleDrop);
+
+      return () => {
+        windowEl.removeEventListener("dragenter", handleDragEnter);
+        windowEl.removeEventListener("dragover", handleDragOver);
+        windowEl.removeEventListener("dragleave", handleDragLeave);
+        windowEl.removeEventListener("drop", handleDrop);
+      };
+    }
+  }, [dnd, fileTree.root]);
 
   return {
     didChange: dnd,
@@ -79,25 +134,25 @@ const empty = {};
 const createProps = trieMemoize(
   [WeakMap, WeakMap],
   <Meta>(
-    dnd: Observable<DndEvent<Meta> | null>,
+    dnd: Subject<DndEvent<Meta> | null>,
     node: FileTreeNode<Meta>
   ): DndProps => ({
     draggable: true,
 
     onDragStart() {
-      dnd.next({ type: "start", node });
+      dnd.setState({ type: "start", node });
     },
 
     onDragEnd() {
-      dnd.next({ type: "end", node });
+      dnd.setState({ type: "end", node });
     },
 
     onDragEnter() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getSnapshot();
+      const snapshot = dnd.getState();
 
       if (dir && snapshot?.node) {
-        dnd.next({ type: "enter", node: snapshot.node, dir });
+        dnd.setState({ type: "enter", node: snapshot.node, dir });
       }
     },
 
@@ -107,32 +162,26 @@ const createProps = trieMemoize(
 
     onDragLeave() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getSnapshot();
+      const snapshot = dnd.getState();
 
-      if (
-        dir &&
-        snapshot &&
-        snapshot.type === "enter" &&
-        snapshot.dir !== dir &&
-        snapshot.node
-      ) {
-        dnd.next({ type: "leave", node: snapshot.node, dir });
+      if (dir && snapshot && snapshot.type === "enter" && snapshot.node) {
+        dnd.setState({ type: "leave", node: snapshot.node, dir });
       }
     },
 
     onDrop() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getSnapshot();
+      const snapshot = dnd.getState();
 
       if (dir && snapshot?.node) {
-        dnd.next({ type: "drop", node: snapshot.node, dir });
+        dnd.setState({ type: "drop", node: snapshot.node, dir });
       }
     },
   })
 );
 
 const createDnd = trieMemoize([WeakMap], <Meta>(fileTree: FileTree<Meta>) => {
-  return pureObservable<DndEvent<Meta> | null>(null, shallowEqual);
+  return pureSubject<DndEvent<Meta> | null>(null, shallowEqual);
 });
 
 export type DndEvent<Meta> =
@@ -210,13 +259,18 @@ export interface UseDndConfig {
    * Timeout for expanding a directory when a draggable element enters it.
    */
   dragOverExpandTimeout?: number;
+  /**
+   * A React ref created by useRef() or an HTML element for the container viewport
+   * you're rendering the list inside of.
+   */
+  windowRef: WindowRef;
 }
 
 export interface UseDndPlugin {
   /**
-   * An observable that emits drag 'n drop events.
+   * A subject that emits drag 'n drop events.
    */
-  didChange: Observable<DndEvent<any> | null>;
+  didChange: Subject<DndEvent<any> | null>;
   /**
    * Get the drag 'n drop props for a given node ID.
    */

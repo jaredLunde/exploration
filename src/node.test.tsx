@@ -25,8 +25,10 @@ describe("<Node>", () => {
       </Node>
     );
 
-    expect(element.asFragment().firstChild).toHaveAttribute("id", "exp-0");
-    expect(element.asFragment().firstChild).toHaveClass("depth-1");
+    expect(element.asFragment().firstChild).toHaveAttribute(
+      "data-exploration-depth",
+      "1"
+    );
     expect(element.asFragment().firstChild).toHaveStyle({ height: "24px" });
   });
 

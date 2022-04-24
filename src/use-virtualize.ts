@@ -135,25 +135,21 @@ export function useVirtualize<Meta>(
         visibleNodes.length,
         Math.ceil((scrollPosition.scrollTop + overscan) / totalNodeHeight)
       );
-      const children: React.ReactElement[] = [];
+      const length = stopIndex - index;
+      const children: React.ReactElement[] = new Array(length);
 
       for (; index < stopIndex; index++) {
         const nodeId = visibleNodes[index];
         const node = fileTree.getById(nodeId);
         if (!node) continue;
 
-        children.push(
-          render({
-            key: nodeId,
-            index,
-            node,
-            tree: fileTree,
-            style: createStyle(
-              nodeHeight,
-              nodeGap * index + index * nodeHeight
-            ),
-          })
-        );
+        children[length - index] = render({
+          key: nodeId,
+          index,
+          node,
+          tree: fileTree,
+          style: createStyle(nodeHeight, nodeGap * index + index * nodeHeight),
+        });
       }
 
       return children;

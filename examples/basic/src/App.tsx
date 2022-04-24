@@ -7,7 +7,7 @@ import {
   Node,
   useDnd,
   useHotkeys,
-  useObservable,
+  useObserver,
   useRovingFocus,
   useSelections,
   useTraits,
@@ -22,12 +22,12 @@ export default function App() {
   const rovingFocus = useRovingFocus(tree);
   const selections = useSelections(tree);
   const traits = useTraits(tree, ["selected", "focused", "drop-target"]);
-  const dnd = useDnd(tree);
+  const dnd = useDnd(tree, { windowRef });
   const virtualize = useVirtualize(tree, { windowRef, nodeHeight: 24 });
 
   useHotkeys(tree, { windowRef, rovingFocus, selections });
 
-  useObservable(selections.didChange, (value) => {
+  useObserver(selections.didChange, (value) => {
     const selected = Array.from(value);
     traits.set("selected", selected);
 
@@ -40,7 +40,7 @@ export default function App() {
     }
   });
 
-  useObservable(dnd.didChange, (event) => {
+  useObserver(dnd.didChange, (event) => {
     if (!event) return;
 
     if (event.type === "enter" || event.type === "expanded") {
@@ -49,7 +49,7 @@ export default function App() {
       }
 
       const nodeIds: number[] = [event.dir.id];
-      const nodes = [...(event.dir.nodes ?? [])];
+      const nodes = event.dir.nodes ? [...event.dir.nodes] : [];
 
       while (nodes.length) {
         const node = tree.getById(nodes.pop() ?? -1);
@@ -66,9 +66,12 @@ export default function App() {
       traits.set("drop-target", nodeIds);
     } else if (event.type === "drop") {
       traits.clear("drop-target");
-      const selected = selections.didChange.getSnapshot();
+      const selected = selections.didChange.getState();
 
-      if (selected.has(event.dir.id)) {
+      if (
+        event.node === event.dir ||
+        (selected.has(event.node.id) && selected.has(event.dir.id))
+      ) {
         return;
       }
 
@@ -97,7 +100,7 @@ export default function App() {
     }
   });
 
-  useObservable(rovingFocus.didChange, (value) => {
+  useObserver(rovingFocus.didChange, (value) => {
     traits.set("focused", [value]);
   });
 
@@ -126,7 +129,7 @@ export default function App() {
 const styles = createStyles({});
 const explorerStyles = styles.one({
   ...[...Array(20).keys()].reduce((acc, depth) => {
-    acc[`.depth-${depth}`] = {
+    acc[`[data-exploration-depth="${depth}"]`] = {
       borderStyle: "solid",
       borderWidth: 1,
       borderColor: "transparent",

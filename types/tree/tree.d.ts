@@ -5,7 +5,7 @@ export declare class Tree<NodeData = {}> {
   protected loadingBranches: Map<Branch<NodeData>, Promise<void>>;
   private getNodes;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
-  flatView: import("./observable").Observable<number>;
+  flatView: import("./subject").Subject<number>;
   root: Branch<NodeData>;
   nodesById: Node<NodeData>[];
   constructor({

@@ -120,14 +120,14 @@ describe("useTraits()", () => {
     expect(result.current.getProps(2)).toEqual({ className: "" });
   });
 
-  it("should subscribe to getProps", () => {
+  it("should observe to getProps", () => {
     const { result } = renderHook(() =>
       useTraits(fileTree, ["foo", "bar", "baz"])
     );
 
     const spy = jest.fn();
 
-    result.current.didChange.subscribe((iterable) => {
+    result.current.didChange.observe((iterable) => {
       const next = iterable.entries().next().value;
       if (!next) return;
       const [k, v] = next;
