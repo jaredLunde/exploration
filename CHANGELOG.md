@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/jaredLunde/exploration/compare/v1.2.0...v1.3.0) (2022-04-24)
+
+
+### Features
+
+* finalize the api ([#13](https://github.com/jaredLunde/exploration/issues/13)) ([47bb5e8](https://github.com/jaredLunde/exploration/commit/47bb5e8b6d51f8559493de136f6c42845d158bd7))
+
 # [1.2.0](https://github.com/jaredLunde/exploration/compare/v1.1.3...v1.2.0) (2022-04-19)
 
 ### Features

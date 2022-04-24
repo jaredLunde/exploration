@@ -8,7 +8,4 @@ import type { FileTreeSnapshot } from "./types";
  * @param fileTree - A file tree
  * @param callback - A callback that handles the file tree snapshot
  */
-export declare function useFileTreeSnapshot<Meta>(
-  fileTree: FileTree<Meta>,
-  callback: (state: FileTreeSnapshot) => Promise<void> | void
-): void;
+export declare function useFileTreeSnapshot<Meta>(fileTree: FileTree<Meta>, callback: (state: FileTreeSnapshot) => Promise<void> | void): void;

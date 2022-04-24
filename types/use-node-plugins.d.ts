@@ -14,19 +14,16 @@ import type { Subject } from "./tree/subject";
  * return <div {...props}>...</div>
  * ```
  */
-export declare function useNodePlugins(
-  nodeId: number,
-  plugins?: NodePlugin[]
-): React.HTMLAttributes<HTMLElement>;
+export declare function useNodePlugins(nodeId: number, plugins?: NodePlugin[]): React.HTMLAttributes<HTMLElement>;
 export declare type NodePlugin<T = unknown> = {
-  /**
-   * A subject that the `useNodePlugins()` hook will observe to.
-   */
-  didChange: Subject<T>;
-  /**
-   * A function that returns React props based on a node ID.
-   *
-   * @param nodeId - The ID of a node in the file tree.
-   */
-  getProps(nodeId: number): React.HTMLAttributes<HTMLElement>;
+    /**
+     * A subject that the `useNodePlugins()` hook will observe to.
+     */
+    didChange: Subject<T>;
+    /**
+     * A function that returns React props based on a node ID.
+     *
+     * @param nodeId - The ID of a node in the file tree.
+     */
+    getProps(nodeId: number): React.HTMLAttributes<HTMLElement>;
 };

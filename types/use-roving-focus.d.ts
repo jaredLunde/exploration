@@ -6,23 +6,21 @@ import type { Subject } from "./tree/subject";
  *
  * @param fileTree - A file tree
  */
-export declare function useRovingFocus<Meta>(
-  fileTree: FileTree<Meta>
-): UseRovingFocusPlugin;
+export declare function useRovingFocus<Meta>(fileTree: FileTree<Meta>): UseRovingFocusPlugin;
 export interface RovingFocusProps {
-  tabIndex: number;
-  onFocus(e: React.FocusEvent<HTMLElement>): void;
-  onBlur(e: React.FocusEvent<HTMLElement>): void;
+    tabIndex: number;
+    onFocus(e: React.FocusEvent<HTMLElement>): void;
+    onBlur(e: React.FocusEvent<HTMLElement>): void;
 }
 export interface UseRovingFocusPlugin {
-  /**
-   * A subject that you can use to observe to changes to the focused node.
-   */
-  didChange: Subject<number>;
-  /**
-   * Get the React props for a given node ID.
-   *
-   * @param nodeId - A node ID
-   */
-  getProps: (nodeId: number) => RovingFocusProps;
+    /**
+     * A subject that you can use to observe to changes to the focused node.
+     */
+    didChange: Subject<number>;
+    /**
+     * Get the React props for a given node ID.
+     *
+     * @param nodeId - A node ID
+     */
+    getProps: (nodeId: number) => RovingFocusProps;
 }

@@ -10,6 +10,4 @@ import type { FileTree } from "./file-tree";
  * return visibleNodes.map((node) => <div className={`depth-${node.depth}`}>{node.basename}</div>)
  * ```
  */
-export declare function useVisibleNodes<Meta>(
-  fileTree: FileTree<Meta>
-): number[];
+export declare function useVisibleNodes<Meta>(fileTree: FileTree<Meta>): number[];

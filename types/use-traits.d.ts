@@ -9,60 +9,57 @@ import type { Subject } from "./tree/subject";
  * @param fileTree - A file tree
  * @param traits - The list of available traits that can be applied to nodes
  */
-export declare function useTraits<Trait extends string>(
-  fileTree: FileTree,
-  traits: Trait[]
-): UseTraitsPlugin<Trait>;
+export declare function useTraits<Trait extends string>(fileTree: FileTree, traits: Trait[]): UseTraitsPlugin<Trait>;
 export interface TraitsProps {
-  className?: string;
+    className?: string;
 }
 export interface UseTraitsPlugin<Trait> {
-  /**
-   * A subject that you can use to observe to changes to traits.
-   */
-  didChange: Subject<Map<string, Set<number>>>;
-  /**
-   * Get the React props for a given node ID.
-   *
-   * @param nodeId - A node ID
-   */
-  getProps(nodeId: number): TraitsProps;
-  /**
-   * Adds a trait to given node IDs
-   *
-   * @param trait - The trait to apply to the given node IDs
-   * @param nodeIds - Node IDs to add the traits to
-   */
-  add(trait: Extract<Trait, string>, ...nodeIds: number[]): void;
-  /**
-   * Sets node IDs to a given trait. This is different from add in
-   * that it replaces any exist node IDs assigned to the trait.
-   *
-   * @param trait - The trait to apply to the given node IDs
-   * @param nodeIds - Node IDs to add the traits to
-   */
-  set(trait: Extract<Trait, string>, nodeIds: number[]): void;
-  /**
-   * Deletes a node ID from a given trait
-   *
-   * @param trait - The trait
-   * @param nodeId - The node ID to delete a trait for
-   */
-  delete(trait: Extract<Trait, string>, nodeId: number): void;
-  /**
-   * Clears all of the node IDs assigned to a given trait
-   *
-   * @param trait - The trait
-   */
-  clear(trait: Extract<Trait, string>): void;
-  /**
-   * Clears all of the node IDs assigned to all traits
-   */
-  clearAll(): void;
-  /**
-   * Clears the traits assigned to a given node ID
-   *
-   * @param nodeId - A node ID
-   */
-  clearNode(nodeId: number): void;
+    /**
+     * A subject that you can use to observe to changes to traits.
+     */
+    didChange: Subject<Map<string, Set<number>>>;
+    /**
+     * Get the React props for a given node ID.
+     *
+     * @param nodeId - A node ID
+     */
+    getProps(nodeId: number): TraitsProps;
+    /**
+     * Adds a trait to given node IDs
+     *
+     * @param trait - The trait to apply to the given node IDs
+     * @param nodeIds - Node IDs to add the traits to
+     */
+    add(trait: Extract<Trait, string>, ...nodeIds: number[]): void;
+    /**
+     * Sets node IDs to a given trait. This is different from add in
+     * that it replaces any exist node IDs assigned to the trait.
+     *
+     * @param trait - The trait to apply to the given node IDs
+     * @param nodeIds - Node IDs to add the traits to
+     */
+    set(trait: Extract<Trait, string>, nodeIds: number[]): void;
+    /**
+     * Deletes a node ID from a given trait
+     *
+     * @param trait - The trait
+     * @param nodeId - The node ID to delete a trait for
+     */
+    delete(trait: Extract<Trait, string>, nodeId: number): void;
+    /**
+     * Clears all of the node IDs assigned to a given trait
+     *
+     * @param trait - The trait
+     */
+    clear(trait: Extract<Trait, string>): void;
+    /**
+     * Clears all of the node IDs assigned to all traits
+     */
+    clearAll(): void;
+    /**
+     * Clears the traits assigned to a given node ID
+     *
+     * @param nodeId - A node ID
+     */
+    clearNode(nodeId: number): void;
 }
