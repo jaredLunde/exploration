@@ -46,7 +46,7 @@ npm i exploration
 
 ## The problem
 
-File explorers in React tend to be both large, slow, and opinionated. They peter out at a
+File explorers in React tend to be large, slow, and opinionated. They usually peter out at a
 hundred nodes and aren't suitable for building a complex file explorer in the browser. Other
 solutions like [Aspen](https://github.com/zikaari/aspen) aimed to solve this problem by
 using typed arrays (which don't seem to offer much benefit in performance) and event-driven models.
@@ -57,7 +57,7 @@ Aspen and Monaco's tree were huge inspirations.
 
 With this library I tried to solve all of those problems. It's built on plain JavaScript arrays,
 well-designed data structures, an event-driven model, and concurrent mode-safe React hooks. It
-does just enough to be extermely powerful without being opinionated about styles, hotkeys, or
+does just enough to be extremely powerful without being opinionated about styles, hotkeys, or
 traits. It's also performant enough to be used in browser integrated development environments.
 It makes sure React only renders what changes without render thrashing.
 
