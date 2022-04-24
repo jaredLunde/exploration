@@ -760,7 +760,7 @@ Returns `true` if the given node is a file
 | -------- | ----------------- | --------- | ---------------- |
 | treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-## [**⇗ Back to top**](#exploration)
+[**⇗ Back to top**](#exploration)
 
 ---
 
@@ -774,7 +774,7 @@ Returns `true` if the given node is a prompt
 | -------- | ----------------- | --------- | ---------------- |
 | treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-## [**⇗ Back to top**](#exploration)
+[**⇗ Back to top**](#exploration)
 
 ---
 
