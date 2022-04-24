@@ -61,7 +61,7 @@ describe("useDnd()", () => {
             {fileTree.visibleNodes.map((nodeId, index) => (
               <div
                 key={nodeId}
-                id={`exp-${index}`}
+                id={`exploration-${index}`}
                 tabIndex={0}
                 {...dnd.getProps(nodeId)}
               />
@@ -79,7 +79,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
 
     expect(handleChange).lastCalledWith({
       type: "start",
@@ -94,7 +94,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragEnd(document.getElementById("exp-0"));
+    fireEvent.dragEnd(document.getElementById("exploration-0"));
 
     expect(handleChange).lastCalledWith({
       type: "end",
@@ -109,8 +109,8 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     expect(handleChange).lastCalledWith({
       type: "enter",
@@ -126,7 +126,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
     fireEvent.dragEnter(element);
 
     expect(handleChange).lastCalledWith({
@@ -143,7 +143,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     expect(handleChange).not.toHaveBeenCalledWith(
       expect.objectContaining({
@@ -160,9 +160,9 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
     fireEvent.dragEnter(
-      document.getElementById(`exp-${fileTree.visibleNodes.length - 1}`)
+      document.getElementById(`exploration-${fileTree.visibleNodes.length - 1}`)
     );
 
     expect(handleChange).not.toHaveBeenCalledWith({
@@ -181,10 +181,10 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
-    fireEvent.dragEnter(document.getElementById("exp-2"));
-    fireEvent.dragLeave(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
+    fireEvent.dragLeave(document.getElementById("exploration-1"));
 
     expect(handleChange).lastCalledWith({
       type: "leave",
@@ -200,9 +200,9 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
     fireEvent.dragEnter(element);
-    fireEvent.dragEnter(document.getElementById("exp-2"));
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
     fireEvent.dragLeave(element);
 
     expect(handleChange).lastCalledWith({
@@ -219,10 +219,10 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     fireEvent.dragLeave(
-      document.getElementById(`exp-${fileTree.visibleNodes.length - 1}`)
+      document.getElementById(`exploration-${fileTree.visibleNodes.length - 1}`)
     );
 
     expect(handleChange).not.toHaveBeenCalledWith({
@@ -241,8 +241,8 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -270,8 +270,8 @@ describe("useDnd()", () => {
     });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -289,8 +289,8 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
 
@@ -298,7 +298,7 @@ describe("useDnd()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.dragEnter(document.getElementById("exp-2"));
+    fireEvent.dragEnter(document.getElementById("exploration-2"));
 
     act(() => {
       jest.advanceTimersByTime(200);
@@ -314,8 +314,8 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
@@ -324,7 +324,7 @@ describe("useDnd()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.dragEnd(document.getElementById("exp-0"));
+    fireEvent.dragEnd(document.getElementById("exploration-0"));
 
     act(() => {
       jest.advanceTimersByTime(200);
@@ -340,8 +340,8 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragStart(document.getElementById("exp-0"));
-    fireEvent.dragEnter(document.getElementById("exp-1"));
+    fireEvent.dragStart(document.getElementById("exploration-0"));
+    fireEvent.dragEnter(document.getElementById("exploration-1"));
 
     const dir = fileTree.getById(fileTree.visibleNodes[1]) as Dir;
     expect(dir.expanded).toBe(false);
@@ -350,7 +350,7 @@ describe("useDnd()", () => {
       jest.advanceTimersByTime(200);
     });
 
-    fireEvent.drop(document.getElementById("exp-2"));
+    fireEvent.drop(document.getElementById("exploration-2"));
 
     act(() => {
       jest.advanceTimersByTime(200);
@@ -371,7 +371,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.dragOver(document.getElementById("exp-1"));
+    fireEvent.dragOver(document.getElementById("exploration-1"));
     expect(handleChange).not.toHaveBeenCalled();
   });
 
@@ -393,7 +393,7 @@ describe("useDnd()", () => {
     const [element, Component] = createComponent({ onChange: handleChange });
     render(<Component />, { container: element });
 
-    fireEvent.drop(document.getElementById("exp-1"));
+    fireEvent.drop(document.getElementById("exploration-1"));
 
     expect(handleChange).not.toHaveBeenCalledWith(
       expect.objectContaining({

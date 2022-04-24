@@ -105,7 +105,7 @@ type GetNodes<Meta> = {
    * @param parent - The parent directory to get the nodes for
    * @param factory - A factory to create nodes (file/dir) with
    */
-  (parent: Dir<Meta>, factory: FileTreeFactory<Meta>):
+  (parent: Dir<Meta>, factory: Omit<FileTreeFactory<Meta>, "createPrompt">):
     | Promise<FileTreeNode<Meta>[]>
     | FileTreeNode<Meta>[];
 };
@@ -236,17 +236,30 @@ interface VirtualizeRenderProps<Meta> {
 A React component that renders a node in a file tree with plugins. This can be directly
 paired with the [`useVirtualize()`](#usevirtualize) hook.
 
-#### Props
+#### Node Props
 
-| Name     | Type                  | Required? | Description                                                      |
-| -------- | --------------------- | --------- | ---------------------------------------------------------------- |
-| node     | `FileTreeNode<Meta>`  | Yes       | A file tree node                                                 |
-| index    | `number`              | Yes       | The index of the node within the file tree list of visible nodes |
-| tree     | `FileTree<Meta>`      | Yes       | The file tree that contains the node                             |
-| style    | `React.CSSProperties` | Yes       | Styles to apply to the `<div>` element                           |
-| children | `React.ReactNode`     | Yes       | Children to render within the node                               |
+| Name     | Type                                                     | Required? | Description                                                      |
+| -------- | -------------------------------------------------------- | --------- | ---------------------------------------------------------------- |
+| as       | `React.ComponentType<React.HTMLAttributes<HTMLElement>>` | No        | Render the node as this component. Defaults to `"div"`.          |
+| node     | `FileTreeNode<Meta>`                                     | Yes       | A file tree node                                                 |
+| index    | `number`                                                 | Yes       | The index of the node within the file tree list of visible nodes |
+| tree     | `FileTree<Meta>`                                         | Yes       | The file tree that contains the node                             |
+| style    | `React.CSSProperties`                                    | Yes       | Styles to apply to the `<div>` element                           |
+| children | `React.ReactNode`                                        | Yes       | Children to render within the node                               |
 
 [**⇗ Back to top**](#exploration)
+
+---
+
+### useNodeProps()
+
+A hook that creates and memoizes node-specific props from a set of input props.
+
+#### Arguments
+
+| Name   | Type                       | Required? | Description                                  |
+| ------ | -------------------------- | --------- | -------------------------------------------- |
+| config | [`NodeProps`](#node-props) | Yes       | Options to generate node-specific props from |
 
 ---
 
@@ -618,10 +631,12 @@ file tree when you initially load it.
 | expand     | Expand a directory in the tree.                                                                                                                                                                                                                                                            |
 | collapse   | Collapse a directory in the tree.                                                                                                                                                                                                                                                          |
 | remove     | Remove a node and its descendants from the tree.                                                                                                                                                                                                                                           |
+| invalidate | Invalidate the list of visible nodes. This is useful for re-rendering your tree when node data changes.                                                                                                                                                                                    |
 | produce    | Produce a new tree with the given function applied to the given node. This is similar to `immer`'s produce function as you're working on a draft and can freely mutate the object.                                                                                                         |
 | move       | Move a node to a new parent.                                                                                                                                                                                                                                                               |
 | newFile    | Create a new file in a given directory.                                                                                                                                                                                                                                                    |
 | newDir     | Create a new directory in a given directory.                                                                                                                                                                                                                                               |
+| newPrompt  | Create a new prompt in a given directory.                                                                                                                                                                                                                                                  |
 | rename     | Rename a node.                                                                                                                                                                                                                                                                             |
 | isExpanded | A more accurate and real-time representation of whether a branch is expanded. `Dir#expanded` represents the "optimistic" expansion state of the branch in question not the actual status, because the child nodes might still need to be loaded before the change can be seen in the tree. |
 | isVisible  | Returns `true` if the node and its parents are visible in the tree.                                                                                                                                                                                                                        |
@@ -698,6 +713,29 @@ A class for creating a file node.
 
 ---
 
+### Prompt()
+
+A class for creating a prompt node.
+
+#### Arguments
+
+| Name   | Type            | Required? | Description     |
+| ------ | --------------- | --------- | --------------- |
+| parent | `Dir<NodeData>` | Yes       | The parent node |
+
+#### Properties
+
+| Name     | Type        | Description                                         |
+| -------- | ----------- | --------------------------------------------------- |
+| parentId | `number`    | The ID of the parent node.                          |
+| parent   | `Dir<Meta>` | The parent node.                                    |
+| path     | `string`    | The full path of the prompt.                        |
+| basename | `string`    | The base name of prompts is always an empty string. |
+
+[**⇗ Back to top**](#exploration)
+
+---
+
 ### isDir()
 
 Returns `true` if the given node is a directory
@@ -722,7 +760,21 @@ Returns `true` if the given node is a file
 | -------- | ----------------- | --------- | ---------------- |
 | treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
 
-[**⇗ Back to top**](#exploration)
+## [**⇗ Back to top**](#exploration)
+
+---
+
+### isPrompt()
+
+Returns `true` if the given node is a prompt
+
+#### Arguments
+
+| Name     | Type              | Required? | Description      |
+| -------- | ----------------- | --------- | ---------------- |
+| treeNode | `FileTreeNode<T>` | Yes       | A file tree node |
+
+## [**⇗ Back to top**](#exploration)
 
 ---
 

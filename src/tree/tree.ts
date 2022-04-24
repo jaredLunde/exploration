@@ -92,14 +92,14 @@ export class Tree<NodeData = {}> {
         );
       }
 
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
   collapse(branch: Branch<NodeData>): void {
     if (branch.expanded) {
       branch.expanded = false;
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
@@ -136,7 +136,7 @@ export class Tree<NodeData = {}> {
 
     if (draftResult.modified) {
       this.setNodes(branch, draftResult.draft);
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
@@ -170,7 +170,7 @@ export class Tree<NodeData = {}> {
       this.setNodes(nodeToRemoveParent, nextNodes);
     }
 
-    this.invalidateFlatView();
+    this.invalidate();
   }
 
   async move(node: Node<NodeData>, to: Branch<NodeData>): Promise<void> {
@@ -210,11 +210,15 @@ export class Tree<NodeData = {}> {
         this.setNodes(to, [...to.nodes, node.id]);
       }
 
-      this.invalidateFlatView();
+      this.invalidate();
     }
   }
 
-  invalidateFlatView(): void {
+  /**
+   * Invalidate the list of visible nodes. This is useful for re-rendering your tree
+   * when node data changes.
+   */
+  invalidate(): void {
     this.flatView.setState(this.flatView.getState() + 1);
   }
 

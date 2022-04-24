@@ -18,7 +18,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
     windowRef,
     rovingFocus,
     selections,
-    querySelectorPattern = `#exp-{index}`,
+    querySelectorPattern = `[data-exploration-index="{index}"]`,
   } = config;
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;

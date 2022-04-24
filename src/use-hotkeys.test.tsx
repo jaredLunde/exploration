@@ -70,7 +70,8 @@ describe("useHotkeys()", () => {
             {fileTree.visibleNodes.map((nodeId, index) => (
               <div
                 key={nodeId}
-                id={`exp-${index}`}
+                id={`exploration-${index}`}
+                data-exploration-index={index}
                 {...rovingFocus.getProps(nodeId)}
                 {...selections.getProps(nodeId)}
                 {...traits.getProps(nodeId)}
@@ -94,18 +95,18 @@ describe("useHotkeys()", () => {
 
     fireEvent.keyDown(element, { key: "ArrowDown" });
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
 
     fireEvent.keyDown(element, { key: "ArrowDown" });
 
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-1")
+      document.getElementById("exploration-1")
     );
 
     fireEvent.keyDown(element, { key: "ArrowUp" });
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
   });
 
@@ -120,18 +121,18 @@ describe("useHotkeys()", () => {
     fireEvent.keyDown(element, { key: "ArrowRight" });
 
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
 
     expect(dir.expanded).toBe(true);
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
 
     await waitFor(() => {
       fireEvent.keyDown(element, { key: "ArrowRight" });
       expect(document.activeElement as any).toBe(
-        document.getElementById("exp-1")
+        document.getElementById("exploration-1")
       );
     });
 
@@ -139,7 +140,7 @@ describe("useHotkeys()", () => {
       fireEvent.keyDown(element, { key: "ArrowLeft" });
       expect(dir.expanded).toBe(false);
       expect(document.activeElement as any).toBe(
-        document.getElementById("exp-0")
+        document.getElementById("exploration-0")
       );
     });
   });
@@ -156,7 +157,7 @@ describe("useHotkeys()", () => {
 
     expect(dir.expanded).toBe(true);
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
 
     fireEvent.keyDown(element, { key: " " });
@@ -184,7 +185,7 @@ describe("useHotkeys()", () => {
     fireEvent.keyDown(element, { key: "Home" });
 
     expect(document.activeElement as any).toBe(
-      document.getElementById("exp-0")
+      document.getElementById("exploration-0")
     );
   });
 

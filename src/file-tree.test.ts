@@ -409,6 +409,27 @@ describe("createFileTree()", () => {
       ]);
     });
 
+    it("should produce a new tree with prompt insertion", async () => {
+      const tree = createFileTree(getNodesFromMockFs);
+
+      await waitForTree(tree);
+      const node = tree.nodesById.find(
+        (node) => node?.data.name === "/.github"
+      ) as Dir;
+      await tree.expand(node);
+
+      tree.produce(node, ({ createPrompt, insert }) => {
+        insert(createPrompt());
+      });
+
+      expect(node.nodes.length).toBe(mockFs["/.github"].length + 1);
+      expect(node.nodes.map((node) => tree.getById(node).data.name)).toEqual([
+        "",
+        "/.github/ISSUE_TEMPLATE.md",
+        "/.github/PULL_REQUEST_TEMPLATE.md",
+      ]);
+    });
+
     it("should revert a change to the draft tree", async () => {
       const tree = createFileTree(getNodesFromMockFs);
 
@@ -627,6 +648,28 @@ describe("file tree actions", () => {
 
     tree.newDir(tree.root, { name: "bar" });
     expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
+  });
+
+  it("should create a prompt and sort", () => {
+    tree.newPrompt(tree.root);
+    expect(tree.getById(tree.root.nodes[0]).basename).toBe("");
+
+    tree.newDir(tree.root, { name: "bar" });
+    expect(tree.getById(tree.root.nodes[0]).basename).toBe("");
+    expect(tree.getById(tree.root.nodes[0]).path).toBe("");
+  });
+
+  it("should create a prompt in a directory", async () => {
+    const tree = createFileTree(getNodesFromMockFs);
+
+    await waitForTree(tree);
+    const dir = tree.getById(tree.root.nodes[0]) as Dir;
+
+    await tree.expand(dir);
+    tree.newPrompt(dir);
+
+    expect(tree.getById(dir.nodes[0]).basename).toBe("");
+    expect(tree.getById(dir.nodes[0]).path).toBe("/.github");
   });
 
   it("should move a file and sort", async () => {

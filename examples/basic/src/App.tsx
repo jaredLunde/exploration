@@ -126,7 +126,7 @@ export default function App() {
 const styles = createStyles({});
 const explorerStyles = styles.one({
   ...[...Array(20).keys()].reduce((acc, depth) => {
-    acc[`.depth-${depth}`] = {
+    acc[`[data-exploration-depth="${depth}"]`] = {
       borderStyle: "solid",
       borderWidth: 1,
       borderColor: "transparent",
