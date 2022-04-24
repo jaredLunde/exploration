@@ -24,8 +24,8 @@ export function useNodePlugins(
 ): React.HTMLAttributes<HTMLElement> {
   const numPlugins = plugins.length;
   const mergeProps = React.useMemo(() => {
-    const caches: WeakMapConstructor[] = [];
-    for (let i = 0; i < numPlugins; i++) caches.push(WeakMap);
+    const caches: WeakMapConstructor[] = new Array(numPlugins);
+    for (let i = 0; i < numPlugins; i++) caches[i] = WeakMap;
 
     return trieMemoize(
       caches,
@@ -36,10 +36,12 @@ export function useNodePlugins(
   }, [numPlugins]);
 
   function getSnapshot() {
-    const props: React.HTMLAttributes<HTMLElement>[] = [];
+    const props: React.HTMLAttributes<HTMLElement>[] = new Array(
+      plugins.length
+    );
 
     for (let i = 0; i < numPlugins; i++) {
-      props.push(plugins[i].getProps(nodeId));
+      props[i] = plugins[i].getProps(nodeId);
     }
 
     return mergeProps(...props);
@@ -48,10 +50,10 @@ export function useNodePlugins(
   return useSyncExternalStore(
     (callback) => {
       callback = throttle(callback, 60);
-      const unsubs: (() => void)[] = [];
+      const unsubs: (() => void)[] = new Array(plugins.length);
 
       for (let i = 0; i < numPlugins; i++) {
-        unsubs.push(plugins[i].didChange.observe(callback));
+        unsubs[i] = plugins[i].didChange.observe(callback);
       }
 
       return () => {
