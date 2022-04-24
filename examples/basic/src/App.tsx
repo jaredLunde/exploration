@@ -49,7 +49,7 @@ export default function App() {
       }
 
       const nodeIds: number[] = [event.dir.id];
-      const nodes = [...(event.dir.nodes ?? [])];
+      const nodes = event.dir.nodes ? [...event.dir.nodes] : [];
 
       while (nodes.length) {
         const node = tree.getById(nodes.pop() ?? -1);
@@ -68,7 +68,10 @@ export default function App() {
       traits.clear("drop-target");
       const selected = selections.didChange.getState();
 
-      if (selected.has(event.dir.id)) {
+      if (
+        event.node === event.dir ||
+        (selected.has(event.node.id) && selected.has(event.dir.id))
+      ) {
         return;
       }
 
