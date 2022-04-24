@@ -18,7 +18,10 @@ import { shallowEqual } from "./utils";
  * @param config.dragOverExpandTimeout - Timeout for expanding a directory when a draggable
  *   element enters it.
  */
-export function useDnd(fileTree: FileTree, config: UseDndConfig): UseDndPlugin {
+export function useDnd<Meta>(
+  fileTree: FileTree<Meta>,
+  config: UseDndConfig
+): UseDndPlugin<Meta> {
   const storedConfig = React.useRef(config);
   const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
   const storedTimeout = React.useRef<{
@@ -266,11 +269,11 @@ export interface UseDndConfig {
   windowRef: WindowRef;
 }
 
-export interface UseDndPlugin {
+export interface UseDndPlugin<Meta> {
   /**
    * A subject that emits drag 'n drop events.
    */
-  didChange: Subject<DndEvent<any> | null>;
+  didChange: Subject<DndEvent<Meta> | null>;
   /**
    * Get the drag 'n drop props for a given node ID.
    */
