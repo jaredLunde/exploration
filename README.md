@@ -449,10 +449,10 @@ A plugin hook for adding drag and drop to the file tree.
 
 #### Arguments
 
-| Name     | Type             | Required? | Description                                         |
-| -------- | ---------------- | --------- | --------------------------------------------------- |
-| fileTree | `FileTree<Meta>` | Yes       | A file tree                                         |
-| config   | `UseDndConfig`   | No        | A configuration object for the drag and drop plugin |
+| Name     | Type                            | Required? | Description                                         |
+| -------- | ------------------------------- | --------- | --------------------------------------------------- |
+| fileTree | `FileTree<Meta>`                | Yes       | A file tree                                         |
+| config   | [`UseDndConfig`](#usedndconfig) | Yes       | A configuration object for the drag and drop plugin |
 
 #### Returns `UseDndPlugin`
 
@@ -466,6 +466,22 @@ interface UseDndPlugin {
    * Get the drag 'n drop props for a given node ID.
    */
   getProps: (nodeId: number) => DndProps | React.HTMLAttributes<HTMLElement>;
+}
+```
+
+#### UseDndConfig
+
+```ts
+interface UseDndConfig {
+  /**
+   * Timeout for expanding a directory when a draggable element enters it.
+   */
+  dragOverExpandTimeout?: number;
+  /**
+   * A React ref created by useRef() or an HTML element for the container viewport
+   * you're rendering the list inside of.
+   */
+  windowRef: WindowRef;
 }
 ```
 

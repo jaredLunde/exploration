@@ -22,7 +22,7 @@ export default function App() {
   const rovingFocus = useRovingFocus(tree);
   const selections = useSelections(tree);
   const traits = useTraits(tree, ["selected", "focused", "drop-target"]);
-  const dnd = useDnd(tree);
+  const dnd = useDnd(tree, { windowRef });
   const virtualize = useVirtualize(tree, { windowRef, nodeHeight: 24 });
 
   useHotkeys(tree, { windowRef, rovingFocus, selections });
