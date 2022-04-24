@@ -1,4 +1,4 @@
-import { useObservable } from ".";
+import { useObserver } from ".";
 import type { FileTree } from "./file-tree";
 import { isDir } from "./file-tree";
 import type { FileTreeSnapshot } from "./types";
@@ -15,7 +15,7 @@ export function useFileTreeSnapshot<Meta>(
   fileTree: FileTree<Meta>,
   callback: (state: FileTreeSnapshot) => Promise<void> | void
 ) {
-  useObservable(fileTree.flatView, () => {
+  useObserver(fileTree.flatView, () => {
     const expandedPaths: string[] = [];
     const nodeIds = [...fileTree.visibleNodes];
     const buriedIds: number[] = [];

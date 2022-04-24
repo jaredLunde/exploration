@@ -1,8 +1,8 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
-import type { Observable } from "./tree/observable";
-import { observable } from "./tree/observable";
+import type { Subject } from "./tree/subject";
+import { subject } from "./tree/subject";
 
 /**
  * A plugin hook for adding roving focus to file tree nodes.
@@ -24,7 +24,7 @@ export function useRovingFocus<Meta>(
       return createProps(
         focusedNodeId,
         nodeId,
-        nodeId === focusedNodeId.getSnapshot()
+        nodeId === focusedNodeId.getState()
       );
     },
   };
@@ -33,7 +33,7 @@ export function useRovingFocus<Meta>(
 const createProps = trieMemoize(
   [WeakMap, Map, Map],
   (
-    focusedNodeId: Observable<number>,
+    focusedNodeId: Subject<number>,
     nodeId: number,
     focused: boolean
   ): RovingFocusProps => {
@@ -41,12 +41,12 @@ const createProps = trieMemoize(
       tabIndex: focused ? 0 : -1,
 
       onFocus(e: React.FocusEvent<HTMLElement>) {
-        focusedNodeId.next(nodeId);
+        focusedNodeId.setState(nodeId);
       },
 
       onBlur(e: React.FocusEvent<HTMLElement>) {
         if (focused) {
-          focusedNodeId.next(-1);
+          focusedNodeId.setState(-1);
         }
       },
     };
@@ -55,7 +55,7 @@ const createProps = trieMemoize(
 
 const getFocusedNodeId = trieMemoize(
   [WeakMap],
-  <Meta>(fileTree: FileTree<Meta>) => observable<number>(-1)
+  <Meta>(fileTree: FileTree<Meta>) => subject<number>(-1)
 );
 
 export interface RovingFocusProps {
@@ -66,9 +66,9 @@ export interface RovingFocusProps {
 
 export interface UseRovingFocusPlugin {
   /**
-   * An observable that you can use to subscribe to changes to the focused node.
+   * A subject that you can use to observe to changes to the focused node.
    */
-  didChange: Observable<number>;
+  didChange: Subject<number>;
   /**
    * Get the React props for a given node ID.
    *

@@ -19,20 +19,20 @@ export function useResizeObserver<
   });
 
   React.useEffect(() => {
-    let didUnsubscribe = false;
+    let didUnobserve = false;
     const targetEl = target && "current" in target ? target.current : target;
     if (!targetEl) return () => {};
 
     function cb(entry: ResizeObserverEntry, observer: ResizeObserver) {
-      if (didUnsubscribe) return;
+      if (didUnobserve) return;
       storedCallback.current(entry, observer);
     }
 
-    resizeObserver?.subscribe(targetEl, cb);
+    resizeObserver?.observe(targetEl, cb);
 
     return () => {
-      didUnsubscribe = true;
-      resizeObserver?.unsubscribe(targetEl, cb);
+      didUnobserve = true;
+      resizeObserver?.unobserve(targetEl, cb);
     };
   }, [target, resizeObserver]);
 }
@@ -52,13 +52,13 @@ function createResizeObserver<R extends typeof ResizeObserver>(
 
   return {
     observer,
-    subscribe(target: HTMLElement, callback: UseResizeObserverCallback) {
+    observe(target: HTMLElement, callback: UseResizeObserverCallback) {
       observer.observe(target);
       const cbs = callbacks.get(target) ?? [];
       cbs.push(callback);
       callbacks.set(target, cbs);
     },
-    unsubscribe(target: HTMLElement, callback: UseResizeObserverCallback) {
+    unobserve(target: HTMLElement, callback: UseResizeObserverCallback) {
       const cbs = callbacks.get(target) ?? [];
       if (cbs.length === 1) {
         observer.unobserve(target);

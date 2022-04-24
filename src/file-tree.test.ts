@@ -237,7 +237,7 @@ describe("createFileTree()", () => {
       const tree = createFileTree(getNodesFromMockFs);
 
       const handle = jest.fn();
-      const unsubscribe = tree.flatView.subscribe(handle);
+      const unobserve = tree.flatView.observe(handle);
 
       await waitForTree(tree);
       expect(handle).toHaveBeenCalledTimes(0);
@@ -247,7 +247,7 @@ describe("createFileTree()", () => {
       expect(handle).toHaveBeenCalledTimes(2);
       expect(tree.visibleNodes.length).toBeGreaterThan(0);
 
-      unsubscribe();
+      unobserve();
       await tree.expand(tree.getById(tree.root.nodes[0]) as Dir<any>);
       expect(handle).toHaveBeenCalledTimes(2);
       expect(tree.visibleNodes.length).toBeGreaterThan(0);

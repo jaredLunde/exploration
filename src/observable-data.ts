@@ -1,56 +1,56 @@
-import type { Observable } from "./tree/observable";
-import { observable } from "./tree/observable";
+import type { Subject } from "./tree/subject";
+import { subject } from "./tree/subject";
 
-export class ObservableSet<T> extends Set<T> {
-  didChange: Observable<Set<T>>;
+export class SubjectSet<T> extends Set<T> {
+  didChange: Subject<Set<T>>;
 
   constructor(initialValue?: T[]) {
     super(initialValue);
-    this.didChange = observable(new Set(this));
+    this.didChange = subject(new Set(this));
   }
 
   add(value: T) {
     super.add(value);
-    this.didChange.next(new Set(this));
+    this.didChange.setState(new Set(this));
     return this;
   }
 
   delete(value: T) {
     const deleted = super.delete(value);
-    this.didChange.next(new Set(this));
+    this.didChange.setState(new Set(this));
     return deleted;
   }
 
   clear() {
     super.clear();
-    this.didChange.next(new Set(this));
+    this.didChange.setState(new Set(this));
     return this;
   }
 }
 
-export class ObservableMap<K, V> extends Map<K, V> {
-  didChange: Observable<Map<K, V>>;
+export class SubjectMap<K, V> extends Map<K, V> {
+  didChange: Subject<Map<K, V>>;
 
   constructor(initialValue?: [K, V][]) {
     super(initialValue);
-    this.didChange = observable(new Map(this));
+    this.didChange = subject(new Map(this));
   }
 
   set(key: K, value: V) {
     super.set(key, value);
-    this.didChange.next(new Map(this));
+    this.didChange.setState(new Map(this));
     return this;
   }
 
   delete(key: K) {
     const deleted = super.delete(key);
-    this.didChange.next(new Map(this));
+    this.didChange.setState(new Map(this));
     return deleted;
   }
 
   clear() {
     super.clear();
-    this.didChange.next(new Map(this));
+    this.didChange.setState(new Map(this));
     return this;
   }
 }

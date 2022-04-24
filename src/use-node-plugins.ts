@@ -1,11 +1,11 @@
 import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
-import type { Observable } from "./tree/observable";
+import type { Subject } from "./tree/subject";
 import { mergeProps as mergeProps_, throttle } from "./utils";
 
 /**
- * A hook that subscribes to plugins and retrieves props that should be applied
+ * A hook that observes to plugins and retrieves props that should be applied
  * to a given node. An example of a plugin wouuld be the `useTraits()` hook.
  *
  * @param nodeId - The node ID used to retrieve props from a plugin
@@ -51,7 +51,7 @@ export function useNodePlugins(
       const unsubs: (() => void)[] = [];
 
       for (let i = 0; i < numPlugins; i++) {
-        unsubs.push(plugins[i].didChange.subscribe(callback));
+        unsubs.push(plugins[i].didChange.observe(callback));
       }
 
       return () => {
@@ -65,9 +65,9 @@ export function useNodePlugins(
 
 export type NodePlugin<T = unknown> = {
   /**
-   * An observable that the `useNodePlugins()` hook will subscribe to.
+   * A subject that the `useNodePlugins()` hook will observe to.
    */
-  didChange: Observable<T>;
+  didChange: Subject<T>;
   /**
    * A function that returns React props based on a node ID.
    *

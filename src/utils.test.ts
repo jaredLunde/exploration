@@ -42,8 +42,8 @@ describe("mergeProps()", () => {
     const merged = mergeProps([{ onChange: handleA }, { onChange: handleB }]);
 
     merged.onChange("foo");
-    expect(handleA).toHaveBeenCalledWith("foo");
-    expect(handleB).toHaveBeenCalledWith("foo");
+    expect(handleA).lastCalledWith("foo");
+    expect(handleB).lastCalledWith("foo");
   });
 
   it("should merge class names", () => {

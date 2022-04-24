@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as React from "react";
 import {
   useHotkeys,
-  useObservable,
+  useObserver,
   useRovingFocus,
   useSelections,
   useTraits,
@@ -56,11 +56,11 @@ describe("useHotkeys()", () => {
           selections,
         });
 
-        useObservable(rovingFocus.didChange, () => {
+        useObserver(rovingFocus.didChange, () => {
           forceUpdate({});
         });
 
-        useObservable(selections.didChange, (nodeIds) => {
+        useObserver(selections.didChange, (nodeIds) => {
           traits.set("selected", [...nodeIds]);
           forceUpdate({});
         });

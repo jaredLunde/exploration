@@ -3,13 +3,13 @@ import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { Leaf } from "./leaf";
 import { nodesById } from "./nodes-by-id";
-import { observable } from "./observable";
+import { subject } from "./subject";
 
 export class Tree<NodeData = {}> {
   protected loadingBranches = new Map<Branch<NodeData>, Promise<void>>();
   private getNodes: GetNodes<NodeData>;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
-  flatView = observable<number>(0);
+  flatView = subject<number>(0);
   root: Branch<NodeData>;
   nodesById = nodesById as Node<NodeData>[];
 
@@ -29,7 +29,7 @@ export class Tree<NodeData = {}> {
   }
 
   get visibleNodes(): number[] {
-    return this.createVisibleNodes(this.flatView.getSnapshot());
+    return this.createVisibleNodes(this.flatView.getState());
   }
 
   getById(id: number): Node<NodeData> | undefined {
@@ -215,7 +215,7 @@ export class Tree<NodeData = {}> {
   }
 
   invalidateFlatView(): void {
-    this.flatView.next(this.flatView.getSnapshot() + 1);
+    this.flatView.setState(this.flatView.getState() + 1);
   }
 
   /**
