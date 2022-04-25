@@ -18,7 +18,10 @@ import { shallowEqual } from "./utils";
  * @param config.dragOverExpandTimeout - Timeout for expanding a directory when a draggable
  *   element enters it.
  */
-export function useDnd(fileTree: FileTree, config: UseDndConfig): UseDndPlugin {
+export function useDnd<Meta>(
+  fileTree: FileTree<Meta>,
+  config: UseDndConfig
+): UseDndPlugin<Meta> {
   const storedConfig = React.useRef(config);
   const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
   const storedTimeout = React.useRef<{
@@ -149,10 +152,10 @@ const createProps = trieMemoize(
 
     onDragEnter() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot?.node) {
-        dnd.setState({ type: "enter", node: snapshot.node, dir });
+      if (dir && state?.node) {
+        dnd.setState({ type: "enter", node: state.node, dir });
       }
     },
 
@@ -162,19 +165,19 @@ const createProps = trieMemoize(
 
     onDragLeave() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot && snapshot.type === "enter" && snapshot.node) {
-        dnd.setState({ type: "leave", node: snapshot.node, dir });
+      if (dir && state && state.type === "enter" && state.node) {
+        dnd.setState({ type: "leave", node: state.node, dir });
       }
     },
 
     onDrop() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot?.node) {
-        dnd.setState({ type: "drop", node: snapshot.node, dir });
+      if (dir && state?.node) {
+        dnd.setState({ type: "drop", node: state.node, dir });
       }
     },
   })
@@ -266,11 +269,11 @@ export interface UseDndConfig {
   windowRef: WindowRef;
 }
 
-export interface UseDndPlugin {
+export interface UseDndPlugin<Meta> {
   /**
    * A subject that emits drag 'n drop events.
    */
-  didChange: Subject<DndEvent<any> | null>;
+  didChange: Subject<DndEvent<Meta> | null>;
   /**
    * Get the drag 'n drop props for a given node ID.
    */

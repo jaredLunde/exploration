@@ -1,5 +1,5 @@
 import { fireEvent } from "@testing-library/react";
-import { act, renderHook } from "@testing-library/react-hooks";
+import { renderHook } from "@testing-library/react-hooks";
 import { useResizeObserver } from "./use-resize-observer";
 
 class ResizeObserverPolyfill {
@@ -57,7 +57,7 @@ describe("useResizeObserver()", () => {
         ResizeObserver: ResizeObserverPolyfill,
       })
     );
-    const b = renderHook(() =>
+    renderHook(() =>
       useResizeObserver(ref, callbackB, {
         ResizeObserver: ResizeObserverPolyfill,
       })
@@ -82,12 +82,12 @@ describe("useResizeObserver()", () => {
     const refA = { current: elementA };
     const refB = { current: elementB };
 
-    const a = renderHook(() =>
+    renderHook(() =>
       useResizeObserver(refA, callbackA, {
         ResizeObserver: ResizeObserverPolyfill,
       })
     );
-    const b = renderHook(() =>
+    renderHook(() =>
       useResizeObserver(refB, callbackB, {
         ResizeObserver: ResizeObserverPolyfill,
       })

@@ -2,7 +2,7 @@ import * as React from "react";
 import trieMemoize from "trie-memoize";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Subject } from "./tree/subject";
-import { mergeProps as mergeProps_, throttle } from "./utils";
+import { mergeProps as mergeProps_ } from "./utils";
 
 /**
  * A hook that observes to plugins and retrieves props that should be applied
@@ -10,7 +10,6 @@ import { mergeProps as mergeProps_, throttle } from "./utils";
  *
  * @param nodeId - The node ID used to retrieve props from a plugin
  * @param plugins - A list of file tree plugins
- * @returns A memoized set of props returned by the plugins
  * @example
  * ```ts
  * const traits = useTraits(fileTree)
@@ -49,7 +48,6 @@ export function useNodePlugins(
 
   return useSyncExternalStore(
     (callback) => {
-      callback = throttle(callback, 60);
       const unsubs: (() => void)[] = new Array(plugins.length);
 
       for (let i = 0; i < numPlugins; i++) {

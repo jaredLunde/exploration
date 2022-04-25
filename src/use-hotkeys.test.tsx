@@ -21,7 +21,7 @@ describe("useHotkeys()", () => {
   beforeAll(() => {
     // this is here to silence a warning temporarily
     // we'll fix it in the next exercise
-    jest.spyOn(console, "error").mockImplementation((...args) => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterAll(() => {

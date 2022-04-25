@@ -449,6 +449,13 @@ interface UseSelectionsPlugin {
    * Clear all of the selections
    */
   clear(): void;
+  /**
+   * A utility function that yields nodes from a set of selections if they
+   * don't have a parent node in the set.
+   *
+   * @yields {number} - A node id
+   */
+  narrow(): Generator<number, void, unknown>;
 }
 ```
 

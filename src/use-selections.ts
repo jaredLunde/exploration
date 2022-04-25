@@ -2,6 +2,7 @@ import * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
 import { SubjectSet } from "./observable-data";
+import { nodesById } from "./tree/nodes-by-id";
 import type { Subject } from "./tree/subject";
 import { useVisibleNodes } from "./use-visible-nodes";
 
@@ -65,6 +66,35 @@ export function useSelections<Meta>(
 
     clear() {
       selectionsSet.clear();
+    },
+
+    narrow: function* () {
+      // Remove child nodes from selections if their parent is already selected
+      for (const nodeId of selectionsSet) {
+        const node = nodesById[nodeId];
+
+        if (node) {
+          let parentId = node.parentId;
+
+          while (parentId > -1) {
+            if (selectionsSet.has(parentId)) {
+              break;
+            }
+
+            const parentNode = nodesById[parentId];
+
+            if (!parentNode) {
+              break;
+            }
+
+            parentId = parentNode.parentId;
+          }
+
+          if (parentId === -1) {
+            yield nodeId;
+          }
+        }
+      }
     },
   };
 }
@@ -222,4 +252,11 @@ export interface UseSelectionsPlugin {
    * Clear all of the selections
    */
   clear(): void;
+  /**
+   * A utility function that yields nodes from a set of selections if they
+   * don't have a parent node in the set.
+   *
+   * @yields {number} - A node id
+   */
+  narrow(): Generator<number, void, unknown>;
 }

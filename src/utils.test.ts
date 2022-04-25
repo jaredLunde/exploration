@@ -1,5 +1,5 @@
 import { mergeProps } from ".";
-import { shallowEqual } from "./utils";
+import { shallowEqual, throttle } from "./utils";
 
 describe("shallowEqual()", () => {
   it("should return true for equal objects", () => {
@@ -76,5 +76,43 @@ describe("mergeProps()", () => {
     const merged = mergeProps([{}, { style: { backgroundColor: "blue" } }]);
 
     expect(merged.style).toEqual({ backgroundColor: "blue" });
+  });
+});
+
+describe("throttle()", () => {
+  it("should invoke the callback once per timeout", () => {
+    const fn = jest.fn((value: number) => {});
+    const throttled = throttle(fn, 30);
+
+    throttled(1);
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    jest.advanceTimersByTime(1000 / 60);
+
+    throttled(2);
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    jest.advanceTimersByTime(1000 / 60);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).lastCalledWith(2);
+  });
+
+  it("should fire a leading call", () => {
+    const fn = jest.fn((value: number) => {});
+    const throttled = throttle(fn, 30, true);
+
+    throttled(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).lastCalledWith(1);
+
+    throttled(2);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).lastCalledWith(1);
+    jest.advanceTimersByTime(1000 / 60);
+
+    throttled(3);
+    jest.advanceTimersByTime(1000 / 60);
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).lastCalledWith(3);
   });
 });
