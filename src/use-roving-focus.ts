@@ -40,11 +40,11 @@ const createProps = trieMemoize(
     return {
       tabIndex: focused ? 0 : -1,
 
-      onFocus(e: React.FocusEvent<HTMLElement>) {
+      onFocus() {
         focusedNodeId.setState(nodeId);
       },
 
-      onBlur(e: React.FocusEvent<HTMLElement>) {
+      onBlur() {
         if (focused) {
           focusedNodeId.setState(-1);
         }

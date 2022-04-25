@@ -50,9 +50,10 @@ export default function App() {
 
       const nodeIds: number[] = [event.dir.id];
       const nodes = event.dir.nodes ? [...event.dir.nodes] : [];
+      let nodeId: number | undefined;
 
-      while (nodes.length) {
-        const node = tree.getById(nodes.pop() ?? -1);
+      while ((nodeId = nodes.pop())) {
+        const node = tree.getById(nodeId);
 
         if (node) {
           nodeIds.push(node.id);
@@ -66,7 +67,7 @@ export default function App() {
       traits.set("drop-target", nodeIds);
     } else if (event.type === "drop") {
       traits.clear("drop-target");
-      const selected = selections.didChange.getState();
+      const selected = new Set(selections.narrow());
 
       if (
         event.node === event.dir ||
@@ -81,13 +82,17 @@ export default function App() {
             await tree.expand(event.dir);
           }
 
+          const promises: Promise<void>[] = [];
+
           for (const id of selected) {
             const node = tree.getById(id);
 
             if (node) {
-              await tree.move(node, event.dir);
+              promises.push(tree.move(node, event.dir));
             }
           }
+
+          await Promise.all(promises);
         };
 
         moveSelections();

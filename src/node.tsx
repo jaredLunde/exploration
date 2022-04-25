@@ -1,5 +1,5 @@
 import * as React from "react";
-import { isDir } from "./file-tree";
+import { isDir, isFile } from "./file-tree";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import { subject } from "./tree/subject";
 import type { NodePlugin } from "./use-node-plugins";
@@ -33,17 +33,20 @@ export function Node<Meta>(props: NodeProps<Meta>) {
  * @param config - Props to generate exploration node-specific props from
  */
 export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
-  return React.useMemo<React.HTMLAttributes<HTMLElement>>(() => {
-    const node = config.node;
-    const dir = isDir(node);
+  const { node, tree, index, style } = config;
+  const type = isDir(node) ? "dir" : isFile(node) ? "file" : "prompt";
+  const expanded = isDir(node) ? node.expanded : undefined;
+  const { id, depth } = node;
 
+  return React.useMemo<React.HTMLAttributes<HTMLElement>>(() => {
     return {
       role: "button",
-      style: config.style,
-      "data-exploration-id": node.id,
-      "data-exploration-index": config.index,
-      "data-exploration-depth": node.depth,
-      "data-exploration-expanded": dir ? node.expanded : undefined,
+      style,
+      "data-exploration-id": id,
+      "data-exploration-index": index,
+      "data-exploration-depth": depth,
+      "data-exploration-type": type,
+      "data-exploration-expanded": expanded,
       onClick(event) {
         event.currentTarget.focus();
 
@@ -57,16 +60,16 @@ export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
           return;
         }
 
-        if (dir) {
-          if (node.expanded) {
-            config.tree.collapse(node);
+        if (isDir(node)) {
+          if (expanded) {
+            tree.collapse(node);
           } else {
-            config.tree.expand(node);
+            tree.expand(node);
           }
         }
       },
     };
-  }, [config.index, config.style, config.tree, config.node]);
+  }, [index, depth, expanded, style, type, node, tree, id]);
 }
 
 const empty: [] = [];

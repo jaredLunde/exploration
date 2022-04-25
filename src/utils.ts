@@ -94,8 +94,9 @@ export function throttle<CallbackArguments extends any[]>(
     const call = () => {
       prev = rightNow;
       clearTrailing();
+      // @ts-expect-error: IArguments isn't assignable, but they're the same thing
       // eslint-disable-next-line prefer-spread
-      callback.apply(null, args as any);
+      callback.apply(null, args);
     };
     const current = prev;
     // leading

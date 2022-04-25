@@ -152,10 +152,10 @@ const createProps = trieMemoize(
 
     onDragEnter() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot?.node) {
-        dnd.setState({ type: "enter", node: snapshot.node, dir });
+      if (dir && state?.node) {
+        dnd.setState({ type: "enter", node: state.node, dir });
       }
     },
 
@@ -165,19 +165,19 @@ const createProps = trieMemoize(
 
     onDragLeave() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot && snapshot.type === "enter" && snapshot.node) {
-        dnd.setState({ type: "leave", node: snapshot.node, dir });
+      if (dir && state && state.type === "enter" && state.node) {
+        dnd.setState({ type: "leave", node: state.node, dir });
       }
     },
 
     onDrop() {
       const dir = isDir(node) ? node : node.parent;
-      const snapshot = dnd.getState();
+      const state = dnd.getState();
 
-      if (dir && snapshot?.node) {
-        dnd.setState({ type: "drop", node: snapshot.node, dir });
+      if (dir && state?.node) {
+        dnd.setState({ type: "drop", node: state.node, dir });
       }
     },
   })
