@@ -1,3 +1,11 @@
+## [1.3.4](https://github.com/jaredLunde/exploration/compare/v1.3.3...v1.3.4) (2022-04-25)
+
+
+### Bug Fixes
+
+* fix virtualization ([7ef958d](https://github.com/jaredLunde/exploration/commit/7ef958d3df7b432383a8e906abc8c85190084421))
+* remove console log ([edb055d](https://github.com/jaredLunde/exploration/commit/edb055d3eb14994965e8f93b6adad186ded364d9))
+
 ## [1.3.3](https://github.com/jaredLunde/exploration/compare/v1.3.2...v1.3.3) (2022-04-25)
 
 
