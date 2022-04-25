@@ -38,6 +38,7 @@ export function useVirtualize<Meta>(
   const height = useHeight(windowRef, ResizeObserver);
   const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
 
+  console.log("HERE", scrollPosition.scrollTop);
   return {
     scrollTop: scrollPosition.scrollTop,
     isScrolling: scrollPosition.isScrolling,
@@ -135,15 +136,17 @@ export function useVirtualize<Meta>(
         visibleNodes.length,
         Math.ceil((scrollPosition.scrollTop + overscan) / totalNodeHeight)
       );
-      const length = stopIndex - index;
-      const children: React.ReactElement[] = new Array(Math.max(length, 0));
+      const start = index;
+      const children: React.ReactElement[] = new Array(
+        Math.max(stopIndex - index, 0)
+      );
 
       for (; index < stopIndex; index++) {
         const nodeId = visibleNodes[index];
         const node = fileTree.getById(nodeId);
         if (!node) continue;
 
-        children[length - index] = render({
+        children[index - start] = render({
           key: nodeId,
           index,
           node,
@@ -263,7 +266,7 @@ export function useScrollPosition(
         subscribe(callback) {
           const current =
             windowRef && "current" in windowRef ? windowRef.current : windowRef;
-          callback = throttle(callback, 12, true);
+          callback = throttle(callback, 15, true);
 
           if (current) {
             current.addEventListener("scroll", callback);
