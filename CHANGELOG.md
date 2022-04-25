@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/jaredLunde/exploration/compare/v1.3.1...v1.3.2) (2022-04-25)
+
+
+### Bug Fixes
+
+* prevent array from creating invalid length ([#16](https://github.com/jaredLunde/exploration/issues/16)) ([f26f228](https://github.com/jaredLunde/exploration/commit/f26f22828aed60a5e7e386dd2270b9b227766605))
+
 ## [1.3.1](https://github.com/jaredLunde/exploration/compare/v1.3.0...v1.3.1) (2022-04-25)
 
 
