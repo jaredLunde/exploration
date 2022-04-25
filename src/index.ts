@@ -3,16 +3,18 @@ export {
   defaultComparator,
   isDir,
   isFile,
+  isPrompt,
   FileTree,
   Dir,
   File,
+  Prompt,
 } from "./file-tree";
 export type { FileTreeNode, FileTreeData, FileTreeFactory } from "./file-tree";
 export { Node } from "./node";
 export { SubjectMap, SubjectSet } from "./observable-data";
 export * as pathFx from "./path-fx";
 export { subject } from "./tree/subject";
-export type { Subject } from "./tree/subject";
+export type { Subject, Observer } from "./tree/subject";
 export type { FileTreeSnapshot, WindowRef } from "./types";
 export { useDnd } from "./use-dnd";
 export type { DndEvent, DndProps, UseDndPlugin, UseDndConfig } from "./use-dnd";
