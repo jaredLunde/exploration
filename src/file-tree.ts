@@ -202,9 +202,13 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
    * @param withData - The data for the file
    */
   newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>) {
-    this.produce(inDir, ({ createFile, insert }) => {
-      insert(createFile(withData));
+    const file = new File(inDir, withData);
+
+    this.produce(inDir, ({ insert }) => {
+      insert(file);
     });
+
+    return file;
   }
 
   /**
@@ -215,9 +219,13 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
    * @param expanded - Whether the directory should be expanded by default
    */
   newDir(inDir: Dir<Meta>, withData: FileTreeData<Meta>, expanded?: boolean) {
-    this.produce(inDir, ({ createDir, insert }) => {
-      insert(createDir(withData, expanded));
+    const dir = new Dir(inDir, withData, expanded);
+
+    this.produce(inDir, ({ insert }) => {
+      insert(dir);
     });
+
+    return dir;
   }
 
   /**
@@ -226,9 +234,13 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
    * @param inDir - The directory to create the directory in
    */
   newPrompt(inDir: Dir<Meta>) {
-    this.produce(inDir, ({ createPrompt, insert }) => {
-      insert(createPrompt());
+    const prompt = new Prompt(inDir, { name: "" });
+
+    this.produce(inDir, ({ insert }) => {
+      insert(prompt);
     });
+
+    return prompt;
   }
 
   /**
@@ -248,6 +260,7 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
 }
 
 export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+  readonly $$type = "file";
   /**
    * The parent directory of the file
    */
@@ -277,6 +290,7 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 }
 
 export class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+  readonly $$type = "prompt";
   /**
    * The parent directory of this directory
    */
@@ -303,6 +317,7 @@ export class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
 }
 
 export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
+  readonly $$type = "dir";
   /**
    * The parent directory of this directory
    */
@@ -362,7 +377,7 @@ export function defaultComparator(a: FileTreeNode, b: FileTreeNode) {
  */
 export function isPrompt<Meta>(
   treeNode: FileTreeNode<Meta>
-): treeNode is Prompt<Meta> {
+): treeNode is Prompt<Meta> & { readonly $$type: "prompt" } {
   return treeNode.constructor === Prompt;
 }
 
@@ -371,7 +386,9 @@ export function isPrompt<Meta>(
  *
  * @param treeNode - A tree node
  */
-export function isFile<T>(treeNode: FileTreeNode<T>): treeNode is File<T> {
+export function isFile<Meta>(
+  treeNode: FileTreeNode<Meta>
+): treeNode is File<Meta> {
   return treeNode.constructor === File;
 }
 
@@ -380,11 +397,16 @@ export function isFile<T>(treeNode: FileTreeNode<T>): treeNode is File<T> {
  *
  * @param treeNode - A tree node
  */
-export function isDir<T>(treeNode: FileTreeNode<T>): treeNode is Dir<T> {
+export function isDir<Meta>(
+  treeNode: FileTreeNode<Meta>
+): treeNode is Dir<Meta> {
   return treeNode.constructor === Dir;
 }
 
-export type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | Prompt<Meta>;
+export type FileTreeNode<Meta = {}> =
+  | File<Meta>
+  | Dir<Meta>
+  | (Prompt<Meta> & { readonly $$type: "prompt" });
 
 export type FileTreeData<Meta = {}> = {
   name: string;
