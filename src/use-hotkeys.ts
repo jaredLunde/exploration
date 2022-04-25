@@ -102,7 +102,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
         if (node && isDir(node)) {
           if (!fileTree.isExpanded(node)) {
             await fileTree.expand(node);
-          } else if (fileTree.isVisible(node)) {
+          } else if (fileTree.isVisible(node) && node.nodes) {
             const element = document.querySelector(
               querySelectorPattern.replace(
                 "{index}",

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createFileTree, defaultComparator, isFile } from ".";
+import { createFileTree, defaultComparator, isFile, isPrompt } from ".";
 import type { Dir, File } from ".";
+import { isDir } from "./file-tree";
+import { dirname } from "./path-fx";
 import type { Branch } from "./tree/branch";
 import { nodesById } from "./tree/nodes-by-id";
 import type { Tree } from "./tree/tree";
@@ -48,7 +50,7 @@ describe("createFileTree()", () => {
       expect(node.path).toBe("/.github");
 
       await tree.move(
-        tree.getById(tree.root.nodes[0]),
+        tree.getById(tree.root.nodes[0]) as Dir,
         tree.nodesById.find((n) => n?.data.name === "/src") as Dir<any>
       );
 
@@ -65,7 +67,7 @@ describe("createFileTree()", () => {
       expect(node.path).toBe("/.gitignore");
 
       await tree.move(
-        node,
+        node as File,
         tree.nodesById.find((n) => n?.data.name === "/src") as Dir<any>
       );
 
@@ -117,8 +119,8 @@ describe("createFileTree()", () => {
 
     it("should only expand once while waiting for promise to resolve", async () => {
       const tree = createFileTree(getNodesFromMockFs);
-
       await waitForTree(tree);
+
       const node = tree.nodesById.find(
         (node): node is Dir => node?.data.name === "/src"
       )!;
@@ -680,8 +682,14 @@ describe("file tree actions", () => {
 
     const firstDir = tree.getById(tree.root.nodes[0]) as Dir;
     await tree.expand(firstDir);
-    await tree.move(tree.nodesById.find((n) => n?.basename === "b")!, firstDir);
-    await tree.move(tree.nodesById.find((n) => n?.basename === "a")!, firstDir);
+    await tree.move(
+      tree.nodesById.find((n) => n?.basename === "b") as File,
+      firstDir
+    );
+    await tree.move(
+      tree.nodesById.find((n) => n?.basename === "a") as File,
+      firstDir
+    );
 
     expect(tree.getById(firstDir.nodes[0]).data.name).toBe("a");
   });
@@ -692,7 +700,7 @@ describe("file tree actions", () => {
 
     expect(tree.getById(tree.root.nodes[0]).data.name).toBe("bar");
 
-    tree.rename(tree.nodesById.find((n) => n?.basename === "foo")!, "a");
+    tree.rename(tree.nodesById.find((n) => n?.basename === "foo") as File, "a");
 
     expect(tree.getById(tree.root.nodes[0]).data.name).toBe("a");
   });

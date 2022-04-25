@@ -20,7 +20,7 @@ export function useRovingFocus<Meta>(
   return {
     didChange: focusedNodeId,
 
-    getProps: (nodeId) => {
+    getProps(nodeId) {
       return createProps(
         focusedNodeId,
         nodeId,
