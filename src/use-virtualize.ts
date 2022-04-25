@@ -136,7 +136,7 @@ export function useVirtualize<Meta>(
         Math.ceil((scrollPosition.scrollTop + overscan) / totalNodeHeight)
       );
       const length = stopIndex - index;
-      const children: React.ReactElement[] = new Array(length);
+      const children: React.ReactElement[] = new Array(Math.max(length, 0));
 
       for (; index < stopIndex; index++) {
         const nodeId = visibleNodes[index];
