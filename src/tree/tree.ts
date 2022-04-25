@@ -167,7 +167,7 @@ export class Tree<NodeData = {}> {
     if (nodeToRemoveParent?.nodes) {
       let found = 0;
       const nextNodes: number[] = new Array(
-        nodeToRemoveParent.nodes.length - 1
+        Math.max(nodeToRemoveParent.nodes.length - 1, 0)
       );
 
       for (let i = 0; i < nodeToRemoveParent.nodes.length; i++) {
@@ -205,7 +205,9 @@ export class Tree<NodeData = {}> {
     // Parent may have changed in the meantime
     if (node.parent === initialParent) {
       if (initialParent?.nodes) {
-        const nextNodes: number[] = new Array(initialParent.nodes.length - 1);
+        const nextNodes: number[] = new Array(
+          Math.max(initialParent.nodes.length - 1, 0)
+        );
         let found = 0;
 
         for (let i = 0; i < initialParent.nodes.length; i++) {
