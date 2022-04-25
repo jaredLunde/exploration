@@ -162,6 +162,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
           return;
         }
 
+        event.preventDefault();
         const nodeId = getSelectedId();
         const selectedIndex = getSelectedIndex();
 
@@ -202,6 +203,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
           return;
         }
 
+        event.preventDefault();
         const element = document.querySelector(
           querySelectorPattern.replace("{index}", "0")
         );
@@ -222,6 +224,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
           return;
         }
 
+        event.preventDefault();
         const element = document.querySelector(
           querySelectorPattern.replace("{index}", visibleNodes.length - 1 + "")
         );
@@ -242,6 +245,7 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
           return;
         }
 
+        event.preventDefault();
         const rovingId = rovingFocus.didChange.getState();
         const selectedIndex = visibleNodes.indexOf(rovingId);
 
