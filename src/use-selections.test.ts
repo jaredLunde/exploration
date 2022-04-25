@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react-hooks";
 import { useSelections } from ".";
+import type { Dir } from "./file-tree";
 import { createFileTree } from "./file-tree";
 import { getNodesFromMockFs, waitForTree } from "./test/utils";
 
@@ -253,5 +254,31 @@ describe("useSelections()", () => {
       fileTree.visibleNodes[1],
       fileTree.visibleNodes[2],
     ]);
+  });
+
+  it("should narrow selections", async () => {
+    await waitForTree(fileTree);
+    const { result } = renderHook(() => useSelections(fileTree));
+
+    await act(async () => {
+      await fileTree.expand(fileTree.getById(fileTree.visibleNodes[0]) as Dir);
+    });
+
+    act(() => {
+      // @ts-expect-error
+      result.current.getProps(fileTree.visibleNodes[0]).onClick({});
+      result.current
+        .getProps(fileTree.visibleNodes[2])
+        // @ts-expect-error
+        .onClick({ shiftKey: true });
+    });
+
+    expect([...result.current.didChange.getState()]).toEqual([
+      fileTree.visibleNodes[0],
+      fileTree.visibleNodes[1],
+      fileTree.visibleNodes[2],
+    ]);
+
+    expect([...result.current.narrow()]).toEqual([fileTree.visibleNodes[0]]);
   });
 });
