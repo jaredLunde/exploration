@@ -1,5 +1,6 @@
 // This file is for setting up Jest test environments
 import "@testing-library/jest-dom/extend-expect";
+import { clearRequestTimeout } from "@essentials/request-timeout";
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -14,3 +15,9 @@ window.requestAnimationFrame = (callback) => {
 window.cancelAnimationFrame = (id) => {
   clearTimeout(id);
 };
+
+jest.mock("@essentials/request-timeout", () => ({
+  default: window.setTimeout,
+  requestTimeout: window.setTimeout,
+  clearRequestTimeout: window.clearTimeout,
+}));

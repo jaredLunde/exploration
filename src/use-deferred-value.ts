@@ -3,7 +3,6 @@ import {
   requestTimeout,
 } from "@essentials/request-timeout";
 import * as React from "react";
-import { perf } from "./utils";
 
 export const useDeferredValue: <T>(
   value: T,
@@ -25,7 +24,7 @@ export function useThrottle<T>(
 
   React.useEffect(() => {
     let didUnmount = false;
-    const now = perf.now();
+    const now = performance.now();
     waitedFor.current +=
       now - (lastInvocation.current === 0 ? now : lastInvocation.current);
     lastInvocation.current = now;

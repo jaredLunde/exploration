@@ -1,5 +1,9 @@
 // @react-aria/utils
 // Credit: https://github.com/adobe/react-spectrum/tree/main/packages/%40react-aria
+import {
+  clearRequestTimeout,
+  requestTimeout,
+} from "@essentials/request-timeout";
 import clsx from "clsx";
 
 /**
@@ -84,13 +88,14 @@ export function throttle<CallbackArguments extends any[]>(
 ): (...args: CallbackArguments) => void {
   const ms = 1000 / fps;
   let prev = 0;
-  let trailingTimeout: ReturnType<typeof setTimeout>;
-  const clearTrailing = () => trailingTimeout && clearTimeout(trailingTimeout);
+  let trailingTimeout: ReturnType<typeof requestTimeout>;
+  const clearTrailing = () =>
+    trailingTimeout && clearRequestTimeout(trailingTimeout);
 
   return function () {
     // eslint-disable-next-line prefer-rest-params
     const args = arguments;
-    const rightNow = perf.now();
+    const rightNow = performance.now();
     const call = () => {
       prev = rightNow;
       clearTrailing();
@@ -101,6 +106,7 @@ export function throttle<CallbackArguments extends any[]>(
     const current = prev;
     // leading
     if (leading && current === 0) return call();
+    const delta = rightNow - current;
     // body
     if (rightNow - current > ms) {
       if (current > 0) return call();
@@ -108,14 +114,12 @@ export function throttle<CallbackArguments extends any[]>(
     }
     // trailing
     clearTrailing();
-    trailingTimeout = setTimeout(() => {
+    trailingTimeout = requestTimeout(() => {
       call();
       prev = 0;
-    }, ms);
+    }, ms - delta);
   };
 }
-
-export const perf = typeof performance !== "undefined" ? performance : Date;
 
 export function shallowEqual<
   A extends Record<string | number | symbol, unknown> | null,
