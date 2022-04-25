@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/jaredLunde/exploration/compare/v1.3.2...v1.3.3) (2022-04-25)
+
+
+### Bug Fixes
+
+* hotkeys should prevent default ([b37b458](https://github.com/jaredLunde/exploration/commit/b37b458cf945deb564b9f1d970245874c1975793))
+
 ## [1.3.2](https://github.com/jaredLunde/exploration/compare/v1.3.1...v1.3.2) (2022-04-25)
 
 
