@@ -38,7 +38,6 @@ export function useVirtualize<Meta>(
   const height = useHeight(windowRef, ResizeObserver);
   const scrollHeight = (nodeHeight + nodeGap) * visibleNodes.length - nodeGap;
 
-  console.log("HERE", scrollPosition.scrollTop);
   return {
     scrollTop: scrollPosition.scrollTop,
     isScrolling: scrollPosition.isScrolling,
