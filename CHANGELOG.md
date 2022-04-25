@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/jaredLunde/exploration/compare/v1.3.0...v1.3.1) (2022-04-25)
+
+
+### Bug Fixes
+
+* fix node component failing to update on property changes ([#14](https://github.com/jaredLunde/exploration/issues/14)) ([1bde4fd](https://github.com/jaredLunde/exploration/commit/1bde4fd0fc99bb8b8287dab6b6ac84e82da58612))
+
 # [1.3.0](https://github.com/jaredLunde/exploration/compare/v1.2.0...v1.3.0) (2022-04-24)
 
 

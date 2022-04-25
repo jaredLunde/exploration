@@ -14,7 +14,6 @@ export declare function mergeProps<T extends Props[]>(args: T): UnionToIntersect
  */
 export declare function chain<Args extends any[]>(...callbacks: Args): (...args: Args) => void;
 export declare function throttle<CallbackArguments extends any[]>(callback: (...args: CallbackArguments) => void, fps?: number, leading?: boolean): (...args: CallbackArguments) => void;
-export declare const perf: Performance | DateConstructor;
 export declare function shallowEqual<A extends Record<string | number | symbol, unknown> | null, B extends Record<string | number | symbol, unknown> | null>(objA: A, objB: B | A): boolean;
 interface Props {
     [key: string]: any;
