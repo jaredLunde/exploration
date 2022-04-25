@@ -100,7 +100,7 @@ export declare class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
      * @param inDir - The directory to create the file in
      * @param withData - The data for the file
      */
-    newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>): void;
+    newFile(inDir: Dir<Meta>, withData: FileTreeData<Meta>): File<Meta>;
     /**
      * Create a new directory in a given directory.
      *
@@ -108,13 +108,13 @@ export declare class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
      * @param withData - The data for the directory
      * @param expanded - Whether the directory should be expanded by default
      */
-    newDir(inDir: Dir<Meta>, withData: FileTreeData<Meta>, expanded?: boolean): void;
+    newDir(inDir: Dir<Meta>, withData: FileTreeData<Meta>, expanded?: boolean): Dir<Meta>;
     /**
      * Create a new directory in a given directory.
      *
      * @param inDir - The directory to create the directory in
      */
-    newPrompt(inDir: Dir<Meta>): void;
+    newPrompt(inDir: Dir<Meta>): Prompt<Meta>;
     /**
      * Rename a node.
      *
@@ -124,6 +124,7 @@ export declare class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
     rename(node: File<Meta> | Dir<Meta>, newName: string): void;
 }
 export declare class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+    readonly $$type = "file";
     /**
      * The parent directory of the file
      */
@@ -138,6 +139,7 @@ export declare class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
     get path(): string;
 }
 export declare class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
+    readonly $$type = "prompt";
     /**
      * The parent directory of this directory
      */
@@ -149,6 +151,7 @@ export declare class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
     get path(): string;
 }
 export declare class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
+    readonly $$type = "dir";
     /**
      * The parent directory of this directory
      */
@@ -174,20 +177,24 @@ export declare function defaultComparator(a: FileTreeNode, b: FileTreeNode): num
  *
  * @param treeNode - A tree node
  */
-export declare function isPrompt<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Prompt<Meta>;
+export declare function isPrompt<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Prompt<Meta> & {
+    readonly $$type: "prompt";
+};
 /**
  * Returns `true` if the given node is a file
  *
  * @param treeNode - A tree node
  */
-export declare function isFile<T>(treeNode: FileTreeNode<T>): treeNode is File<T>;
+export declare function isFile<Meta>(treeNode: FileTreeNode<Meta>): treeNode is File<Meta>;
 /**
  * Returns `true` if the given node is a directory
  *
  * @param treeNode - A tree node
  */
-export declare function isDir<T>(treeNode: FileTreeNode<T>): treeNode is Dir<T>;
-export declare type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | Prompt<Meta>;
+export declare function isDir<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Dir<Meta>;
+export declare type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | (Prompt<Meta> & {
+    readonly $$type: "prompt";
+});
 export declare type FileTreeData<Meta = {}> = {
     name: string;
     meta?: Meta;

@@ -1,3 +1,10 @@
+## [1.3.6](https://github.com/jaredLunde/exploration/compare/v1.3.5...v1.3.6) (2022-04-25)
+
+
+### Bug Fixes
+
+* fix missing exports and type narrowing ([#18](https://github.com/jaredLunde/exploration/issues/18)) ([5ec7115](https://github.com/jaredLunde/exploration/commit/5ec711523b87d453324df7ed541ac71efc4e9261))
+
 ## [1.3.5](https://github.com/jaredLunde/exploration/compare/v1.3.4...v1.3.5) (2022-04-25)
 
 
