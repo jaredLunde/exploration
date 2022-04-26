@@ -4,25 +4,26 @@ describe("join()", () => {
   it("should join paths", () => {
     expect(pathFx.join("/foo", "bar")).toBe("/foo/bar");
     expect(pathFx.join("/foo", "/bar")).toBe("/foo/bar");
-    expect(pathFx.join("/foo", "bar/")).toBe("/foo/bar");
-    expect(pathFx.join("/foo", "/bar/")).toBe("/foo/bar");
+    expect(pathFx.join("/foo", "bar/")).toBe("/foo/bar/");
+    expect(pathFx.join("/foo", "bar//", "/", "/")).toBe("/foo/bar/");
+    expect(pathFx.join("/foo", "/bar/")).toBe("/foo/bar/");
     expect(pathFx.join("/foo", "bar/baz")).toBe("/foo/bar/baz");
     expect(pathFx.join("/foo", "/bar/baz")).toBe("/foo/bar/baz");
-    expect(pathFx.join("/foo", "bar/baz/")).toBe("/foo/bar/baz");
-    expect(pathFx.join("/foo", "/bar/baz/")).toBe("/foo/bar/baz");
+    expect(pathFx.join("/foo", "bar/baz/")).toBe("/foo/bar/baz/");
+    expect(pathFx.join("/foo", "/bar/baz/")).toBe("/foo/bar/baz/");
     expect(pathFx.join("/foo", "bar/baz/qux")).toBe("/foo/bar/baz/qux");
     expect(pathFx.join("/foo", "/bar/baz/qux")).toBe("/foo/bar/baz/qux");
-    expect(pathFx.join("/foo", "bar/baz/qux/")).toBe("/foo/bar/baz/qux");
-    expect(pathFx.join("/foo", "/bar/baz/qux/")).toBe("/foo/bar/baz/qux");
+    expect(pathFx.join("/foo", "bar/baz/qux/")).toBe("/foo/bar/baz/qux/");
+    expect(pathFx.join("/foo", "/bar/baz/qux/")).toBe("/foo/bar/baz/qux/");
   });
 
   it("should join paths lower in the tree", () => {
     expect(pathFx.join("/foo/bar", "../baz")).toBe("/foo/baz");
     expect(pathFx.join("/foo/bar", "..")).toBe("/foo");
-    expect(pathFx.join("/foo/bar", "./")).toBe("/foo/bar");
+    expect(pathFx.join("/foo/bar", "./")).toBe("/foo/bar/");
     expect(pathFx.join("/foo/bar", "../../baz")).toBe("/baz");
     expect(pathFx.join("/foo/bar", "../../baz/qux")).toBe("/baz/qux");
-    expect(pathFx.join("/foo/bar", "../../../baz/qux/")).toBe("/baz/qux");
+    expect(pathFx.join("/foo/bar", "../../../baz/qux/")).toBe("/baz/qux/");
   });
 });
 describe("relative()", () => {
@@ -121,8 +122,11 @@ describe("dirname()", () => {
 
 describe("normalize()", () => {
   it("should normalize the path", () => {
-    expect(pathFx.normalize("/foo/bar/baz/qux/")).toBe("/foo/bar/baz/qux");
-    expect(pathFx.normalize("/foo/bar/baz/qux/../../../")).toBe("/foo");
+    expect(pathFx.normalize("/foo/bar/baz/qux/")).toBe("/foo/bar/baz/qux/");
+    expect(pathFx.normalize("/foo/bar/baz/qux/../../../")).toBe("/foo/");
+    expect(pathFx.normalize("/foo/bar/baz/qux/../../..")).toBe("/foo");
+    expect(pathFx.normalize("")).toBe("");
+    expect(pathFx.normalize("/")).toBe("/");
   });
 });
 
