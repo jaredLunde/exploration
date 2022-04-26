@@ -22,7 +22,7 @@ export function useSelections<Meta>(
   const visibleNodes = nodes ?? visibleNodes_;
   const prevSelectionsSet = React.useRef<SubjectRange<number> | null>(null);
   const selectionsSet = React.useMemo(() => {
-    const next = getSelectionsSet(fileTree, visibleNodes);
+    const next = createSelectionsSet(fileTree, visibleNodes);
 
     if (prevSelectionsSet.current) {
       for (const nodeId of prevSelectionsSet.current) {
@@ -179,7 +179,7 @@ const createProps = trieMemoize(
   }
 );
 
-const getSelectionsSet = trieMemoize(
+const createSelectionsSet = trieMemoize(
   [WeakMap, WeakMap],
   <Meta>(fileTree: FileTree<Meta>, visibleNodes: number[]) =>
     new SubjectRange<number>()
