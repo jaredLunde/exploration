@@ -14,6 +14,7 @@ export declare class Tree<NodeData = {}> {
         comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
     });
     get visibleNodes(): number[];
+    getSnapshot: () => number[];
     getById(id: number): Node<NodeData> | undefined;
     /**
      * Ensures that the children of any given branch have been loaded and ready to be worked with.

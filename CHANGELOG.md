@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/jaredLunde/exploration/compare/v1.4.0...v1.4.1) (2022-04-26)
+
+
+### Bug Fixes
+
+* force release ([#21](https://github.com/jaredLunde/exploration/issues/21)) ([0bc651b](https://github.com/jaredLunde/exploration/commit/0bc651b290fd6f9008ec29b61ef6a544d6cd016b))
+
 # [1.4.0](https://github.com/jaredLunde/exploration/compare/v1.3.6...v1.4.0) (2022-04-26)
 
 
