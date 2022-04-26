@@ -1,5 +1,5 @@
+import memoizeOne from "@essentials/memoize-one";
 import * as React from "react";
-import trieMemoize from "trie-memoize";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { Subject } from "./tree/subject";
 import { mergeProps as mergeProps_ } from "./utils";
@@ -21,46 +21,45 @@ export function useNodePlugins(
   nodeId: number,
   plugins: NodePlugin[] = []
 ): React.HTMLAttributes<HTMLElement> {
-  const numPlugins = plugins.length;
-  const mergeProps = React.useMemo(() => {
-    const caches: WeakMapConstructor[] = new Array(numPlugins);
-    for (let i = 0; i < numPlugins; i++) caches[i] = WeakMap;
+  const subject = createSubject(plugins);
+  const mergeProps = React.useRef(
+    memoizeOne(mergeProps_, (a, b) => shallowEqualArray(a[0], b[0]))
+  ).current;
+  const storedPlugins = React.useRef(plugins);
 
-    return trieMemoize(
-      caches,
-      (...props: React.HTMLAttributes<HTMLElement>[]) => {
-        return mergeProps_(props);
-      }
-    );
-  }, [numPlugins]);
+  React.useEffect(() => {
+    storedPlugins.current = plugins;
+  });
 
-  function getSnapshot() {
-    const props: React.HTMLAttributes<HTMLElement>[] = new Array(
-      plugins.length
-    );
+  const getSnapshot = React.useCallback(() => {
+    const plugins = storedPlugins.current;
+    const length = plugins.length;
+    const props: React.HTMLAttributes<HTMLElement>[] = new Array(length);
+    for (let i = 0; i < length; i++) props[i] = plugins[i].getProps(nodeId);
+    return mergeProps(props);
+  }, [mergeProps, nodeId]);
 
-    for (let i = 0; i < numPlugins; i++) {
-      props[i] = plugins[i].getProps(nodeId);
-    }
+  return useSyncExternalStore(subject, getSnapshot, getSnapshot);
+}
 
-    return mergeProps(...props);
-  }
+const createSubject = memoizeOne((plugins: NodePlugin[]) => {
+  return function subject(onStoreChange: () => void) {
+    const numPlugins = plugins.length;
+    const unsubs: (() => void)[] = new Array(numPlugins);
+    let i = 0;
+    for (; i < numPlugins; i++)
+      unsubs[i] = plugins[i].didChange.observe(onStoreChange);
+    return () => {
+      for (i = 0; i < unsubs.length; i++) unsubs[i]();
+    };
+  };
+}, shallowEqualArray);
 
-  return useSyncExternalStore(
-    (callback) => {
-      const unsubs: (() => void)[] = new Array(plugins.length);
-
-      for (let i = 0; i < numPlugins; i++) {
-        unsubs[i] = plugins[i].didChange.observe(callback);
-      }
-
-      return () => {
-        for (let i = 0; i < unsubs.length; i++) unsubs[i]();
-      };
-    },
-    getSnapshot,
-    getSnapshot
-  );
+function shallowEqualArray(a: any[], b: any[]) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
 }
 
 export type NodePlugin<T = unknown> = {

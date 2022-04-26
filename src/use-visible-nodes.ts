@@ -16,8 +16,8 @@ export function useVisibleNodes<Meta>(fileTree: FileTree<Meta>) {
   return (
     useSyncExternalStore(
       fileTree.flatView.observe,
-      () => fileTree.visibleNodes,
-      () => fileTree.visibleNodes
+      fileTree.getSnapshot,
+      fileTree.getSnapshot
     ) ?? empty
   );
 }

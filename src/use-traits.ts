@@ -18,7 +18,7 @@ export function useTraits<Trait extends string>(
   traits: Trait[]
 ): UseTraitsPlugin<Trait> {
   const storedTraits = React.useRef(traits);
-  const traitsMap = React.useMemo(() => getTraitsMap(fileTree), [fileTree]);
+  const traitsMap = createTraitsMap(fileTree);
 
   React.useEffect(() => {
     storedTraits.current = traits;
@@ -29,9 +29,9 @@ export function useTraits<Trait extends string>(
     getProps(nodeId) {
       let className = "";
 
-      for (const [trait, set] of traitsMap) {
-        if (set.has(nodeId)) {
-          className += trait + " ";
+      for (const entry of traitsMap) {
+        if (entry[1].has(nodeId)) {
+          className += entry[0] + " ";
         }
       }
 
@@ -101,21 +101,10 @@ const createProps = trieMemoize([Map], (className: string): TraitsProps => {
   return { className: className.slice(0, -1) };
 });
 
-const fileTreeTraitsMap = new WeakMap<
-  FileTree,
-  SubjectMap<string, Set<number>>
->();
-
-function getTraitsMap(fileTree: FileTree) {
-  let traitsMap = fileTreeTraitsMap.get(fileTree);
-
-  if (!traitsMap) {
-    traitsMap = new SubjectMap<string, Set<number>>();
-    fileTreeTraitsMap.set(fileTree, traitsMap);
-  }
-
-  return traitsMap;
-}
+const createTraitsMap = trieMemoize(
+  [WeakMap],
+  (fileTree: FileTree) => new SubjectMap<string, Set<number>>()
+);
 
 export interface TraitsProps {
   className?: string;

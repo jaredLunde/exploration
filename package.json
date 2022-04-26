@@ -109,7 +109,6 @@
       "module": "./dist/module/index.js",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/main/index.js",
-      "umd": "./dist/umd/exploration.js",
       "source": "./src/index.ts",
       "types": "./types/index.d.ts",
       "default": "./dist/main/index.js"
@@ -191,6 +190,5 @@
       "@semantic-release/github"
     ]
   },
-  "source": "src/index.ts",
-  "unpkg": "dist/umd/exploration.js"
+  "source": "src/index.ts"
 }

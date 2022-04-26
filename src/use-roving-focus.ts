@@ -55,7 +55,7 @@ const createProps = trieMemoize(
 
 const getFocusedNodeId = trieMemoize(
   [WeakMap],
-  <Meta>(fileTree: FileTree<Meta>) => subject<number>(-1)
+  <Meta>(fileTree: FileTree<Meta>) => subject(-1)
 );
 
 export interface RovingFocusProps {

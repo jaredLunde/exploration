@@ -9,7 +9,7 @@ export class Tree<NodeData = {}> {
   protected loadingBranches = new Map<Branch<NodeData>, Promise<void>>();
   private getNodes: GetNodes<NodeData>;
   comparator?: (a: Node<NodeData>, b: Node<NodeData>) => number;
-  flatView = subject<number>(0);
+  flatView = subject(0);
   root: Branch<NodeData>;
   nodesById = nodesById as Node<NodeData>[];
 
@@ -31,6 +31,10 @@ export class Tree<NodeData = {}> {
   get visibleNodes(): number[] {
     return this.createVisibleNodes(this.flatView.getState());
   }
+
+  getSnapshot = () => {
+    return this.visibleNodes;
+  };
 
   getById(id: number): Node<NodeData> | undefined {
     return this.nodesById[id];
