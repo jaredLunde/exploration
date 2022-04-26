@@ -145,7 +145,7 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   }
 
   /**
-   * A function that walks the tree starting at a given directory and calls a visitor
+   * Walks the tree starting at a given directory and calls a visitor
    * function for each node.
    *
    * @param dir - The directory to walk
