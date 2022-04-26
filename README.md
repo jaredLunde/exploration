@@ -853,6 +853,8 @@ For all other props, the last prop object overrides all previous ones.
 
 ## Path utilities
 
+Utilities for unix-style paths
+
 ### pathFx.join()
 
 Join all arguments together and normalize the resulting path.
