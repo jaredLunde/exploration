@@ -1,7 +1,6 @@
-const ANY_LEADING_SEP_RE = /^[\\/]+/;
-const ANY_TRAILING_SEP_RE = /[\\/]+$/;
-const UNIX_JOIN_CHARACTER = "/";
-const UNIX_SEP_NEGATE_RE = /[^/]+/g;
+export const SEP = "/";
+const SEP_NEGATE_RE = /[^/]+/g;
+const TRAILING_SEP_RE = /\/$/;
 
 /**
  * Returns `true` if the path is relative.
@@ -9,7 +8,7 @@ const UNIX_SEP_NEGATE_RE = /[^/]+/g;
  * @param path - The path to check
  */
 export function isRelative(path: string): boolean {
-  return path.charAt(0) !== "/";
+  return path[0] !== SEP;
 }
 
 /**
@@ -19,8 +18,9 @@ export function isRelative(path: string): boolean {
  */
 export function join(...paths: string[]) {
   const composed = [];
-  const hasLeadingSep = ANY_LEADING_SEP_RE.test(paths[0]);
-  const hasTrailingSep = ANY_TRAILING_SEP_RE.test(paths[paths.length - 1]);
+  const hasLeadingSlash = paths[0][0] === SEP;
+  const lastPath = paths[paths.length - 1];
+  const hasTrailingSlash = lastPath[lastPath.length - 1] === SEP;
 
   for (let i = 0; i < paths.length; i++) {
     const path = paths[i];
@@ -31,7 +31,7 @@ export function join(...paths: string[]) {
 
       if (part === ".") {
         continue;
-      } else if (/^[.]{2,}$/.test(part)) {
+      } else if (part.length === 2 && part[0] === "." && part[1] === ".") {
         composed.pop();
       } else {
         composed.push(part);
@@ -39,15 +39,15 @@ export function join(...paths: string[]) {
     }
   }
 
-  if (hasLeadingSep) {
+  if (hasLeadingSlash) {
     composed.unshift("");
   }
 
-  if (hasTrailingSep) {
+  if (hasTrailingSlash) {
     composed.push("");
   }
 
-  return removeTrailingSlashes(composed.join(UNIX_JOIN_CHARACTER));
+  return composed.join(SEP);
 }
 
 /**
@@ -63,7 +63,7 @@ export function relative(from: string, to: string) {
 
   const fromFrags = split(from);
   const toFrags = split(to);
-  const hasTrailingSep = ANY_TRAILING_SEP_RE.test(to);
+  const hasTrailingSep = to[to.length - 1] === SEP;
 
   for (let i = 0; i < fromFrags.length; i++) {
     const fromFrag = fromFrags[i];
@@ -71,16 +71,12 @@ export function relative(from: string, to: string) {
     if (fromFrag !== toFrags[i]) {
       const remainder = fromFrags.length - i;
 
-      return Array(remainder)
-        .fill("..")
-        .concat(toFrags.slice(i))
-        .join(UNIX_JOIN_CHARACTER);
+      return new Array(remainder).fill("..").concat(toFrags.slice(i)).join(SEP);
     }
   }
 
   return removeTrailingSlashes(
-    toFrags.slice(fromFrags.length).join(UNIX_JOIN_CHARACTER) +
-      (hasTrailingSep ? UNIX_JOIN_CHARACTER : "")
+    toFrags.slice(fromFrags.length).join(SEP) + (hasTrailingSep ? SEP : "")
   );
 }
 
@@ -90,16 +86,18 @@ export function relative(from: string, to: string) {
  * @param path - The path to split.
  */
 export function split(path: string): string[] {
-  return path.match(UNIX_SEP_NEGATE_RE) ?? [];
+  return path.match(SEP_NEGATE_RE) ?? [];
 }
 
 /**
- * Normalize a path, taking care of `..` and `.`, and removing redundant slashes.
- * Unlike Node's `path`, this removes any trailing slashes.
+ * Normalize a path, taking care of `..` and `.`, and removing redundant slashes
+ * while preserving trailing slashes.
  *
  * @param path - The path to normalize.
  */
 export function normalize(path: string): string {
+  // Hot path for known roots
+  if (path === "" || path === "/") return path;
   return join(path);
 }
 
@@ -131,7 +129,8 @@ export function depth(path: string): number {
  */
 export function basename(path: string): string {
   const frags = split(path);
-  return frags[frags.length - 1] ?? "";
+  const lastIndex = frags.length - 1;
+  return lastIndex === -1 ? "" : frags[lastIndex];
 }
 
 /**
@@ -153,18 +152,18 @@ export function extname(path: string): string {
  */
 export function dirname(path: string): string {
   const parts = split(path);
-  const hasLeadingSep = ANY_LEADING_SEP_RE.test(path);
+  const hasLeadingSep = path[0] === SEP;
   parts.pop();
 
   if (parts.length === 0) {
-    return hasLeadingSep ? UNIX_JOIN_CHARACTER : ".";
+    return hasLeadingSep ? SEP : ".";
   }
 
   if (hasLeadingSep) {
     parts.unshift("");
   }
 
-  return parts.join(UNIX_JOIN_CHARACTER);
+  return parts.join(SEP);
 }
 
 /**
@@ -173,5 +172,5 @@ export function dirname(path: string): string {
  * @param path - The path to remove trailing slashes from.
  */
 export function removeTrailingSlashes(path: string) {
-  return path.replace(ANY_TRAILING_SEP_RE, "");
+  return path.replace(TRAILING_SEP_RE, "");
 }

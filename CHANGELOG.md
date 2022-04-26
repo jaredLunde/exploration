@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/jaredLunde/exploration/compare/v1.3.6...v1.4.0) (2022-04-26)
+
+
+### Features
+
+* add walk/getByPath methods to file tree ([#19](https://github.com/jaredLunde/exploration/issues/19)) ([852e150](https://github.com/jaredLunde/exploration/commit/852e1501e658ac22c80b36a4454d3e68e60316ac))
+
 ## [1.3.6](https://github.com/jaredLunde/exploration/compare/v1.3.5...v1.3.6) (2022-04-25)
 
 

@@ -612,7 +612,7 @@ file tree when you initially load it.
 | Name     | Type                                                 | Required? | Description                                    |
 | -------- | ---------------------------------------------------- | --------- | ---------------------------------------------- |
 | fileTree | `FileTree<Meta>`                                     | Yes       | A file tree                                    |
-| callback | `(state: FileTreeSnapshot) => Promise<void> \| void` | Yes       | A callback that handles the file tree snapshot |
+| observer | `(state: FileTreeSnapshot) => Promise<void> \| void` | Yes       | A callback that handles the file tree snapshot |
 
 [**⇗ Back to top**](#exploration)
 
@@ -635,6 +635,8 @@ file tree when you initially load it.
 | Name       | Description                                                                                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | getById    | Get a node by its ID.                                                                                                                                                                                                                                                                      |
+| getByPath  | Get a node by its path. Note that this requires walking the tree, which has O(n) complexity.                                                                                                                                                                                               |
+| walk       | Walks the tree starting at a given directory and calls a visitor function for each node.                                                                                                                                                                                                   |
 | expand     | Expand a directory in the tree.                                                                                                                                                                                                                                                            |
 | collapse   | Collapse a directory in the tree.                                                                                                                                                                                                                                                          |
 | remove     | Remove a node and its descendants from the tree.                                                                                                                                                                                                                                           |
@@ -896,8 +898,8 @@ Splits a path into an array of path segments.
 
 ### pathFx.normalize()
 
-Normalize a path, taking care of `..` and `.`, and removing redundant slashes.
-Unlike Node's `path`, this removes any trailing slashes.
+Normalize a path, taking care of `..` and `.`, and removing redundant slashes while
+preserving trailing slashes.
 
 #### Arguments
 

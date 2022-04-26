@@ -9,11 +9,11 @@ import type { FileTreeSnapshot } from "./types";
  * file tree when you initially load it.
  *
  * @param fileTree - A file tree
- * @param callback - A callback that handles the file tree snapshot
+ * @param observer - A callback that handles the file tree snapshot
  */
 export function useFileTreeSnapshot<Meta>(
   fileTree: FileTree<Meta>,
-  callback: (state: FileTreeSnapshot) => Promise<void> | void
+  observer: (state: FileTreeSnapshot) => Promise<void> | void
 ) {
   useObserver(fileTree.flatView, () => {
     const expandedPaths: string[] = [];
@@ -24,8 +24,7 @@ export function useFileTreeSnapshot<Meta>(
     while ((nodeId = nodeIds.pop())) {
       const node = fileTree.getById(nodeId);
 
-      if (!node) continue;
-      if (isDir(node)) {
+      if (node && isDir(node)) {
         if (node.expanded) {
           expandedPaths.push(node.path);
         } else if (node.nodes) {
@@ -51,7 +50,7 @@ export function useFileTreeSnapshot<Meta>(
       }
     }
 
-    callback({ expandedPaths, buriedPaths, version: SNAPSHOT_VERSION });
+    observer({ expandedPaths, buriedPaths, version: SNAPSHOT_VERSION });
   });
 }
 

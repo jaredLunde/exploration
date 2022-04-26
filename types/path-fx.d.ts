@@ -1,3 +1,4 @@
+export declare const SEP = "/";
 /**
  * Returns `true` if the path is relative.
  *
@@ -24,8 +25,8 @@ export declare function relative(from: string, to: string): string;
  */
 export declare function split(path: string): string[];
 /**
- * Normalize a path, taking care of `..` and `.`, and removing redundant slashes.
- * Unlike Node's `path`, this removes any trailing slashes.
+ * Normalize a path, taking care of `..` and `.`, and removing redundant slashes
+ * while preserving trailing slashes.
  *
  * @param path - The path to normalize.
  */

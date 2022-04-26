@@ -53,7 +53,7 @@ export function createFileTree<Meta = {}>(
       return getNodes(parent as Dir<Meta>, factory);
     },
     comparator,
-    root: new Dir(null, root ? { ...root } : { name: "/" }),
+    root: new Dir(null, root ? { ...root } : { name: pathFx.SEP }),
   });
 
   return tree;
@@ -125,6 +125,65 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
   }
 
   /**
+   * Get a node in the tree by its path. Note that this requires walking the tree,
+   * which has O(n) complexity. It should therefore be avoided unless absolutely necessary.
+   *
+   * @param path - The path to search for in the tree
+   */
+  getByPath(path: string) {
+    let found: FileTreeNode<Meta> | undefined;
+    path = pathFx.removeTrailingSlashes(pathFx.normalize(path));
+
+    this.walk(this.root, (node) => {
+      if (node.path === path) {
+        found = node;
+        return false;
+      }
+    });
+
+    return found;
+  }
+
+  /**
+   * Walks the tree starting at a given directory and calls a visitor
+   * function for each node.
+   *
+   * @param dir - The directory to walk
+   * @param visitor - A function that is called for each node in the tree. Returning
+   *   `false` will stop the walk.
+   * @example
+   * tree.walk(tree.root, node => {
+   *   console.log(node.path);
+   *
+   *   if (node.path === '/foo/bar') {
+   *     return false
+   *   }
+   * })
+   */
+  walk(
+    dir: Dir<Meta>,
+    visitor: (
+      node: FileTreeNode<Meta>,
+      parent: FileTreeNode<Meta>
+    ) => boolean | void
+  ) {
+    const nodeIds = !dir.nodes ? [] : [...dir.nodes];
+    let nodeId: number | undefined;
+
+    while ((nodeId = nodeIds.pop())) {
+      const node = this.getById(nodeId);
+      if (!node) continue;
+
+      const shouldContinue = visitor(node, dir);
+      if (shouldContinue === false) return;
+
+      if (isDir(node) && node.nodes) {
+        nodeIds.push(...node.nodes);
+      }
+    }
+  }
+
+  /**
    * Produce a new tree with the given function applied to the given node.
    * This is similar to `immer`'s produce function as you're working on a draft
    * and can freely mutate the object.
@@ -132,7 +191,7 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
    * @param dir - The directory to produce the tree for
    * @param produceFn - The function to produce the tree with
    */
-  public produce(
+  produce(
     dir: Dir<Meta>,
     produceFn: (
       context: FileTreeFactory<Meta> & {
@@ -261,6 +320,9 @@ export class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
 
 export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
   readonly $$type = "file";
+  private _basenameName?: string;
+  private _basename?: string;
+
   /**
    * The parent directory of the file
    */
@@ -274,18 +336,53 @@ export class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
    * The basename of the file
    */
   get basename() {
-    return pathFx.basename(this.data.name);
+    if (this._basenameName === this.data.name) {
+      return this._basename!;
+    }
+
+    this._basenameName = this.data.name;
+    return (this._basename = pathFx.basename(this.data.name));
   }
 
   /**
    * The full path of the file
    */
   get path(): string {
-    if (this.parentId > -1) {
-      return pathFx.join(this.parent!.path, this.basename);
+    return getPath(this);
+  }
+}
+
+export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
+  readonly $$type = "dir";
+  private _basenameName?: string;
+  private _basename?: string;
+
+  /**
+   * The parent directory of this directory
+   */
+  get parent(): Dir<Meta> | null {
+    return this.parentId === -1
+      ? null
+      : (nodesById[this.parentId] as Dir<Meta>);
+  }
+
+  /**
+   * The basename of the directory
+   */
+  get basename() {
+    if (this._basenameName === this.data.name) {
+      return this._basename!;
     }
 
-    return this.data.name;
+    this._basenameName = this.data.name;
+    return (this._basename = pathFx.basename(this.data.name));
+  }
+
+  /**
+   * The full path of the directory
+   */
+  get path(): string {
+    return getPath(this);
   }
 }
 
@@ -308,42 +405,22 @@ export class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
    * The full path of the prompt
    */
   get path(): string {
-    if (this.parentId > -1) {
-      return pathFx.join(this.parent!.path, this.basename);
-    }
-
-    return this.data.name;
+    return getPath(this);
   }
 }
 
-export class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
-  readonly $$type = "dir";
-  /**
-   * The parent directory of this directory
-   */
-  get parent(): Dir<Meta> | null {
-    return this.parentId === -1
-      ? null
-      : (nodesById[this.parentId] as Dir<Meta>);
+function getPath(node: FileTreeNode) {
+  if (node.parent) {
+    const parentPath = node.parent.path;
+    const hasTrailingSlash = parentPath[parentPath.length - 1] === pathFx.SEP;
+    const sep =
+      hasTrailingSlash || parentPath === "" || node.basename === ""
+        ? ""
+        : pathFx.SEP;
+    return parentPath + sep + node.basename;
   }
 
-  /**
-   * The basename of the directory
-   */
-  get basename() {
-    return pathFx.basename(this.data.name);
-  }
-
-  /**
-   * The full path of the directory
-   */
-  get path(): string {
-    if (this.parentId > -1) {
-      return pathFx.join(this.parent!.path, this.basename);
-    }
-
-    return this.data.name;
-  }
+  return pathFx.normalize(node.data.name);
 }
 
 /**
@@ -377,7 +454,7 @@ export function defaultComparator(a: FileTreeNode, b: FileTreeNode) {
  */
 export function isPrompt<Meta>(
   treeNode: FileTreeNode<Meta>
-): treeNode is Prompt<Meta> & { readonly $$type: "prompt" } {
+): treeNode is Prompt<Meta> {
   return treeNode.constructor === Prompt;
 }
 
@@ -403,10 +480,7 @@ export function isDir<Meta>(
   return treeNode.constructor === Dir;
 }
 
-export type FileTreeNode<Meta = {}> =
-  | File<Meta>
-  | Dir<Meta>
-  | (Prompt<Meta> & { readonly $$type: "prompt" });
+export type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | Prompt<Meta>;
 
 export type FileTreeData<Meta = {}> = {
   name: string;

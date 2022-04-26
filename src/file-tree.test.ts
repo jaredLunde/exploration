@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createFileTree, defaultComparator, isFile, isPrompt } from ".";
+import { createFileTree, defaultComparator, isFile } from ".";
 import type { Dir, File } from ".";
-import { isDir } from "./file-tree";
-import { dirname } from "./path-fx";
 import type { Branch } from "./tree/branch";
 import { nodesById } from "./tree/nodes-by-id";
 import type { Tree } from "./tree/tree";
@@ -16,6 +14,14 @@ describe("createFileTree()", () => {
   describe("structure", () => {
     it("should create a tree with visible nodes", async () => {
       const tree = createFileTree(getNodesFromMockFs);
+
+      await waitForTree(tree);
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
+      expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
+    });
+
+    it("should create a tree with visible nodes and an empty root path", async () => {
+      const tree = createFileTree(getNodesFromMockFs, { root: { name: "" } });
 
       await waitForTree(tree);
       expect(tree.visibleNodes.length).toBe(mockFs["/"].length);
@@ -627,6 +633,23 @@ describe("createFileTree()", () => {
     expect(huskyHooks.expanded).toBe(true);
     expect(huskyHooks.nodes).not.toBeUndefined();
   });
+
+  it("should get a node by its path", async () => {
+    const tree = createFileTree(getNodesFromMockFs);
+    await waitForTree(tree);
+    expect(tree.getByPath("/./.gitignore")!.path).toBe("/.gitignore");
+    expect(tree.getByPath("/.gitignore")!.path).toBe("/.gitignore");
+    expect(tree.getByPath("/.gitignore/")!.path).toBe("/.gitignore");
+    expect(tree.getByPath("/.husky/../.gitignore")!.path).toBe("/.gitignore");
+  });
+
+  it("should get a buried node by its path", async () => {
+    const tree = createFileTree(getNodesFromMockFs);
+    await waitForTree(tree);
+    await tree.expand(tree.getById(tree.visibleNodes[1]) as Dir);
+    tree.collapse(tree.getById(tree.visibleNodes[1]) as Dir);
+    expect(tree.getByPath("/.husky/hooks")!.path).toBe("/.husky/hooks");
+  });
 });
 
 describe("file tree actions", () => {
@@ -658,7 +681,7 @@ describe("file tree actions", () => {
 
     tree.newDir(tree.root, { name: "bar" });
     expect(tree.getById(tree.root.nodes[0]).basename).toBe("");
-    expect(tree.getById(tree.root.nodes[0]).path).toBe("");
+    expect(tree.getById(tree.root.nodes[0]).path).toBe("/");
   });
 
   it("should create a prompt in a directory", async () => {
@@ -754,7 +777,8 @@ function waitForTree(tree: Tree<any>) {
 }
 
 function getNodesFromMockFs(parent: any, { createFile, createDir }: any) {
-  return mockFs[parent.data.name].map((stat) => {
+  const name = parent.data.name || "/";
+  return mockFs[name].map((stat) => {
     if (stat.type === "file") {
       return createFile({ name: stat.name });
     }
