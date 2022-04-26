@@ -64,6 +64,30 @@ export declare class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
         root: Dir<Meta>;
     });
     /**
+     * Get a node in the tree by its path. Note that this requires walking the tree,
+     * which has O(n) complexity. It should therefore be avoided unless absolutely necessary.
+     *
+     * @param path - The path to search for in the tree
+     */
+    getByPath(path: string): FileTreeNode<Meta> | undefined;
+    /**
+     * Walks the tree starting at a given directory and calls a visitor
+     * function for each node.
+     *
+     * @param dir - The directory to walk
+     * @param visitor - A function that is called for each node in the tree. Returning
+     *   `false` will stop the walk.
+     * @example
+     * tree.walk(tree.root, node => {
+     *   console.log(node.path);
+     *
+     *   if (node.path === '/foo/bar') {
+     *     return false
+     *   }
+     * })
+     */
+    walk(dir: Dir<Meta>, visitor: (node: FileTreeNode<Meta>, parent: FileTreeNode<Meta>) => boolean | void): void;
+    /**
      * Produce a new tree with the given function applied to the given node.
      * This is similar to `immer`'s produce function as you're working on a draft
      * and can freely mutate the object.
@@ -125,6 +149,8 @@ export declare class FileTree<Meta = {}> extends Tree<FileTreeData<Meta>> {
 }
 export declare class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
     readonly $$type = "file";
+    private _basenameName?;
+    private _basename?;
     /**
      * The parent directory of the file
      */
@@ -135,6 +161,23 @@ export declare class File<Meta = {}> extends Leaf<FileTreeData<Meta>> {
     get basename(): string;
     /**
      * The full path of the file
+     */
+    get path(): string;
+}
+export declare class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
+    readonly $$type = "dir";
+    private _basenameName?;
+    private _basename?;
+    /**
+     * The parent directory of this directory
+     */
+    get parent(): Dir<Meta> | null;
+    /**
+     * The basename of the directory
+     */
+    get basename(): string;
+    /**
+     * The full path of the directory
      */
     get path(): string;
 }
@@ -150,21 +193,6 @@ export declare class Prompt<Meta = {}> extends Leaf<FileTreeData<Meta>> {
      */
     get path(): string;
 }
-export declare class Dir<Meta = {}> extends Branch<FileTreeData<Meta>> {
-    readonly $$type = "dir";
-    /**
-     * The parent directory of this directory
-     */
-    get parent(): Dir<Meta> | null;
-    /**
-     * The basename of the directory
-     */
-    get basename(): string;
-    /**
-     * The full path of the directory
-     */
-    get path(): string;
-}
 /**
  * A sort comparator for sorting path names
  *
@@ -177,9 +205,7 @@ export declare function defaultComparator(a: FileTreeNode, b: FileTreeNode): num
  *
  * @param treeNode - A tree node
  */
-export declare function isPrompt<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Prompt<Meta> & {
-    readonly $$type: "prompt";
-};
+export declare function isPrompt<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Prompt<Meta>;
 /**
  * Returns `true` if the given node is a file
  *
@@ -192,9 +218,7 @@ export declare function isFile<Meta>(treeNode: FileTreeNode<Meta>): treeNode is 
  * @param treeNode - A tree node
  */
 export declare function isDir<Meta>(treeNode: FileTreeNode<Meta>): treeNode is Dir<Meta>;
-export declare type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | (Prompt<Meta> & {
-    readonly $$type: "prompt";
-});
+export declare type FileTreeNode<Meta = {}> = File<Meta> | Dir<Meta> | Prompt<Meta>;
 export declare type FileTreeData<Meta = {}> = {
     name: string;
     meta?: Meta;
