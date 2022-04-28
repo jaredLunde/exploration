@@ -135,21 +135,23 @@ export function shallowEqual<
  * Retry a promise until it resolves or the max number of retries is reached.
  *
  * @param promiseFn - A function that returns a promise to retry
- * @param param1 - Options
- * @param param1.maxRetries - Max number of retries
- * @param param1.initialDelay - Initial delay before first retry
- * @param param1.delayMultiple - Multiplier for each subsequent retry
- * @param param1.shouldRetry - A function that should return `false` to stop retrying
+ * @param config - Options
+ * @param config.maxRetries - Max number of retries
+ * @param config.initialDelay - Initial delay before first retry
+ * @param config.delayMultiple - Multiplier for each subsequent retry
+ * @param config.shouldRetry - A function that should return `false` to stop retrying
  */
 export async function retryWithBackoff<T>(
   promiseFn: () => Promise<T>,
-  {
+  config: RetryWithBackoffConfig = {}
+): Promise<T> {
+  const {
     maxRetries = 4,
     initialDelay = 100,
     delayMultiple = 2,
     shouldRetry,
-  }: RetryWithBackoffConfig = {}
-): Promise<T> {
+  } = config;
+
   try {
     const result = await promiseFn();
     return result;
