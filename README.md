@@ -851,6 +851,52 @@ For all other props, the last prop object overrides all previous ones.
 
 ---
 
+### retryWithBackoff()
+
+Retry a promise until it resolves or the max number of retries is reached.
+
+#### Arguments
+
+| Name      | Type                                                | Required? | Description                                              |
+| --------- | --------------------------------------------------- | --------- | -------------------------------------------------------- |
+| promiseFn | `() => Promise<T>`                                  | Yes       | A function that returns a promise to retry when it fails |
+| config    | [`RetryWithBackoffConfig`](#retrywithbackoffconfig) | No        | Configuration options                                    |
+
+#### RetryWithBackoffConfig
+
+```ts
+interface RetryWithBackoffConfig {
+  /**
+   * Max number of retries
+   *
+   * @default 4
+   */
+  maxRetries?: number;
+  /**
+   * Initial delay before first retry
+   *
+   * @default 100
+   */
+  initialDelay?: number;
+  /**
+   * Multiplier for each subsequent retry
+   *
+   * @default 2
+   */
+  delayMultiple?: number;
+  /**
+   * A function that should return `false` to stop retrying
+   *
+   * @param error - The error that caused the retry
+   */
+  shouldRetry?: (error: unknown) => boolean;
+}
+```
+
+[**⇗ Back to top**](#exploration)
+
+---
+
 ## Path utilities
 
 Utilities for unix-style paths

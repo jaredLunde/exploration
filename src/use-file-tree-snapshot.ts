@@ -50,7 +50,9 @@ export function useFileTreeSnapshot<Meta>(
       }
     }
 
-    observer({ expandedPaths, buriedPaths, version: SNAPSHOT_VERSION });
+    observer({ expandedPaths, buriedPaths, version: SNAPSHOT_VERSION })?.catch(
+      () => {}
+    );
   });
 }
 

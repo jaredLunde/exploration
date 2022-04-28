@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import { act, renderHook } from "@testing-library/react-hooks";
 import { useVirtualize } from ".";
 import { createFileTree } from "./file-tree";

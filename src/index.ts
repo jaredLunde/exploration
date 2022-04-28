@@ -39,4 +39,4 @@ export type {
   UseVirtualizeResult,
 } from "./use-virtualize";
 export { useVisibleNodes } from "./use-visible-nodes";
-export { mergeProps } from "./utils";
+export { mergeProps, retryWithBackoff } from "./utils";

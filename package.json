@@ -92,7 +92,16 @@
   "eslintConfig": {
     "extends": [
       "lunde"
-    ]
+    ],
+    "parserOptions": {
+      "project": [
+        "./tsconfig.eslint.json"
+      ]
+    },
+    "rules": {
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error"
+    }
   },
   "eslintIgnore": [
     "node_modules",

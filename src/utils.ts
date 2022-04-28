@@ -131,6 +131,75 @@ export function shallowEqual<
   return true;
 }
 
+/**
+ * Retry a promise until it resolves or the max number of retries is reached.
+ *
+ * @param promiseFn - A function that returns a promise to retry
+ * @param config - Options
+ * @param config.maxRetries - Max number of retries
+ * @param config.initialDelay - Initial delay before first retry
+ * @param config.delayMultiple - Multiplier for each subsequent retry
+ * @param config.shouldRetry - A function that should return `false` to stop retrying
+ */
+export async function retryWithBackoff<T>(
+  promiseFn: () => Promise<T>,
+  config: RetryWithBackoffConfig = {}
+): Promise<T> {
+  const {
+    maxRetries = 4,
+    initialDelay = 100,
+    delayMultiple = 2,
+    shouldRetry,
+  } = config;
+
+  try {
+    const result = await promiseFn();
+    return result;
+  } catch (err) {
+    if (
+      maxRetries === 0 ||
+      (typeof shouldRetry === "function" && !shouldRetry(err))
+    ) {
+      throw err;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, initialDelay));
+    return retryWithBackoff(promiseFn, {
+      maxRetries: maxRetries - 1,
+      initialDelay: initialDelay * delayMultiple,
+      delayMultiple,
+      shouldRetry,
+    });
+  }
+}
+
+export interface RetryWithBackoffConfig {
+  /**
+   * Max number of retries
+   *
+   * @default 4
+   */
+  maxRetries?: number;
+  /**
+   * Initial delay before first retry
+   *
+   * @default 100
+   */
+  initialDelay?: number;
+  /**
+   * Multiplier for each subsequent retry
+   *
+   * @default 2
+   */
+  delayMultiple?: number;
+  /**
+   * A function that should return `false` to stop retrying
+   *
+   * @param error - The error that caused the retry
+   */
+  shouldRetry?: (error: unknown) => boolean;
+}
+
 interface Props {
   [key: string]: any;
 }

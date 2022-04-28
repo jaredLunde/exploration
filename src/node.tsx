@@ -4,6 +4,7 @@ import type { FileTree, FileTreeNode } from "./file-tree";
 import { subject } from "./tree/subject";
 import type { NodePlugin } from "./use-node-plugins";
 import { useNodePlugins } from "./use-node-plugins";
+import { retryWithBackoff } from "./utils";
 
 /**
  * A React component that renders a node in a file tree with plugins. The
@@ -64,7 +65,11 @@ export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
           if (expanded) {
             tree.collapse(node);
           } else {
-            tree.expand(node);
+            retryWithBackoff(() => tree.expand(node), {
+              shouldRetry() {
+                return node.expanded && !tree.isExpanded(node);
+              },
+            }).catch(() => {});
           }
         }
       },

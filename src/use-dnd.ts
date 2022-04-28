@@ -6,7 +6,7 @@ import type { Subject } from "./tree/subject";
 import { pureSubject } from "./tree/subject";
 import type { WindowRef } from "./types";
 import { useObserver } from "./use-observer";
-import { shallowEqual } from "./utils";
+import { retryWithBackoff, shallowEqual } from "./utils";
 
 /**
  * A plugin hook for adding drag and drop to the file tree.
@@ -45,11 +45,22 @@ export function useDnd<Meta>(
 
       storedTimeout.current.timeout = setTimeout(() => {
         if (!event.dir.expanded) {
-          fileTree.expand(event.dir).then(() => {
-            if (event.dir === storedDir.current) {
-              dnd.setState({ ...event, type: "expanded" });
+          retryWithBackoff(
+            () =>
+              fileTree.expand(event.dir).then(() => {
+                if (event.dir === storedDir.current) {
+                  dnd.setState({ ...event, type: "expanded" });
+                }
+              }),
+            {
+              shouldRetry() {
+                return (
+                  event.dir === storedDir.current &&
+                  !fileTree.isExpanded(event.dir)
+                );
+              },
             }
-          });
+          ).catch(() => {});
         }
       }, storedConfig.current.dragOverExpandTimeout ?? DEFAULT_DRAG_OVER_EXPAND_TIMEOUT);
     } else if (

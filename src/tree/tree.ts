@@ -1,4 +1,5 @@
 import memoizeOne from "@essentials/memoize-one";
+import { retryWithBackoff } from "../utils";
 import type { Node } from "./branch";
 import { Branch } from "./branch";
 import { Leaf } from "./leaf";
@@ -25,7 +26,11 @@ export class Tree<NodeData = {}> {
     this.root = root;
     this.getNodes = getNodes;
     this.comparator = comparator;
-    this.expand(this.root);
+    retryWithBackoff(() => this.expand(this.root), {
+      shouldRetry: () => {
+        return !this.isExpanded(this.root);
+      },
+    }).catch(() => {});
   }
 
   get visibleNodes(): number[] {
@@ -292,7 +297,11 @@ export class Tree<NodeData = {}> {
           const node = nodes[i];
 
           if (isBranch(node) && node.expanded) {
-            this.expand(node);
+            retryWithBackoff(() => this.expand(node), {
+              shouldRetry: () => {
+                return node.expanded && !this.isExpanded(node);
+              },
+            }).catch(() => {});
           }
         }
       })();

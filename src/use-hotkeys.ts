@@ -5,6 +5,7 @@ import type { WindowRef } from "./types";
 import type { useRovingFocus } from "./use-roving-focus";
 import type { useSelections } from "./use-selections";
 import { useVisibleNodes } from "./use-visible-nodes";
+import { retryWithBackoff } from "./utils";
 
 /**
  * A hook for adding standard hotkeys to the file tree.
@@ -182,7 +183,11 @@ export function useHotkeys(fileTree: FileTree, config: UseHotkeysConfig) {
               if (node.expanded) {
                 fileTree.collapse(node);
               } else {
-                fileTree.expand(node);
+                retryWithBackoff(() => fileTree.expand(node), {
+                  shouldRetry() {
+                    return node.expanded && !fileTree.isExpanded(node);
+                  },
+                }).catch(() => {});
               }
             } else {
               selections.clear();
