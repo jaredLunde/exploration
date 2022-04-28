@@ -1,5 +1,5 @@
 import { mergeProps } from ".";
-import { shallowEqual, throttle } from "./utils";
+import { retryWithBackoff, shallowEqual, throttle } from "./utils";
 
 describe("shallowEqual()", () => {
   it("should return true for equal objects", () => {
@@ -114,5 +114,74 @@ describe("throttle()", () => {
     jest.advanceTimersByTime(1000 / 60);
     expect(fn).toHaveBeenCalledTimes(2);
     expect(fn).lastCalledWith(3);
+  });
+});
+
+describe("retryWithBackoff()", () => {
+  it("should retry with backoff", async () => {
+    const fn = jest.fn(async () => {
+      throw new Error("error");
+    });
+
+    const promise = retryWithBackoff(fn, {
+      initialDelay: 1,
+      delayMultiple: 2,
+      maxRetries: 3,
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    await Promise.resolve();
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    await Promise.resolve();
+    jest.advanceTimersByTime(2);
+    await Promise.resolve();
+    expect(fn).toHaveBeenCalledTimes(3);
+
+    await Promise.resolve();
+    jest.advanceTimersByTime(4);
+    await Promise.resolve();
+    expect(fn).toHaveBeenCalledTimes(4);
+
+    const catchFn = jest.fn();
+    await promise.catch(catchFn);
+    expect(catchFn).lastCalledWith(new Error("error"));
+  });
+
+  it("should return value", async () => {
+    const fn = jest.fn(async () => {
+      return "foo";
+    });
+    const promise = retryWithBackoff(fn);
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(await promise).toBe("foo");
+  });
+
+  it("prevent retrying if shouldRetry returns false", async () => {
+    const fn = jest.fn(async () => {
+      throw new Error("error");
+    });
+
+    const promise = retryWithBackoff(fn, {
+      initialDelay: 1,
+      delayMultiple: 2,
+      maxRetries: 3,
+      shouldRetry: () => false,
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    await Promise.resolve();
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    const catchFn = jest.fn();
+    await promise.catch(catchFn);
+    expect(catchFn).lastCalledWith(new Error("error"));
   });
 });
