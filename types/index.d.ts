@@ -23,4 +23,4 @@ export type { SelectionsProps, UseSelectionsPlugin } from "./use-selections";
 export { useVirtualize } from "./use-virtualize";
 export type { UseVirtualizeConfig, UseVirtualizeResult, } from "./use-virtualize";
 export { useVisibleNodes } from "./use-visible-nodes";
-export { mergeProps } from "./utils";
+export { mergeProps, retryWithBackoff } from "./utils";

@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/jaredLunde/exploration/compare/v1.4.1...v1.5.0) (2022-04-28)
+
+
+### Features
+
+* add retryWithBackoff utility ([#22](https://github.com/jaredLunde/exploration/issues/22)) ([82c596a](https://github.com/jaredLunde/exploration/commit/82c596a83678f708bdab86b89dff2ab84194661c))
+
 ## [1.4.1](https://github.com/jaredLunde/exploration/compare/v1.4.0...v1.4.1) (2022-04-26)
 
 
