@@ -37,7 +37,6 @@
     "@react-hook/hotkey": "^3.1.0",
     "clsx": "^1.1.1",
     "trie-memoize": "^1.2.0",
-    "use-subscription": "^1.6.0",
     "use-sync-external-store": "^1.0.0"
   },
   "peerDependencies": {
@@ -64,7 +63,8 @@
     "eslint": "^7.32.0",
     "eslint-config-lunde": "latest",
     "husky": "latest",
-    "jest": "latest",
+    "jest": "^28",
+    "jest-environment-jsdom": "^28.0.2",
     "lint-staged": "latest",
     "lundle": "latest",
     "prettier": "latest",
@@ -154,7 +154,8 @@
           }
         }
       ]
-    }
+    },
+    "transformIgnorePatterns": []
   },
   "lint-staged": {
     "package.json": [

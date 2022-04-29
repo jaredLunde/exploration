@@ -4,7 +4,7 @@ import {
 } from "@essentials/request-timeout";
 import * as React from "react";
 import trieMemoize from "trie-memoize";
-import { useSubscription } from "use-subscription";
+import { useSyncExternalStore } from "use-sync-external-store/shim";
 import type { FileTree, FileTreeNode } from "./file-tree";
 import type { WindowRef } from "./types";
 import { useResizeObserver } from "./use-resize-observer";
@@ -209,33 +209,35 @@ export function useHeight(windowRef: WindowRef, ResizeObserver: any) {
 }
 
 export function useGlobalWindowHeight(windowRef: WindowRef) {
-  return useSubscription(
-    React.useMemo(
-      () => ({
-        getCurrentValue() {
-          if (typeof window !== "undefined" && windowRef === window) {
-            return window.innerHeight;
-          }
+  return useSyncExternalStore(
+    (callback) => {
+      callback = throttle(callback, 12, true);
+      if (typeof window !== "undefined" && windowRef instanceof Window) {
+        window.addEventListener("resize", callback);
+        window.addEventListener("orientationchange", callback);
 
-          return null;
-        },
-        subscribe(callback) {
-          callback = throttle(callback, 12, true);
-          if (typeof window !== "undefined" && windowRef instanceof Window) {
-            window.addEventListener("resize", callback);
-            window.addEventListener("orientationchange", callback);
+        return () => {
+          window.removeEventListener("resize", callback);
+          window.removeEventListener("orientationchange", callback);
+        };
+      }
 
-            return () => {
-              window.removeEventListener("resize", callback);
-              window.removeEventListener("orientationchange", callback);
-            };
-          }
+      return () => {};
+    },
+    () => {
+      if (typeof window !== "undefined" && windowRef === window) {
+        return window.innerHeight;
+      }
 
-          return () => {};
-        },
-      }),
-      [windowRef]
-    )
+      return null;
+    },
+    () => {
+      if (typeof window !== "undefined" && windowRef === window) {
+        return window.innerHeight;
+      }
+
+      return null;
+    }
   );
 }
 
@@ -244,42 +246,38 @@ export function useScrollPosition(
   { offset = 0 }: UseScrollPosition = {}
 ): { scrollTop: number; isScrolling: boolean } {
   const [isScrolling, setIsScrolling] = React.useState(false);
-  const scrollTop = useSubscription(
-    React.useMemo(
-      () => ({
-        getCurrentValue() {
-          const current =
-            windowRef && "current" in windowRef ? windowRef.current : windowRef;
+  const getSnapshot = () => {
+    const current =
+      windowRef && "current" in windowRef ? windowRef.current : windowRef;
 
-          if (typeof window !== "undefined") {
-            return !current
-              ? 0
-              : "scrollTop" in current
-              ? current.scrollTop
-              : current.scrollY;
-          }
+    if (typeof window !== "undefined") {
+      return !current
+        ? 0
+        : "scrollTop" in current
+        ? current.scrollTop
+        : current.scrollY;
+    }
 
-          return 0;
-        },
+    return 0;
+  };
+  const scrollTop = useSyncExternalStore(
+    (callback) => {
+      const current =
+        windowRef && "current" in windowRef ? windowRef.current : windowRef;
+      callback = throttle(callback, 15, true);
 
-        subscribe(callback) {
-          const current =
-            windowRef && "current" in windowRef ? windowRef.current : windowRef;
-          callback = throttle(callback, 15, true);
+      if (current) {
+        current.addEventListener("scroll", callback);
 
-          if (current) {
-            current.addEventListener("scroll", callback);
+        return () => {
+          window.removeEventListener("scroll", callback);
+        };
+      }
 
-            return () => {
-              window.removeEventListener("scroll", callback);
-            };
-          }
-
-          return () => {};
-        },
-      }),
-      [windowRef]
-    )
+      return () => {};
+    },
+    getSnapshot,
+    getSnapshot
   );
 
   React.useEffect(() => {
