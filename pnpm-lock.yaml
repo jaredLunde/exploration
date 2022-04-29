@@ -25,7 +25,7 @@ specifiers:
   eslint: ^7.32.0
   eslint-config-lunde: latest
   husky: latest
-  jest: latest
+  jest: ^28
   jest-environment-jsdom: ^28.0.2
   lint-staged: latest
   lundle: latest
