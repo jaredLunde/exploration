@@ -64,6 +64,7 @@
     "eslint-config-lunde": "latest",
     "husky": "latest",
     "jest": "latest",
+    "jest-environment-jsdom": "^28.0.2",
     "lint-staged": "latest",
     "lundle": "latest",
     "prettier": "latest",
