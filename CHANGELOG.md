@@ -1,3 +1,9 @@
+## [1.5.2](https://github.com/jaredLunde/exploration/compare/v1.5.1...v1.5.2) (2022-06-26)
+
+### Bug Fixes
+
+- remove unnecessary useMemos ([#24](https://github.com/jaredLunde/exploration/issues/24)) ([8ffc30c](https://github.com/jaredLunde/exploration/commit/8ffc30c967f6dbf3eb60683d9e7718fe6bfae644))
+
 ## [1.5.1](https://github.com/jaredLunde/exploration/compare/v1.5.0...v1.5.1) (2022-04-29)
 
 ### Bug Fixes
