@@ -1,7 +1,7 @@
-import { useObserver } from ".";
 import type { FileTree } from "./file-tree";
 import { isDir } from "./file-tree";
 import type { FileTreeSnapshot } from "./types";
+import { useObserver } from "./use-observer";
 
 /**
  * Take a snapshot of the expanded and buried directories of a file tree.
