@@ -23,7 +23,7 @@ export function useDnd<Meta>(
   config: UseDndConfig
 ): UseDndPlugin<Meta> {
   const storedConfig = React.useRef(config);
-  const dnd = React.useMemo(() => createDnd(fileTree), [fileTree]);
+  const dnd = createDnd(fileTree);
   const storedTimeout = React.useRef<{
     id: number;
     timeout: ReturnType<typeof setTimeout> | null;
