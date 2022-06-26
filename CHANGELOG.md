@@ -1,3 +1,9 @@
+## [1.5.3](https://github.com/jaredLunde/exploration/compare/v1.5.2...v1.5.3) (2022-06-26)
+
+### Bug Fixes
+
+- fix bundle size ([#25](https://github.com/jaredLunde/exploration/issues/25)) ([588ff1c](https://github.com/jaredLunde/exploration/commit/588ff1cf0202d3d817a926537455068cc1aa057d))
+
 ## [1.5.2](https://github.com/jaredLunde/exploration/compare/v1.5.1...v1.5.2) (2022-06-26)
 
 ### Bug Fixes
