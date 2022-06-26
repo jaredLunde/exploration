@@ -71,6 +71,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-test-renderer": "^18.2.0",
+    "semantic-release": "^19.0.3",
     "type-fest": "^2.12.2",
     "typescript": "latest"
   },
