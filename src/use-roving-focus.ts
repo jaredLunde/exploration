@@ -1,4 +1,4 @@
-import * as React from "react";
+import type * as React from "react";
 import trieMemoize from "trie-memoize";
 import type { FileTree } from "./file-tree";
 import type { Subject } from "./tree/subject";
@@ -12,10 +12,7 @@ import { subject } from "./tree/subject";
 export function useRovingFocus<Meta>(
   fileTree: FileTree<Meta>
 ): UseRovingFocusPlugin {
-  const focusedNodeId = React.useMemo(
-    () => getFocusedNodeId(fileTree),
-    [fileTree]
-  );
+  const focusedNodeId = createFocusedNodeId(fileTree);
 
   return {
     didChange: focusedNodeId,
@@ -53,7 +50,7 @@ const createProps = trieMemoize(
   }
 );
 
-const getFocusedNodeId = trieMemoize(
+const createFocusedNodeId = trieMemoize(
   [WeakMap],
   <Meta>(fileTree: FileTree<Meta>) => subject(-1)
 );
