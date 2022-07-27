@@ -9,7 +9,12 @@ export {
   File,
   Prompt,
 } from "./file-tree";
-export type { FileTreeNode, FileTreeData, FileTreeFactory } from "./file-tree";
+export type {
+  FileTreeNode,
+  FileTreeData,
+  FileTreeFactory,
+  GetNodes,
+} from "./file-tree";
 export { Node } from "./node";
 export { SubjectMap, SubjectSet } from "./observable-data";
 export * as pathFx from "./path-fx";
