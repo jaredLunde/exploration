@@ -1,3 +1,9 @@
+## [1.5.4](https://github.com/jaredLunde/exploration/compare/v1.5.3...v1.5.4) (2022-07-27)
+
+### Bug Fixes
+
+- export get nodes type ([#26](https://github.com/jaredLunde/exploration/issues/26)) ([aeaf611](https://github.com/jaredLunde/exploration/commit/aeaf611e1e9bacc196ec23aa5da306bc3abf790b))
+
 ## [1.5.3](https://github.com/jaredLunde/exploration/compare/v1.5.2...v1.5.3) (2022-06-26)
 
 ### Bug Fixes
