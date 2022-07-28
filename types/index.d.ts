@@ -1,20 +1,5 @@
-export {
-  createFileTree,
-  defaultComparator,
-  isDir,
-  isFile,
-  isPrompt,
-  FileTree,
-  Dir,
-  File,
-  Prompt,
-} from "./file-tree";
-export type {
-  FileTreeNode,
-  FileTreeData,
-  FileTreeFactory,
-  GetNodes,
-} from "./file-tree";
+export { createFileTree, defaultComparator, isDir, isFile, isPrompt, FileTree, Dir, File, Prompt, } from "./file-tree";
+export type { FileTreeNode, FileTreeData, FileTreeFactory, GetNodes, } from "./file-tree";
 export { Node } from "./node";
 export { SubjectMap, SubjectSet } from "./observable-data";
 export * as pathFx from "./path-fx";
@@ -32,16 +17,10 @@ export { useFileTreeSnapshot } from "./use-file-tree-snapshot";
 export { useTraits } from "./use-traits";
 export type { TraitsProps, UseTraitsPlugin } from "./use-traits";
 export { useRovingFocus } from "./use-roving-focus";
-export type {
-  RovingFocusProps,
-  UseRovingFocusPlugin,
-} from "./use-roving-focus";
+export type { RovingFocusProps, UseRovingFocusPlugin, } from "./use-roving-focus";
 export { useSelections } from "./use-selections";
 export type { SelectionsProps, UseSelectionsPlugin } from "./use-selections";
 export { useVirtualize } from "./use-virtualize";
-export type {
-  UseVirtualizeConfig,
-  UseVirtualizeResult,
-} from "./use-virtualize";
+export type { UseVirtualizeConfig, UseVirtualizeResult, } from "./use-virtualize";
 export { useVisibleNodes } from "./use-visible-nodes";
 export { mergeProps, retryWithBackoff } from "./utils";

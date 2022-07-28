@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/jaredLunde/exploration/compare/v1.5.4...v1.5.5) (2022-07-28)
+
+
+### Bug Fixes
+
+* fix selections sets instability ([#27](https://github.com/jaredLunde/exploration/issues/27)) ([f2ea209](https://github.com/jaredLunde/exploration/commit/f2ea209de0121fa0ef181556da4f64dd3f0d5e3b))
+
 ## [1.5.4](https://github.com/jaredLunde/exploration/compare/v1.5.3...v1.5.4) (2022-07-27)
 
 ### Bug Fixes
