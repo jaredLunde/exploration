@@ -21,19 +21,15 @@ export function useSelections<Meta>(
   const visibleNodes_ = useVisibleNodes(fileTree);
   const visibleNodes = nodes ?? visibleNodes_;
   const prevSelectionsSet = React.useRef<SubjectRange<number> | null>(null);
-  const selectionsSet = React.useMemo(() => {
-    const next = createSelectionsSet(fileTree, visibleNodes);
+  const selectionsSet = createSelectionsSet(fileTree, nodes ?? emptyArray);
 
+  React.useEffect(() => {
     if (prevSelectionsSet.current) {
       for (const nodeId of prevSelectionsSet.current) {
-        next.add(nodeId);
+        selectionsSet.add(nodeId);
       }
     }
 
-    return next;
-  }, [fileTree, visibleNodes]);
-
-  React.useEffect(() => {
     prevSelectionsSet.current = selectionsSet;
   }, [selectionsSet]);
 
@@ -98,6 +94,8 @@ export function useSelections<Meta>(
     },
   };
 }
+
+const emptyArray: number[] = [];
 
 const createProps = trieMemoize(
   [WeakMap, WeakMap, Map],
