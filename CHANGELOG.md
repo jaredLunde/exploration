@@ -1,3 +1,10 @@
+## [1.5.6](https://github.com/jaredLunde/exploration/compare/v1.5.5...v1.5.6) (2022-07-30)
+
+
+### Bug Fixes
+
+* export more missing types ([#28](https://github.com/jaredLunde/exploration/issues/28)) ([cc785df](https://github.com/jaredLunde/exploration/commit/cc785df15af26c6d08c42da8c317c3cf104ef711))
+
 ## [1.5.5](https://github.com/jaredLunde/exploration/compare/v1.5.4...v1.5.5) (2022-07-28)
 
 
