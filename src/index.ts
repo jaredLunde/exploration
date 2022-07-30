@@ -16,6 +16,7 @@ export type {
   GetNodes,
 } from "./file-tree";
 export { Node } from "./node";
+export type { NodeProps } from "./node";
 export { SubjectMap, SubjectSet } from "./observable-data";
 export * as pathFx from "./path-fx";
 export { subject } from "./tree/subject";
@@ -42,6 +43,7 @@ export { useVirtualize } from "./use-virtualize";
 export type {
   UseVirtualizeConfig,
   UseVirtualizeResult,
+  VirtualizeRenderProps,
 } from "./use-virtualize";
 export { useVisibleNodes } from "./use-visible-nodes";
 export { mergeProps, retryWithBackoff } from "./utils";
