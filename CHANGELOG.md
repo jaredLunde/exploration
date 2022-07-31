@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/jaredLunde/exploration/compare/v1.5.6...v1.6.0) (2022-07-31)
+
+
+### Features
+
+* expose useNode plugin ([#29](https://github.com/jaredLunde/exploration/issues/29)) ([8e4a337](https://github.com/jaredLunde/exploration/commit/8e4a337c380e0930771051b3a6cbb997d1f4bc2b))
+
 ## [1.5.6](https://github.com/jaredLunde/exploration/compare/v1.5.5...v1.5.6) (2022-07-30)
 
 
