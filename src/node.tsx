@@ -13,33 +13,29 @@ import { retryWithBackoff } from "./utils";
  * @param props - Node props
  */
 export function Node<Meta>(props: NodeProps<Meta>) {
-  const nodeProps = useNodeProps(props);
-
   const elementProps = useNodePlugins(props.node.id, [
     ...(props.plugins ?? empty),
-    {
-      didChange: noopSubject,
-      getProps() {
-        return nodeProps;
-      },
-    },
+    useNode(props.tree, props),
   ]);
 
   return React.createElement(props.as ?? "div", elementProps, props.children);
 }
 
 /**
- * A hook that creates and memoizes node-specific props from a set of input props.
+ * A plugin that creates and memoizes node-specific props.
  *
+ * @param fileTree - A file tree
  * @param config - Props to generate exploration node-specific props from
  */
-export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
-  const { node, tree, index, style } = config;
+export function useNode<Meta>(
+  fileTree: FileTree<Meta>,
+  config: UseNodeConfig<Meta>
+) {
+  const { node, index, style } = config;
   const type = isDir(node) ? "dir" : isFile(node) ? "file" : "prompt";
   const expanded = isDir(node) ? node.expanded : undefined;
   const { id, depth } = node;
-
-  return React.useMemo<React.HTMLAttributes<HTMLElement>>(() => {
+  const props = React.useMemo<React.HTMLAttributes<HTMLElement>>(() => {
     return {
       role: "button",
       style,
@@ -63,18 +59,25 @@ export function useNodeProps<Meta>(config: Omit<NodeProps<Meta>, "as">) {
 
         if (isDir(node)) {
           if (expanded) {
-            tree.collapse(node);
+            fileTree.collapse(node);
           } else {
-            retryWithBackoff(() => tree.expand(node), {
+            retryWithBackoff(() => fileTree.expand(node), {
               shouldRetry() {
-                return node.expanded && !tree.isExpanded(node);
+                return node.expanded && !fileTree.isExpanded(node);
               },
             }).catch(() => {});
           }
         }
       },
     };
-  }, [index, depth, expanded, style, type, node, tree, id]);
+  }, [index, depth, expanded, style, type, node, fileTree, id]);
+
+  return {
+    didChange: noopSubject,
+    getProps() {
+      return props;
+    },
+  };
 }
 
 const empty: [] = [];
@@ -112,3 +115,8 @@ export interface NodeProps<Meta> {
    */
   children: React.ReactNode;
 }
+
+export type UseNodeConfig<Meta> = Pick<
+  NodeProps<Meta>,
+  "node" | "index" | "style"
+>;

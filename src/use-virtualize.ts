@@ -163,12 +163,12 @@ const createStyle = trieMemoize(
   [Map, Map],
   (height: number, top: number): React.CSSProperties => ({
     position: "absolute",
-    width: "100%",
-    height,
     contain: "strict",
     userSelect: "none",
-    top,
+    width: "100%",
     left: 0,
+    height,
+    top,
   })
 );
 
