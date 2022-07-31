@@ -15,8 +15,8 @@ export type {
   FileTreeFactory,
   GetNodes,
 } from "./file-tree";
-export { Node } from "./node";
-export type { NodeProps } from "./node";
+export { Node, useNode } from "./node";
+export type { NodeProps, UseNodeConfig } from "./node";
 export { SubjectMap, SubjectSet } from "./observable-data";
 export * as pathFx from "./path-fx";
 export { subject } from "./tree/subject";
