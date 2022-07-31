@@ -24,11 +24,11 @@ export function Node<Meta>(props: NodeProps<Meta>) {
 /**
  * A plugin that creates and memoizes node-specific props.
  *
- * @param tree - A file tree
+ * @param fileTree - A file tree
  * @param config - Props to generate exploration node-specific props from
  */
 export function useNode<Meta>(
-  tree: FileTree<Meta>,
+  fileTree: FileTree<Meta>,
   config: UseNodeConfig<Meta>
 ) {
   const { node, index, style } = config;
@@ -59,18 +59,18 @@ export function useNode<Meta>(
 
         if (isDir(node)) {
           if (expanded) {
-            tree.collapse(node);
+            fileTree.collapse(node);
           } else {
-            retryWithBackoff(() => tree.expand(node), {
+            retryWithBackoff(() => fileTree.expand(node), {
               shouldRetry() {
-                return node.expanded && !tree.isExpanded(node);
+                return node.expanded && !fileTree.isExpanded(node);
               },
             }).catch(() => {});
           }
         }
       },
     };
-  }, [index, depth, expanded, style, type, node, tree, id]);
+  }, [index, depth, expanded, style, type, node, fileTree, id]);
 
   return {
     didChange: noopSubject,

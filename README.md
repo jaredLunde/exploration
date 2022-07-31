@@ -251,15 +251,16 @@ paired with the [`useVirtualize()`](#usevirtualize) hook.
 
 ---
 
-### useNodeProps()
+### useNode()
 
-A hook that creates and memoizes node-specific props from a set of input props.
+A plugin that creates and memoizes node-specific props.
 
 #### Arguments
 
-| Name   | Type                       | Required? | Description                                  |
-| ------ | -------------------------- | --------- | -------------------------------------------- |
-| config | [`NodeProps`](#node-props) | Yes       | Options to generate node-specific props from |
+| Name     | Type                                                  | Required? | Description                                  |
+| -------- | ----------------------------------------------------- | --------- | -------------------------------------------- |
+| fileTree | `FileTree<Meta>`                                      | Yes       | A file tree                                  |
+| config   | `Pick<NodeProps<Meta>, "node" \| "index" \| "style">` | Yes       | Options to generate node-specific props from |
 
 ---
 
