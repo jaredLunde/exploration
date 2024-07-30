@@ -2,11 +2,15 @@
 
 # Exploration
 
-> Primitives for creating high performance file explorers with React
+Primitives for creating high performance file explorers with React
 
 ```sh
 npm i exploration
 ```
+
+<a href="https://flexstack.com"><img src="https://flexstack.com/images/supported-by-flexstack.svg" height="32" alt="Supported by FlexStack"></a>
+    
+<hr>
 
 <p>
   <a href="https://bundlephobia.com/result?p=exploration">
@@ -25,8 +29,6 @@ npm i exploration
     <img alt="MIT License" src="https://img.shields.io/npm/l/exploration?style=for-the-badge&labelColor=24292e">
   </a>
 </p>
-
----
 
 ## Features
 
