@@ -8,7 +8,7 @@ Primitives for creating high performance file explorers with React
 npm i exploration
 ```
 
-<a href="https://flexstack.com"><img src="https://flexstack.com/images/supported-by-flexstack.svg" height="32" alt="Supported by FlexStack"></a>
+<a href="https://flexstack.com"><img src="https://flexstack.com/images/supported-by-flexstack.svg?v1" height="36" alt="Supported by FlexStack"></a>
     
 <hr>
 
